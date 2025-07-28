@@ -1,32 +1,61 @@
-up_key = keyboard_check(ord("W"));
-left_key = keyboard_check(ord("A"));
-down_key = keyboard_check(ord("S"));
-right_key = keyboard_check(ord("D"));
-run_key = keyboard_check_pressed(vk_shift);
+up_key = InputCheck(INPUT_VERB.UP);
+left_key = InputCheck(INPUT_VERB.LEFT);
+down_key = InputCheck(INPUT_VERB.DOWN);
+right_key = InputCheck(INPUT_VERB.RIGHT);
+run_key = InputCheck(INPUT_VERB.CANCEL);
 
-xspd = (right_key - left_key) * walk_spd;
-yspd = (down_key - up_key) * walk_spd;
 
-if place_meeting(x+xspd, y, obj_wall)
+if obj_player.can_move == true
 {
-	xspd = 0;
+	if (run_key) {
+		image_speed = 3;
+		spd = run_spd;
+	} else {
+		spd = walk_spd;
+		image_speed = 2;
+	}
+	
+	if xspd == 0 and yspd == 0 or can_move == false {
+		image_speed = 0;
+		image_index = 0;
+	} else {
+		image_speed = 2;
+	}
+	
+	xspd = (right_key - left_key) * spd;
+	yspd = (down_key -  up_key) * spd;
+
+	if (place_meeting(x+xspd, y, obj_wall))
+	{
+		xspd = 0;
+	}
+	if (place_meeting(x ,y+yspd, obj_wall))
+	{
+		yspd = 0;
+	}
+
+	mask_index = sprite[FACE_DOWN];
+	if yspd == 0 {
+		if xspd > 0 {face = FACE_RIGHT};
+		if xspd < 0 {face = FACE_LEFT};
+	}
+	if xspd == 0 {
+		if yspd > 0 {face = FACE_DOWN};
+		if yspd < 0 {face = FACE_UP};
+	}
+
+	sprite_index = sprite[face];
+
+	x += xspd;
+	y += yspd;
+} else {
+	image_speed = 0;
+	image_index = 0;
 }
-if place_meeting(x ,y+yspd, obj_wall)
-{
-	yspd = 0;
-}
 
-if xspd > 0 {
-	sprite_index = spr_player_right;
-} else if xspd < 0 {
-	sprite_index = spr_player_left;
-} else if yspd < 0 {
-	sprite_index = spr_player_down;
-} else if yspd < 0 {
-	sprite_index = spr_player_up;
+if instance_exists(obj_textbox) {
+	obj_player.can_move = false
 }
 
 
-x += xspd;
-y += yspd;
-
+depth = -bbox_bottom

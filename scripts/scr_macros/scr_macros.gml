@@ -1,4 +1,9 @@
-#macro RIGHT 0
-#macro LEFT 1
-#macro UP 2
-#macro DOWN 3
+#macro FACE_UP 0
+#macro FACE_LEFT 1
+#macro FACE_RIGHT 2
+#macro FACE_DOWN 3
+
+global.date = 0;
+global.ingame = false;
+
+global.plrName = steam_get_persona_name();

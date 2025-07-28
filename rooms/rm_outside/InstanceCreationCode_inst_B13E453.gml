@@ -1,1 +1,1 @@
-text_id = "trigger 1"
+text_id ="Trigger 1";

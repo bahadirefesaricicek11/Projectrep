@@ -44,8 +44,8 @@
   },
   "origin":0,
   "parent":{
-    "name":"Textbox System",
-    "path":"folders/Textbox System.yy",
+    "name":"textb_sprites",
+    "path":"folders/Textbox System/textb_sprites.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

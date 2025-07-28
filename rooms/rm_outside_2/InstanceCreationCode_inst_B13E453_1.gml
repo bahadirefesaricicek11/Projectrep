@@ -1,1 +1,1 @@
-text_id = "trigger 2";
+startDialogue("Trigger 2");
