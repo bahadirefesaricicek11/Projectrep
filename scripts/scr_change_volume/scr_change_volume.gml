@@ -10,9 +10,10 @@ function scr_change_volume(argument0) {
 			audio_group_set_gain(audiogroup_sound, argument0, 0);
 			break;
 		case 2:
-			audio_group_set_gain(audiogroup_default, argument0, 0);
+			audio_group_set_gain(audiogroup_music, argument0, 0);
 			break;
 	}
-
+	
+	save_settings();
 
 }

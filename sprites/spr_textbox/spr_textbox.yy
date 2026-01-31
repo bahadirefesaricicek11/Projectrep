@@ -1,10 +1,10 @@
 {
-  "$GMSprite":"",
+  "$GMSprite":"v2",
   "%Name":"spr_textbox",
   "bboxMode":0,
   "bbox_bottom":95,
   "bbox_left":0,
-  "bbox_right":15,
+  "bbox_right":115,
   "bbox_top":0,
   "collisionKind":1,
   "collisionTolerance":0,
@@ -12,7 +12,7 @@
   "edgeFiltering":false,
   "For3D":false,
   "frames":[
-    {"$GMSpriteFrame":"","%Name":"cab027d0-67f2-4e4d-9d22-72e5c93e0c62","name":"cab027d0-67f2-4e4d-9d22-72e5c93e0c62","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
+    {"$GMSpriteFrame":"v1","%Name":"cab027d0-67f2-4e4d-9d22-72e5c93e0c62","name":"cab027d0-67f2-4e4d-9d22-72e5c93e0c62","resourceType":"GMSpriteFrame","resourceVersion":"2.0",},
   ],
   "gridX":6,
   "gridY":6,
@@ -24,15 +24,15 @@
   "name":"spr_textbox",
   "nineSlice":{
     "$GMNineSliceData":"",
-    "bottom":6,
+    "bottom":40,
     "enabled":true,
     "guideColour":[4294902015,4294902015,4294902015,4294902015,],
     "highlightColour":1728023040,
     "highlightStyle":0,
-    "left":5,
+    "left":57,
     "resourceType":"GMNineSliceData",
     "resourceVersion":"2.0",
-    "right":5,
+    "right":57,
     "tileMode":[
       0,
       0,
@@ -40,7 +40,7 @@
       0,
       0,
     ],
-    "top":6,
+    "top":40,
   },
   "origin":0,
   "parent":{
@@ -107,5 +107,5 @@
   },
   "type":0,
   "VTile":false,
-  "width":16,
+  "width":116,
 }

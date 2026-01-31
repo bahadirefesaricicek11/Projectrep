@@ -1,1 +1,0 @@
-draw_sprite_tiled(spr_warp_transition, image_index, 0, 0);

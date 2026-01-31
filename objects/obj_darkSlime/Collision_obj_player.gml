@@ -1,0 +1,1 @@
+NewEncounter([global.enemies.darkSlime, global.enemies.darkSlime, global.enemies.darkSlime], bg_battle);

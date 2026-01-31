@@ -1,10 +1,24 @@
 function save_game()
 {
+	if(file_exists("invData.ini"))
+	{
+		file_delete("invData.ini")	
+	}
+	
+	
+	var _invData = json_stringify(obj_item_manager.inv);
+	var _invDataENCD = base64_encode(_invData);
+	
+	ini_open("invData.ini");
+	ini_write_string("INVENTORY","data", _invDataENCD);
+	ini_close();
+	
 	if(file_exists("save.ini")){
 		file_delete("save.ini");
 	}
 	
 	var _current_date = date_current_datetime()
+	
 
 	ini_open("save.ini");
 	ini_write_string("SAVE","roomID",room_get_name(room));
@@ -15,14 +29,33 @@ function save_game()
 	ini_write_real("SAVE","player_face",obj_player.face);
 	
 	
+	
 	ini_close();
 	show_debug_message("Game Saved");
+	
+	
+	if(file_exists("someone.txt")){
+		file_delete("someone.txt");
+	}
+	
+	ini_open("someone.txt");
+	ini_write_string("Message", "TEXT", "01001000 01000001 01001110 01001101 01000001 01001011 01000001 01010010")
+	ini_close();
 }
 function load_game()
 {	
+	if(file_exists("invData.ini"))
+	{
+		ini_open("invData.ini");
+		var _invENCD = ini_read_string("INVENTORY", "data", "");
+		var invdataDCD = base64_decode(_invENCD);
+		obj_item_manager.inv = json_parse(invdataDCD);
+		ini_close();
+	}
 	
 	if(file_exists("save.ini"))
 	{
+		
 		
 		
 		ini_open("save.ini");
@@ -31,12 +64,12 @@ function load_game()
 		global.date = ini_read_real("SAVE","Date", 0);
 		obj_player.x = ini_read_real("SAVE","x", 0);
 		obj_player.y = ini_read_real("SAVE","y", 0);
-		
 		ini_close();
+		
 		
 		if r_name == ""	
 		{
-			room_goto(rm_side_screen);
+			room_goto(rm_menuRoom);
 		}
 		else
 		{
@@ -53,3 +86,47 @@ function load_game()
 		obj_player.can_move = true;
 	}
 }
+
+function save_settings()
+{
+	if(file_exists("settings.ini"))
+	{
+		file_delete("settings.ini")	
+	}
+	
+	var _master = audio_get_master_gain(1);
+	var _vfx = audio_group_get_gain(audiogroup_sound);
+	var _ost = audio_group_get_gain(audiogroup_music);
+	var _flscrn = window_get_fullscreen();
+	
+	ini_open("settings.ini");
+	ini_write_real("SETTINGS","MASTER", _master);
+	ini_write_real("SETTINGS","SOUNDS", _vfx);
+	ini_write_real("SETTINGS","MUSIC", _ost);
+	ini_write_real("SETTINGS","FULLSCREEN", _flscrn);
+	ini_close();
+	
+	show_debug_message("Settings Saved");
+}
+
+function load_settings()
+{
+	if(file_exists("settings.ini"))
+	{
+		ini_open("settings.ini");
+		var _master = ini_read_real("SETTINGS","MASTER",0)
+		var _vfx = ini_read_real("SETTINGS","SOUNDS",0)
+		var _ost = ini_read_real("SETTINGS","MUSIC",0)
+		var _flscrn = ini_read_real("SETTINGS","FULLSCREEN",0);
+		audio_set_master_gain(0,_master);
+		audio_group_set_gain(audiogroup_sound,_vfx);
+		audio_group_set_gain(audiogroup_music,_ost);
+		window_set_fullscreen(_flscrn)
+		ini_close();	
+		
+		show_debug_message("Settings Loaded");
+	}
+}
+	
+	
+	

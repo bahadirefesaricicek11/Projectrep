@@ -6,4 +6,6 @@
 global.date = 0;
 global.ingame = false;
 
-global.plrName = steam_get_persona_name();
+global.dialogue = 0;
+
+global.plrName = "Player";

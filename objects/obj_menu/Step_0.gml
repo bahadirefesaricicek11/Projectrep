@@ -1,5 +1,3 @@
-if (!global.game_pause) exit;
-
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
 
@@ -16,7 +14,7 @@ var input_left_p = InputPressed(INPUT_VERB.LEFT) || keyboard_check_pressed(vk_le
 var input_right_c = InputCheck(INPUT_VERB.RIGHT) || keyboard_check(vk_right);
 var input_left_c = InputCheck(INPUT_VERB.LEFT) || keyboard_check(vk_left);
 var input_enter_p = InputPressed(INPUT_VERB.ACCEPT) || keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space);
-var input_back_p = InputPressed(INPUT_VERB.CANCEL) || keyboard_check_pressed(vk_escape); // Add back button
+var input_back_p = InputPressed(INPUT_VERB.CANCEL) || keyboard_check_pressed(vk_escape);
 
 if ((input_down_p || input_up_p) && !inputting) {
     audio_play_sound(snd_menu_move, 0, false);
@@ -28,7 +26,7 @@ if (inputting) {
             var hinput = input_right_p - input_left_p;
             if (hinput != 0) {
                 ds_grid[# 3, menu_option[page]] = clamp(ds_grid[# 3, menu_option[page]] + hinput, 
-                                                      0, array_length_1d(ds_grid[# 4, menu_option[page]]) - 1);
+                0, array_length_1d(ds_grid[# 4, menu_option[page]]) - 1);
             }
             break;
             
@@ -48,20 +46,17 @@ if (inputting) {
             break;
     }
     
-    // Exit edit mode with BACK or ENTER
     if (input_back_p || input_enter_p) {
         inputting = false;
-        audio_play_sound(snd_menu_move, 0, false); // Play sound when exiting edit mode
+        audio_play_sound(snd_menu_move, 0, false);
     }
 } 
 else {
-    // Normal menu navigation
     var nav_input = input_down_p - input_up_p;
     if (nav_input != 0) {
         menu_option[page] = (menu_option[page] + nav_input + ds_height) % ds_height;
     }
 
-    // Handle enter press
     if (input_enter_p) {
         switch (ds_grid[# 1, menu_option[page]]) {
             case menu_element_type.script_runner:
@@ -75,8 +70,20 @@ else {
             case menu_element_type.shift:
             case menu_element_type.slider:
             case menu_element_type.toggle:
-                inputting = true; // Enter edit mode
+                inputting = true;
                 break;
         }
+    }
+}
+
+
+if (fade_active)
+{
+    fade_alpha -= fade_speed;
+
+    if (fade_alpha <= 0)
+    {
+        fade_alpha = 0;
+        fade_active = false;
     }
 }

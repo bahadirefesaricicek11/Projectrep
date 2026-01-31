@@ -17,13 +17,11 @@ function TextAction(_text) : DialogueAction() constructor {
 	}
 }
 
-function SpeakerAction(_name, _sprite = undefined, _side = undefined): DialogueAction() constructor {
-	name = _name;
+function SpeakerAction(_sprite = undefined, _side = undefined): DialogueAction() constructor {
 	sprite = _sprite;
 	side = _side;
 
 	act = function(textbox) {
-		textbox.speaker_name = name;
 		
 		if (!is_undefined(sprite))
 			textbox.portrait_sprite = sprite;
@@ -71,5 +69,6 @@ function ExecuteAction(_action): DialogueAction() constructor {
 	
 	act = function(textbox) {
 		action(textbox);
+		obj_textbox.next();
 	}
 }

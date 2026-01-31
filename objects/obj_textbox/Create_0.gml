@@ -12,17 +12,12 @@ y = display_get_gui_height() - height - margin;
 text_font = Project_Font;
 text_color = c_white;
 text_speed = 0.6;
-text_x = padding - 4;
-text_y = padding - 8;
+text_x = padding + 20;
+text_y = padding;
 text_width = width - padding * 2;
 
-portrait_x = padding;
+portrait_x = padding + 20;
 portrait_y = padding;
-
-speaker_x = padding + 4;
-speaker_y = 0;
-speaker_font = Project_Font;
-speaker_color = c_white;
 
 option_x = padding;
 option_y = padding * -2.5;
@@ -31,7 +26,7 @@ option_selection_indent = 24;
 option_width = 53;
 option_height = 24;
 option_text_x = 5;
-option_text_y = 4;
+option_text_y = 0;
 option_text_color = c_white;
 
 actions = [];

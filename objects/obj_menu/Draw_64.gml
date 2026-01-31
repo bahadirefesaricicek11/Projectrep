@@ -1,36 +1,31 @@
-if (!global.game_pause) exit;
-
-// Setup
 draw_set_font(Project_Font);
 var gwidth = global.view_width;
 var gheight = global.view_height;
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
 
-// Layout
 var menu_left = 50;
 var title_right = 50;
 var title_top = 90;
 var y_buffer = 32;
 var start_y = (gheight / 2) - (((ds_height - 1) / 2) * y_buffer);
 var divider_x = menu_left + 150;
-var rtx = divider_x + 16; // Right-side elements start position
+var rtx = divider_x + 16;
 var _x = 0;
 
-// Background
 var c = c_black;
 image_speed = 0.25;
 draw_sprite_ext(bg_menu, -1, 0,0, 1*1.3,1*1.3,0,c_white,1)
 
-// Title (Right-Top)
+
+
 draw_set_font(title_font);
 draw_set_halign(fa_right);
 draw_set_valign(fa_top);
-draw_text_color(gwidth - title_right, title_top, "PROJECT", c_orange, c_yellow, c_white, c_white, 1);
+draw_text_color(gwidth - title_right, title_top*1.3, "PROJECT", c_orange, c_yellow, c_white, c_white, 1);
 draw_set_valign(fa_middle);
 draw_set_font(Project_Font);
 
-// Menu Items (Left Side)
 draw_set_halign(fa_left);
 var selected = menu_option[page];
 
@@ -45,16 +40,13 @@ for (var i = 0; i < ds_height; i++) {
     draw_text_color(text_x, y_pos, ds_grid[# 0, i], col, col, col, col, 1);
 }
 
-// Divider Line
 draw_line(divider_x, start_y - y_buffer, divider_x, start_y + (ds_height * y_buffer));
 
-// Interactive Elements (Right Side)
 draw_set_halign(fa_left);
 for (var i = 0; i < ds_height; i++) {
     var y_pos = start_y + (i * y_buffer);
     var element_type = ds_grid[# 1, i];
     
-    // Skip text elements and non-interactive items
     if (element_type == menu_element_type.script_runner || 
         element_type == menu_element_type.page_transfer) continue;
         
@@ -75,20 +67,16 @@ for (var i = 0; i < ds_height; i++) {
         case menu_element_type.slider:
             var current_val = ds_grid[# 3, i];
             var range = ds_grid[# 4, i];
-            var slider_width = 100; // Increased width for better precision
+            var slider_width = 100;
             var slider_pos = (current_val - range[0]) / (range[1] - range[0]) * slider_width;
             
-            // Draw slider track
             draw_line_width(rtx, y_pos-3, rtx + slider_width, y_pos-3, 2);
             
-            // Draw slider handle aligned with the menu text
             if (is_selected) {
                 draw_sprite_ext(spr_slider_ball, 0, rtx + slider_pos, y_pos-2, 5, 5, 45, c_yellow, 1);
-                // Draw value text next to slider
                 draw_text_color(rtx + slider_width + 8, y_pos, string(floor(current_val * 100)) + "%", c_yellow, c_yellow, c_yellow, c_yellow, 1);
             } else {
                 draw_sprite_ext(spr_slider_ball, 0, rtx + slider_pos, y_pos-2, 5, 5, 45, c_white, 1);
-                // Draw value text next to slider
                 draw_text_color(rtx + slider_width + 8, y_pos, string(floor(current_val * 100)) + "%", c_white, c_white, c_white, c_white, 1);
             }
             break;
@@ -108,6 +96,31 @@ for (var i = 0; i < ds_height; i++) {
             break;
     }
 }
+
+if (fade_alpha > 0)
+{
+    draw_set_color(c_black);
+    
+    draw_set_alpha(fade_alpha);
+
+    var _cam_x = camera_get_view_x(view_camera[0]);
+    var _cam_y = camera_get_view_y(view_camera[0]);
+    var _cam_w = camera_get_view_width(view_camera[0]);
+    var _cam_h = camera_get_view_height(view_camera[0]);
+    
+    draw_rectangle(
+        _cam_x, 
+        _cam_y, 
+        _cam_x + _cam_w*1.3, 
+        _cam_y + _cam_h*1.3, 
+        false
+    );
+    
+    draw_set_alpha(1); 
+    draw_set_color(c_white); 
+}
+
+
 
 // Reset alignments
 draw_set_halign(fa_left);

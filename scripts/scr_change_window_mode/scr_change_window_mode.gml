@@ -12,5 +12,6 @@ function scr_change_window_mode(argument0) {
 			break;
 	}
 
-
+	
+	save_settings();
 }

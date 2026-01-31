@@ -29,20 +29,8 @@ if (sprite_exists(portrait_sprite)) {
 		subimg = (text_progress / text_speed) * (sprite_get_speed(portrait_sprite) / game_get_speed(gamespeed_fps));
 		
 	draw_sprite_ext(portrait_sprite, subimg,
-		draw_portrait_x + portrait_width / 8, draw_portrait_y + portrait_height / 5,
+		draw_portrait_x, draw_portrait_y + 5,
 		draw_portrait_xscale, 1, 0, c_white, 1);
-}
-
-if (speaker_name != "") {
-	var name_w = max(string_width(speaker_name), speaker_width) + 8;
-	
-	draw_sprite_stretched(spr_name, 0, x + speaker_x - 4, y + (speaker_y - 8) - speaker_height / 2, name_w, speaker_height);
-	
-	draw_set_halign(fa_center);
-	draw_set_valign(fa_middle);
-	draw_set_font(speaker_font);
-	draw_set_color(speaker_color);
-	draw_text(x + speaker_x - 4 + name_w / 2, y + speaker_y - 4, speaker_name);
 }
 
 draw_set_halign(fa_left);
@@ -65,7 +53,8 @@ if (finished && option_count > 0) {
 			draw_sprite(spr_option_arrow, 0, opt_x + (cursorLevitate-cursWidth / 16), opt_y + selectLerp);
 		}
 		
-		draw_sprite_stretched(spr_option, 0, opt_x, opt_y - option_height / 2, option_width, option_height);
+		var txw = string_width(options[i].text) + 10;
+		draw_sprite_stretched(spr_option, 0, opt_x, opt_y - option_height / 2, txw, option_height);
 		draw_text(opt_x + option_text_x, opt_y + option_text_y, options[i].text);
 	}
 }

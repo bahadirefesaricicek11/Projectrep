@@ -1,3 +1,7 @@
+function scr_send_nameScreen(){
+	room_goto(rm_nameScreen);
+}
+
 function scr_start_game(){
 	room_goto(rm_house)
 	obj_player.x = 210;

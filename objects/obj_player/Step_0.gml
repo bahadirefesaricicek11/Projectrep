@@ -3,10 +3,14 @@ left_key = InputCheck(INPUT_VERB.LEFT);
 down_key = InputCheck(INPUT_VERB.DOWN);
 right_key = InputCheck(INPUT_VERB.RIGHT);
 run_key = InputCheck(INPUT_VERB.CANCEL);
+inventory_key = InputPressed(INPUT_VERB.INVENTORY);
 
 
 if obj_player.can_move == true
 {
+	
+	
+	
 	if (run_key) {
 		image_speed = 3;
 		spd = run_spd;
@@ -25,11 +29,11 @@ if obj_player.can_move == true
 	xspd = (right_key - left_key) * spd;
 	yspd = (down_key -  up_key) * spd;
 
-	if (place_meeting(x+xspd, y, obj_wall))
+	if (place_meeting(x+xspd, y, obj_solid))
 	{
 		xspd = 0;
 	}
-	if (place_meeting(x ,y+yspd, obj_wall))
+	if (place_meeting(x ,y+yspd, obj_solid))
 	{
 		yspd = 0;
 	}
@@ -57,5 +61,18 @@ if instance_exists(obj_textbox) {
 	obj_player.can_move = false
 }
 
+if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
+	obj_item_manager.inv_open = true;
+	obj_player.can_move = false;
+} 
+else if (inventory_key == true) and (obj_item_manager.inv_open == true){
+	obj_item_manager.inv_open = false;
+	obj_player.can_move = true;
+} 
+
+if hp > 100
+{
+	hp = 100;
+}
 
 depth = -bbox_bottom
