@@ -16,9 +16,9 @@ if obj_item_manager.inv_open == true
 	draw_sprite(spr_inventory_background, 0, 240, 135);
 	
 	draw_text_transformed(157, 60, string( obj_player.name), 0.25,0.25, 0)
-	draw_text_transformed(147, 74, "Health:" + string( obj_player.hp), 0.25,0.25, 0)
-	draw_text_transformed(147, 84, "Strength:" + string( obj_player.strength), 0.25,0.25, 0)
-	draw_text_transformed(147, 94, "Armor:" + string( obj_player.armor_density), 0.25,0.25, 0)
+	draw_text_transformed(147, 74, "Health:" + string( global.player_hp), 0.25,0.25, 0)
+	draw_text_transformed(147, 84, "Strength:" + string( global.player_attack), 0.25,0.25, 0)
+	draw_text_transformed(147, 94, "Armor:" + string( global.player_defense), 0.25,0.25, 0)
 	
 
 

@@ -8,4 +8,5 @@ function scr_start_game(){
 	obj_player.y = 130;
 	obj_player.can_move = true;
 	global.ingame = true;
+	scr_text();
 }

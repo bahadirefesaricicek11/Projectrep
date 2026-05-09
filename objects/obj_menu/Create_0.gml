@@ -1,3 +1,4 @@
+load_settings();
 
 global.view_width = camera_get_view_width(view_camera[0]) * 1.3;
 global.view_height = camera_get_view_height(view_camera[0]) * 1.3;
@@ -41,14 +42,15 @@ ds_menu_settings = create_menu_page(
 );
 
 ds_menu_audio = create_menu_page(
-    ["MASTER", menu_element_type.slider, scr_change_volume, 1, [0,1]],
-    ["SOUNDS", menu_element_type.slider, scr_change_volume, 1, [0,1]],
-    ["MUSIC", menu_element_type.slider, scr_change_volume, 1, [0,1]],
-    ["BACK", menu_element_type.page_transfer, menu_page.settings]
+    ["MASTER", menu_element_type.slider, scr_change_volume, global.vol_master, [0,1]],
+    ["SOUNDS", menu_element_type.slider, scr_change_volume, global.vol_sfx,    [0,1]],
+    ["MUSIC",  menu_element_type.slider, scr_change_volume, global.vol_music,  [0,1]],
+    ["BACK",   menu_element_type.page_transfer, menu_page.settings]
 );
 
+var _fs_val = window_get_fullscreen() ? 0 : 1;
 ds_menu_graphics = create_menu_page(
-    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, 1, ["FULLSCREEN", "WINDOWED"]],
+    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _fs_val, ["FULLSCREEN", "WINDOWED"]],
     ["BACK", menu_element_type.page_transfer, menu_page.settings]
 );
 

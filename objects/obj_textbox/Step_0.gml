@@ -35,5 +35,9 @@ if (text_progress == text_length) {
 	}
 }
 else if (InputPressed(INPUT_VERB.ACCEPT) || InputPressed(INPUT_VERB.CANCEL)) {
-	text_progress = text_length;
+	
+	if(text_skippable = true)
+	{
+		text_progress = text_length;
+	}
 }

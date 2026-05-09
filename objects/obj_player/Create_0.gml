@@ -1,8 +1,8 @@
 name = global.plrName;
-hp = 100;
-max_hp = hp;
-strength = 5;
-armor_density = 0;
+global.player_hp = 100;
+global.player_hp_max = global.player_hp;
+global.player_attack = 5;
+global.player_defense = 0;
 
 healthbar_width = 100;
 healthbar_height = 6;
@@ -14,6 +14,7 @@ spd = 1.5;
 walk_spd = 1.5;
 run_spd = 2.5;
 run = false
+
 
 can_move = true;
 xspd = 0;

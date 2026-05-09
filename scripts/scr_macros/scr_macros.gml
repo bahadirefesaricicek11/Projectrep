@@ -8,4 +8,4 @@ global.ingame = false;
 
 global.dialogue = 0;
 
-global.plrName = "Player";
+global.plrName = "Liah";

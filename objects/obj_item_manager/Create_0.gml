@@ -54,7 +54,7 @@ global.item_list = {
 		spr_apple,
 		function ()
 		{
-				obj_player.hp += 10;
+				global.player_hp += 10;
 				array_delete(inv,selected_item,1);
 		},
 		"common",
@@ -67,7 +67,7 @@ global.item_list = {
 		spr_bread,
 		function ()
 		{
-				obj_player.hp += 5;
+				global.player_hp += 5;
 				array_delete(inv,selected_item,1);
 		},
 		"rare",
@@ -80,7 +80,7 @@ global.item_list = {
 		spr_hamburger,
 		function ()
 		{
-				obj_player.hp += 25;
+				global.player_hp += 25;
 				array_delete(inv,selected_item,1);
 		},
 		"epic",
@@ -94,7 +94,7 @@ global.item_list = {
 		function ()
 		{
 			equipped[0] = global.item_list.iron_helmet;
-			obj_player.armor_density += 10;
+			global.player_defense += 10;
 			array_delete(inv, selected_item, 1);
 		},
 		"rare",
@@ -108,7 +108,7 @@ global.item_list = {
 		function ()
 		{
 			equipped[1] = global.item_list.iron_chestplate;
-			obj_player.armor_density += 10;
+			global.player_defense += 10;
 			array_delete(inv, selected_item, 1);
 		},
 		"rare",
@@ -122,7 +122,7 @@ global.item_list = {
 		function ()
 		{
 			equipped[2] = global.item_list.iron_bottom;
-			obj_player.armor_density += 10;
+			global.player_defense += 10;
 			array_delete(inv, selected_item, 1);
 		},
 		"rare",
@@ -136,7 +136,7 @@ global.item_list = {
 		function ()
 		{
 			equipped[3] = global.item_list.normal_shield;
-			obj_player.armor_density += 5;
+			global.player_defense += 5;
 			array_delete(inv, selected_item, 1);
 		},
 		"rare",
@@ -150,7 +150,7 @@ global.item_list = {
 		function ()
 		{
 			equipped[4] = global.item_list.iron_sword;
-			obj_player.strength += 5;
+			global.player_attack += 5;
 			array_delete(inv, selected_item, 1);
 		},
 		"rare",

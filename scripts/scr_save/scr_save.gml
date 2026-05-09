@@ -89,43 +89,39 @@ function load_game()
 
 function save_settings()
 {
-	if(file_exists("settings.ini"))
-	{
-		file_delete("settings.ini")	
-	}
-	
-	var _master = audio_get_master_gain(1);
-	var _vfx = audio_group_get_gain(audiogroup_sound);
-	var _ost = audio_group_get_gain(audiogroup_music);
-	var _flscrn = window_get_fullscreen();
-	
-	ini_open("settings.ini");
-	ini_write_real("SETTINGS","MASTER", _master);
-	ini_write_real("SETTINGS","SOUNDS", _vfx);
-	ini_write_real("SETTINGS","MUSIC", _ost);
-	ini_write_real("SETTINGS","FULLSCREEN", _flscrn);
-	ini_close();
-	
-	show_debug_message("Settings Saved");
+    var _master = audio_get_master_gain(0); 
+    var _vfx    = audio_group_get_gain(audiogroup_sound);
+    var _ost    = audio_group_get_gain(audiogroup_music);
+    var _flscrn = window_get_fullscreen();
+    
+    ini_open("settings.ini");
+    ini_write_real("SETTINGS", "MASTER", _master);
+    ini_write_real("SETTINGS", "SOUNDS", _vfx);
+    ini_write_real("SETTINGS", "MUSIC",  _ost);
+    ini_write_real("SETTINGS", "FULLSCREEN", _flscrn);
+    ini_close();
 }
 
 function load_settings()
 {
-	if(file_exists("settings.ini"))
-	{
-		ini_open("settings.ini");
-		var _master = ini_read_real("SETTINGS","MASTER",0)
-		var _vfx = ini_read_real("SETTINGS","SOUNDS",0)
-		var _ost = ini_read_real("SETTINGS","MUSIC",0)
-		var _flscrn = ini_read_real("SETTINGS","FULLSCREEN",0);
-		audio_set_master_gain(0,_master);
-		audio_group_set_gain(audiogroup_sound,_vfx);
-		audio_group_set_gain(audiogroup_music,_ost);
-		window_set_fullscreen(_flscrn)
-		ini_close();	
-		
-		show_debug_message("Settings Loaded");
-	}
+    if (file_exists("settings.ini"))
+    {
+        ini_open("settings.ini");
+        
+        global.vol_master = ini_read_real("SETTINGS", "MASTER", 1);
+        global.vol_sfx    = ini_read_real("SETTINGS", "SOUNDS", 1);
+        global.vol_music  = ini_read_real("SETTINGS", "MUSIC", 1);
+        var _flscrn       = ini_read_real("SETTINGS", "FULLSCREEN", 0);
+        
+        ini_close();    
+
+        audio_master_gain(global.vol_master); 
+        audio_group_set_gain(audiogroup_sound, global.vol_sfx, 0);
+        audio_group_set_gain(audiogroup_music, global.vol_music, 0);
+        window_set_fullscreen(_flscrn);
+        
+        show_debug_message("Settings Loaded from File");
+    }
 }
 	
 	

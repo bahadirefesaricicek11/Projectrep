@@ -20,10 +20,10 @@ for (var yy = 0; yy < grid_height; yy++) {
 		var is_hovered = (cursor_x == xx && cursor_y == yy);
 		
 		if (key_text == "BACK") {
-            draw_sprite_ext(spr_back_button, 0, dx-10, dy - 10, 1, 1, 0, is_hovered ? c_yellow : c_white, 1);
+            draw_sprite_ext(spr_back_button, 0, dx-10, dy - 10, 1, 1, 0, is_hovered ? c_red : c_white, 1);
         } 
         else if (key_text == "DONE") {
-            draw_sprite_ext(spr_done_button, 0, dx -5, dy - 10, 1, 1, 0, is_hovered ? c_yellow : c_white, 1);
+            draw_sprite_ext(spr_done_button, 0, dx -5, dy - 10, 1, 1, 0, is_hovered ? c_lime : c_white, 1);
         } 
         else {
             draw_set_color(is_hovered ? c_yellow : c_white);

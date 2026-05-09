@@ -1,4 +1,7 @@
-draw_sprite_stretched(spr_textbox, 0, x, y, width, height);
+if(has_background == true)
+{
+	draw_sprite_stretched(spr_textbox, 0, x, y, width, height);
+}
 
 var draw_text_x = x;
 var draw_text_y = y;

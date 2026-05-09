@@ -12,7 +12,7 @@ if obj_player.can_move == true
 	
 	
 	if (run_key) {
-		image_speed = 3;
+		image_speed = 0.2;
 		spd = run_spd;
 	} else {
 		spd = walk_spd;
@@ -70,9 +70,9 @@ else if (inventory_key == true) and (obj_item_manager.inv_open == true){
 	obj_player.can_move = true;
 } 
 
-if hp > 100
+if global.player_hp > 100
 {
-	hp = 100;
+	global.player_hp = 100;
 }
 
-depth = -bbox_bottom
+depth = -bbox_bottom;

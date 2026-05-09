@@ -16,6 +16,10 @@ text_x = padding + 20;
 text_y = padding;
 text_width = width - padding * 2;
 
+has_background = true;
+
+text_skippable = true;
+
 portrait_x = padding + 20;
 portrait_y = padding;
 
@@ -26,7 +30,7 @@ option_selection_indent = 24;
 option_width = 53;
 option_height = 24;
 option_text_x = 5;
-option_text_y = 0;
+option_text_y = 3;
 option_text_color = c_white;
 
 actions = [];
@@ -54,9 +58,10 @@ options = [];
 current_option = 0;
 option_count = 0;
 
+var topic = "";
 
 setTopic = function(topic) {
-	actions = global.topics[$ topic];
+	actions = global.text[$ topic];
 	current_action = -1;
 		
 	next();

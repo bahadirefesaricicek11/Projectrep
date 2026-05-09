@@ -1,13 +1,15 @@
 {
   "$GMObject":"",
   "%Name":"obj_solid",
-  "eventList":[],
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
   "name":"obj_solid",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Solids",
+    "path":"folders/Objects/Solids.yy",
   },
   "parentObjectId":null,
   "persistent":false,
