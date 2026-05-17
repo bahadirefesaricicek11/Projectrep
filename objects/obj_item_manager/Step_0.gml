@@ -27,9 +27,12 @@ if obj_item_manager.inv_open == true
 	    }
 	}
 }
+	if array_contains(inv, global.item_list.gold_stack) {
+		obj_item_manager.inv[array_find_index(inv, gold_stack)].effect();
+		item_remove();
+	}
 
 if instance_exists(obj_textbox)
 {
 	inv_open = false;
 }
-

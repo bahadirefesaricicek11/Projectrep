@@ -20,6 +20,12 @@ if obj_item_manager.inv_open == true
 	draw_text_transformed(147, 84, "Strength:" + string( global.player_attack), 0.25,0.25, 0)
 	draw_text_transformed(147, 94, "Armor:" + string( global.player_defense), 0.25,0.25, 0)
 	
+	
+	var _gtxt = ("Gold: " + string(global.player_gold));
+	var _gw = string_width(_gtxt)-37;
+	draw_sprite_stretched(spr_stats, 0, 50, 20, _gw, 23);
+	draw_sprite(spr_gold_stack, 0, 55, 23);
+	draw_text_transformed(55+16, 27, "Gold: " + string(global.player_gold), 0.25,0.25, 0);
 
 
 	for (var i = 0; i < max_inv_length; i++)

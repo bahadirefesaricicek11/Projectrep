@@ -157,5 +157,17 @@ global.item_list = {
 		"Weapon",
 		true
 	),
+	gold_stack : new create_item(
+		"Gold Stack",
+		"This is a gold stack, gives 20 gold. Fascinating right?", 
+		spr_gold_stack,
+		function() 
+		{
+			global.player_gold += 20;
+		},
+		"common",
+		"Gold",
+		false
+	),
 }
 

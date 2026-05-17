@@ -14,7 +14,7 @@ function scr_text() {
 	global.text[$ "intro_cutscene"] = [
 		EXECUTE(function(textbox) {
 			obj_textbox.has_background = false;
-			obj_textbox.text_skippable = false;
+			obj_textbox.text_speed = 0.3;
 		}),
 		TEXT("Your name is " + _name + "."),
 		EXECUTE(function(textbox) {
@@ -46,6 +46,7 @@ function scr_text() {
 		}),
 		TEXT("You woke up in the middle of nowhere."),
 		EXECUTE(function(textbox) {
+			obj_textbox.text_speed = 0.5;
 			scr_start_game();
 		}),
 	];

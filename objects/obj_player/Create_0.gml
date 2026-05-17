@@ -3,11 +3,7 @@ global.player_hp = 100;
 global.player_hp_max = global.player_hp;
 global.player_attack = 5;
 global.player_defense = 0;
-
-healthbar_width = 100;
-healthbar_height = 6;
-healthbar_x = 8;
-healthbar_y = 8;
+global.player_gold = 0;
 
 
 spd = 1.5;
