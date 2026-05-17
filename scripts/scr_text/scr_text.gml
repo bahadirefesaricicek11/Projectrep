@@ -1,10 +1,14 @@
 function scr_text() {
 	
 	var _name = global.plrName;
+	var _amount = 0;
     
     if (instance_exists(obj_player)) {
         _name = obj_player.name;
 		global.plrName = obj_player.name
+    }
+    if (instance_exists(obj_gold_stack)) {
+        _amount = obj_gold_stack.amount;
     }
 	
 	global.text = {};
@@ -101,6 +105,13 @@ function scr_text() {
 	//-----------------------------------------------------------
 	//ITEM DIALOGUE ---------------------------------------------
 	//-----------------------------------------------------------
+	
+	global.text[$ "gold"] = [
+		TEXT("You got" + string(_amount) + "gold !"),
+		EXECUTE(function(textbox) {
+			gold_add(_amount);
+		}),
+	];
 
 	global.text[$ "Bed 1"] = [
 		TEXT("This is my bed."),

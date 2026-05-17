@@ -18,3 +18,8 @@ function item_use()
 {
 	obj_item_manager.inv[obj_item_manager.selected_item].effect();
 }
+
+function gold_add(_amount) 
+{
+	global.player_gold += _amount;
+}
