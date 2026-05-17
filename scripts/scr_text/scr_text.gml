@@ -1,14 +1,14 @@
 function scr_text() {
 	
 	var _name = global.plrName;
-	var _amount = 0;
+	global.gold_amount = 0;
     
     if (instance_exists(obj_player)) {
         _name = obj_player.name;
 		global.plrName = obj_player.name
     }
     if (instance_exists(obj_gold_stack)) {
-        _amount = obj_gold_stack.amount;
+        global.gold_amount = obj_gold_stack.amount;
     }
 	
 	global.text = {};
@@ -107,9 +107,9 @@ function scr_text() {
 	//-----------------------------------------------------------
 	
 	global.text[$ "gold"] = [
-		TEXT("You got" + string(_amount) + "gold !"),
+		TEXT("You found " + string(global.gold_amount) + " gold !"),
 		EXECUTE(function(textbox) {
-			gold_add(_amount);
+			gold_add(global.gold_amount);
 		}),
 	];
 
