@@ -1,2 +1,2 @@
-amount = 20;
+amount = 90000;
 scr_text();

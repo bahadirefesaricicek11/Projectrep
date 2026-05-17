@@ -19,7 +19,7 @@ visual_x = 0;
 visual_y = 0;
 
 final_name = "";
-max_len = 10;
+max_len = 12;
 
 // Positioning (Adjust these if your text is off-screen)
 spacing_x = 32; 

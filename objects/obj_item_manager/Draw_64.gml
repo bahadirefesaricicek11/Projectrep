@@ -1,12 +1,11 @@
 if obj_item_manager.inv_open == true
 {
 	draw_set_font(textfont);
-	draw_set_halign(fa_left);
 	draw_set_valign(fa_top);
-	
+    
 	common_color = make_color_rgb(51, 204, 255);
-	rare_color = make_color_rgb(255, 204, 0)
-	epic_color = make_color_rgb(153, 0, 153)
+	rare_color = make_color_rgb(255, 204, 0);
+	epic_color = make_color_rgb(153, 0, 153);
 
 	var _xx = _x;
 	var _yy = _y;
@@ -14,18 +13,39 @@ if obj_item_manager.inv_open == true
 	var _sepx = sepx;
 
 	draw_sprite(spr_inventory_background, 0, 240, 135);
+    
+	draw_set_halign(fa_center);
+
+	var player_name = string(obj_player.name);
+	var max_width = 50;
+	var max_scale = 0.25;
+
+	var full_width = string_width(player_name); 
+
+	var target_scale = max_width / full_width;
+
+	var final_scale = min(max_scale, target_scale);
+
+	draw_text_ext_transformed(173, 60, player_name, 0, 50, final_scale, final_scale, 0);
+
+	draw_set_halign(fa_left);
+	draw_text_transformed(147, 74, "Strength: " + string( global.player_attack), 0.20,0.20, 0);
+	draw_text_transformed(147, 84, "Armor: " + string( global.player_defense), 0.20,0.20, 0);
 	
-	draw_text_transformed(157, 60, string( obj_player.name), 0.25,0.25, 0)
-	draw_text_transformed(147, 74, "Health:" + string( global.player_hp), 0.25,0.25, 0)
-	draw_text_transformed(147, 84, "Strength:" + string( global.player_attack), 0.25,0.25, 0)
-	draw_text_transformed(147, 94, "Armor:" + string( global.player_defense), 0.25,0.25, 0)
+	
+	var _htxt = (string(global.player_hp));
+	var _hw = (string_width(_htxt)+110)*0.25;
+	draw_sprite_stretched(spr_stats, 0, 12, 9, _hw, 22);
+	draw_sprite(spr_health, 0, 15, 12);
+	draw_text_transformed(15+18, 13,string( global.player_hp), 0.25,0.25, 0);
 	
 	
-	var _gtxt = ("Gold: " + string(global.player_gold));
-	var _gw = string_width(_gtxt)-37;
-	draw_sprite_stretched(spr_stats, 0, 50, 20, _gw, 23);
-	draw_sprite(spr_gold_stack, 0, 55, 23);
-	draw_text_transformed(55+16, 27, "Gold: " + string(global.player_gold), 0.25,0.25, 0);
+	
+	var _gtxt = (string(global.player_gold));
+	var _gw = (string_width(_gtxt)+110)*0.25;
+	draw_sprite_stretched(spr_stats, 0, 72, 9, _gw, 22);
+	draw_sprite(spr_gold_stack, 0, 75, 12);
+	draw_text_transformed(75+18, 13,string(global.player_gold), 0.25,0.25, 0);
 
 
 	for (var i = 0; i < max_inv_length; i++)
@@ -79,9 +99,13 @@ if obj_item_manager.inv_open == true
 						_c = epic_color;
 					}
 					
-					draw_text_transformed_colour(name_x+ 3, name_y, inv[a].name, 0.51,0.51, 0, c_black,c_black,c_black,c_black, 0.5);
+					font_enable_effects(textfont, true, {
+						outlineEnable: true,
+						outlineColour: c_black,
+					});
 					draw_text_transformed_colour(name_x+ 3, name_y, inv[a].name, 0.5,0.5, 0, _c,_c,_c,_c, 1);
 					draw_text_transformed(info_x, info_y , inv[a].description, 0.25,0.25, 0);
+					font_enable_effects(textfont,false)
 				}
 			}
 		}

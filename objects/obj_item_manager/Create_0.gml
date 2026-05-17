@@ -2,7 +2,7 @@ depth = -9999;
 
 inv_open = false;
 
-textfont = font_add("Project_Font.ttf",24,false,false,32,128);
+textfont = font_add("Project_Font_Better.ttf",24,false,false,32,128);
 font_enable_sdf(textfont, true)
 
 name_x = 16;

@@ -17,6 +17,7 @@ text_y = padding;
 text_width = width - padding * 2;
 
 has_background = true;
+background = spr_textbox;
 
 text_skippable = true;
 

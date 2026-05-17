@@ -70,9 +70,13 @@ else if (inventory_key == true) and (obj_item_manager.inv_open == true){
 	obj_player.can_move = true;
 } 
 
-if global.player_hp > 100
+if (global.player_hp > 100)
 {
 	global.player_hp = 100;
+}
+if (global.player_gold > 99999)
+{
+	global.player_gold = 99999;
 }
 
 depth = -bbox_bottom;

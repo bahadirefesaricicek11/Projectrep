@@ -154,9 +154,13 @@ function scr_text() {
 
 	global.text[$ "NPC 2"] = [
 		SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-		CHOICE("Hey.",
+		EXECUTE(function(textbox) {
+			obj_textbox.background = spr_textbox_special;
+		}),
+		CHOICE("Hey. i have special textbox",
 			OPTION("Hey", "npc2 opt1"),
-			OPTION("...", "npc2 opt2"))	
+			OPTION("...", "npc2 opt2")),
+		
 	];
 	global.text[$ "npc2 opt1"] = [
 		SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
@@ -178,7 +182,7 @@ function scr_text() {
 			item_add(global.item_list.apple);
 			item_add(global.item_list.apple);
 			item_add(global.item_list.apple);
-		})
+		}),
 	];
 	global.text[$ "NPC 3"] = [
 		SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),

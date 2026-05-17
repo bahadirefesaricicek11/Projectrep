@@ -1,6 +1,6 @@
 if(has_background == true)
 {
-	draw_sprite_stretched(spr_textbox, 0, x, y, width, height);
+	draw_sprite_stretched(background, 0, x, y, width, height);
 }
 
 var draw_text_x = x;
