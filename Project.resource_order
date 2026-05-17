@@ -69,6 +69,7 @@
     {"name":"obj_display_manager","order":17,"path":"objects/obj_display_manager/obj_display_manager.yy",},
     {"name":"obj_enemy_unit","order":2,"path":"objects/obj_enemy_unit/obj_enemy_unit.yy",},
     {"name":"obj_fade","order":14,"path":"objects/obj_fade/obj_fade.yy",},
+    {"name":"obj_gold_stack","order":18,"path":"objects/obj_gold_stack/obj_gold_stack.yy",},
     {"name":"obj_item_ingame","order":2,"path":"objects/obj_item_ingame/obj_item_ingame.yy",},
     {"name":"obj_marker","order":6,"path":"objects/obj_marker/obj_marker.yy",},
     {"name":"obj_menu","order":3,"path":"objects/obj_menu/obj_menu.yy",},
