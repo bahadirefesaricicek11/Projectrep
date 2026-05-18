@@ -1,0 +1,1 @@
+startDialogue("Trigger 2");
