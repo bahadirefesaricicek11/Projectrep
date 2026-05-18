@@ -1,3 +1,3 @@
-target_x = obj_player.x;
-target_y = obj_player.y;
+target_x = 580;
+target_y = 210;
 target_rm = rm_outside;
