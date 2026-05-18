@@ -8,7 +8,7 @@ var start_y = (room_height / 3);
 
 
 draw_set_color(c_white);
-draw_text_transformed(room_width / 2, start_y - 50, "NAME: " + final_name, 2, 2, 0);
+draw_text_transformed(room_width / 2, start_y - 50, "NAME: " + final_name, 1.5, 1.5, 0);
 
 for (var yy = 0; yy < grid_height; yy++) {
     for (var xx = 0; xx < grid_width; xx++) {

@@ -32,20 +32,25 @@ if obj_item_manager.inv_open == true
 	draw_text_transformed(147, 74, "Strength: " + string( global.player_attack), 0.20,0.20, 0);
 	draw_text_transformed(147, 84, "Armor: " + string( global.player_defense), 0.20,0.20, 0);
 	
+	var statscale = 0.25;
+	
+	var health_x = 15;
 	
 	var _htxt = (string(global.player_hp));
-	var _hw = (string_width(_htxt)+110)*0.25;
-	draw_sprite_stretched(spr_stats, 0, 12, 9, _hw, 22);
-	draw_sprite(spr_health, 0, 15, 12);
-	draw_text_transformed(15+18, 13,string( global.player_hp), 0.25,0.25, 0);
+	var _hw = (string_width(_htxt)+110)*statscale;
 	
+	draw_sprite_stretched(spr_stats, 0, health_x-3, 9, _hw, 22);
+	draw_sprite(spr_health, 0, health_x, 12);
+	draw_text_transformed(health_x+18, 13,string( global.player_hp), statscale, statscale, 0);
 	
+	var gold_x = 60;
 	
 	var _gtxt = (string(global.player_gold));
-	var _gw = (string_width(_gtxt)+110)*0.25;
-	draw_sprite_stretched(spr_stats, 0, 72, 9, _gw, 22);
-	draw_sprite(spr_gold_stack, 0, 75, 12);
-	draw_text_transformed(75+18, 13,string(global.player_gold), 0.25,0.25, 0);
+	var _gw = (string_width(_gtxt)+110)*statscale;
+	
+	draw_sprite_stretched(spr_stats, 0, gold_x-3, 9, _gw, 22);
+	draw_sprite(spr_gold_stack, 0, gold_x, 12);
+	draw_text_transformed(gold_x+18, 13,string(global.player_gold), statscale, statscale, 0);
 
 
 	for (var i = 0; i < max_inv_length; i++)

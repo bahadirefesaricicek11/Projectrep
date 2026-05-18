@@ -12,7 +12,6 @@ keys = [
     ["!", "?", ".", "_", "-", "/", "(", ")", "BACK", "DONE"]
 ];
 
-// Logic Variables
 cursor_x = 0;
 cursor_y = 0;
 visual_x = 0; 
@@ -21,6 +20,5 @@ visual_y = 0;
 final_name = "";
 max_len = 12;
 
-// Positioning (Adjust these if your text is off-screen)
 spacing_x = 32; 
 spacing_y = 24;
