@@ -31,7 +31,10 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":null,
+  "spriteId":{
+    "name":"spr_slime_dad",
+    "path":"sprites/spr_slime_dad/spr_slime_dad.yy",
+  },
   "spriteMaskId":null,
   "visible":true,
 }

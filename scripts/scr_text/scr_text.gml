@@ -14,6 +14,9 @@ function scr_text() {
     
     global.text = {};
     
+    // FIX 1: Initialize cutscene flag here so it always exists before the cutscene runs
+    global.cutscene_dialogue_done = false;
+    
     //-----------------INTRO---------------------
 	global.text[$ "intro_cutscene"] = [
 		EXECUTE(function(textbox) {
@@ -235,7 +238,7 @@ function scr_text() {
         })
     ];
      
-global.text[$ "music 2"] = [
+    global.text[$ "music 2"] = [
         TEXT("Here's the distorted music"),
         EXECUTE(function(textbox) {
             audio_stop_sound(msc_ambient);
@@ -256,36 +259,39 @@ global.text[$ "music 2"] = [
         })
     ];
 	
-	//-----------------SLIME DAD APPEARS---------------------
-global.text[$ "slime_dad_scene1"] = [
-    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
-    TEXT("...You killed them."),
-    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-    TEXT("They attacked me first."),
-    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
-    TEXT("They were my children."),
-    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-    TEXT("I didn't know..."),
-    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
-    TEXT("It doesn't matter now."),
-    EXECUTE(function(textbox) {
-        // Signal controller that dialogue scene 1 is done
-        global.cutscene_dialogue_done = true;
-    }),
-];
+    //-----------------SLIME DAD APPEARS---------------------
+    global.text[$ "slime_dad_scene1"] = [
+        // FIX 2: replaced spr_portrait_slime_dad_shadow with spr_portrait_1
+        // (placeholder until you draw a real Slime Dad shadow portrait)
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("...You killed them."),
+        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+        TEXT("They attacked me first."),
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("They were my children."),
+        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+        TEXT("I didn't know..."),
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("It doesn't matter now."),
+        EXECUTE(function(textbox) {
+            global.cutscene_dialogue_done = true;
+        }),
+    ];
 
-global.text[$ "slime_dad_scene2"] = [
-    SPEAKER(spr_portrait_slime_dad, PORTRAIT_SIDE.LEFT),
-    TEXT("Face me."),
-    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-    TEXT("W-wait—"),
-    SPEAKER(spr_portrait_slime_dad, PORTRAIT_SIDE.LEFT),
-    TEXT("No more words."),
-    EXECUTE(function(textbox) {
-        global.cutscene_dialogue_done = true;
-    }),
-];
-//-----------------SLIME DAD APPEARS---------------------
+    global.text[$ "slime_dad_scene2"] = [
+        // FIX 2: replaced spr_portrait_slime_dad with spr_portrait_1
+        // (placeholder until you draw a real Slime Dad portrait)
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("Face me."),
+        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+        TEXT("W-wait—"),
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("No more words."),
+        EXECUTE(function(textbox) {
+            global.cutscene_dialogue_done = true;
+        }),
+    ];
+    //-----------------SLIME DAD APPEARS---------------------
 	
     //-----------------TRIGGERS------------------
     global.text[$ "Trigger 1"] = [
