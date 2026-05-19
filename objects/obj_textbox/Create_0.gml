@@ -27,11 +27,11 @@ portrait_y = padding;
 
 option_x = padding;
 option_y = padding * -2.5;
-option_spacing = 25;
+option_spacing = 28;
 option_selection_indent = 24;
 option_width = 53;
-option_height = 24;
-option_text_x = 5;
+option_height = 26;
+option_text_x = 8;
 option_text_y = 0;
 option_text_color = c_white;
 

@@ -19,8 +19,7 @@
   "height":20,
   "HTile":false,
   "layers":[
-    {"$GMImageLayer":"","%Name":"ab24a197-c98e-4af7-a505-31589a64a1f5","blendMode":0,"displayName":"pasteLayer","isLocked":false,"name":"ab24a197-c98e-4af7-a505-31589a64a1f5","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
-    {"$GMImageLayer":"","%Name":"97fc7a2d-9fd5-4933-8049-90fcf1a638b3","blendMode":0,"displayName":"Layer 1 (2)","isLocked":false,"name":"97fc7a2d-9fd5-4933-8049-90fcf1a638b3","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
+    {"$GMImageLayer":"","%Name":"9eaa091f-6399-480d-b82e-4a82ca1c4953","blendMode":0,"displayName":"pasteLayer","isLocked":false,"name":"9eaa091f-6399-480d-b82e-4a82ca1c4953","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
   ],
   "name":"spr_option_special",
   "nineSlice":{
@@ -30,10 +29,10 @@
     "guideColour":[4294902015,4294902015,4294902015,4294902015,],
     "highlightColour":1728023040,
     "highlightStyle":0,
-    "left":10,
+    "left":8,
     "resourceType":"GMNineSliceData",
     "resourceVersion":"2.0",
-    "right":10,
+    "right":8,
     "tileMode":[
       0,
       0,
