@@ -56,8 +56,8 @@ if (finished && option_count > 0) {
 			draw_sprite(spr_option_arrow, 0, opt_x + (cursorLevitate-cursWidth / 16), opt_y + selectLerp);
 		}
 		
-		var txw = string_width(options[i].text) + 10;
-		draw_sprite_stretched(spr_option, 0, opt_x, opt_y - option_height / 2, txw, option_height);
-		draw_text(opt_x + option_text_x, opt_y + option_text_y, options[i].text);
+		var txw = (string_width(options[i].text)+20)*0.75;
+		draw_sprite_stretched(option_background, 0, opt_x, opt_y - option_height / 2, txw, option_height);
+		draw_text_transformed(opt_x + option_text_x, opt_y + option_text_y, options[i].text, 0.75,0.75,0);
 	}
 }

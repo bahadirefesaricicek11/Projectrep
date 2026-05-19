@@ -1,6 +1,6 @@
 {
   "$GMSound":"v2",
-  "%Name":"msc_forest",
+  "%Name":"msc_ambient_angelic",
   "audioGroupId":{
     "name":"audiogroup_default",
     "path":"audiogroups/audiogroup_default",
@@ -10,9 +10,9 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":62.43057,
+  "duration":128.1771,
   "exportDir":"",
-  "name":"msc_forest",
+  "name":"msc_ambient_angelic",
   "parent":{
     "name":"Sounds",
     "path":"folders/Sounds.yy",
@@ -21,6 +21,6 @@
   "resourceType":"GMSound",
   "resourceVersion":"2.0",
   "sampleRate":44100,
-  "soundFile":"msc_forest.ogg",
+  "soundFile":"msc_ambient_angelic.ogg",
   "volume":1.0,
 }

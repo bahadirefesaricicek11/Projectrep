@@ -4,7 +4,7 @@
   "bboxMode":0,
   "bbox_bottom":19,
   "bbox_left":0,
-  "bbox_right":33,
+  "bbox_right":19,
   "bbox_top":0,
   "collisionKind":1,
   "collisionTolerance":0,
@@ -24,15 +24,15 @@
   "name":"spr_option",
   "nineSlice":{
     "$GMNineSliceData":"",
-    "bottom":7,
+    "bottom":3,
     "enabled":true,
     "guideColour":[4294902015,4294902015,4294902015,4294902015,],
     "highlightColour":1728023040,
     "highlightStyle":0,
-    "left":12,
+    "left":3,
     "resourceType":"GMNineSliceData",
     "resourceVersion":"2.0",
-    "right":12,
+    "right":3,
     "tileMode":[
       0,
       0,
@@ -40,7 +40,7 @@
       0,
       0,
     ],
-    "top":7,
+    "top":3,
   },
   "origin":3,
   "parent":{
@@ -107,5 +107,5 @@
   },
   "type":0,
   "VTile":false,
-  "width":34,
+  "width":20,
 }

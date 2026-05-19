@@ -1,16 +1,16 @@
 {
   "$GMObject":"",
-  "%Name":"obj_warp_block",
+  "%Name":"obj_warp_solid",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"obj_warp_block",
+  "name":"obj_warp_solid",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Warp",
+    "path":"folders/Objects/Warp.yy",
   },
   "parentObjectId":null,
   "persistent":false,
