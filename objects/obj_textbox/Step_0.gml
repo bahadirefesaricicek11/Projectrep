@@ -1,6 +1,7 @@
 
 text_progress = min(text_progress + text_speed, text_length);
 
+
 cursorLevitate = dsin(cursorTime);
 cursorTime += leviRate;
 

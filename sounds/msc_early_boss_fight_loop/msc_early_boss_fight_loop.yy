@@ -1,18 +1,18 @@
 {
   "$GMSound":"v2",
-  "%Name":"msc_menu",
+  "%Name":"msc_early_boss_fight_loop",
   "audioGroupId":{
-    "name":"audiogroup_music",
-    "path":"audiogroups/audiogroup_music",
+    "name":"audiogroup_default",
+    "path":"audiogroups/audiogroup_default",
   },
   "bitDepth":1,
   "channelFormat":0,
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":37.5,
+  "duration":72.0,
   "exportDir":"",
-  "name":"msc_menu",
+  "name":"msc_early_boss_fight_loop",
   "parent":{
     "name":"Sounds",
     "path":"folders/Sounds.yy",
@@ -21,6 +21,6 @@
   "resourceType":"GMSound",
   "resourceVersion":"2.0",
   "sampleRate":44100,
-  "soundFile":"msc_menu.ogg",
-  "volume":0.25,
+  "soundFile":"msc_early_boss_fight_loop.ogg",
+  "volume":1.0,
 }
