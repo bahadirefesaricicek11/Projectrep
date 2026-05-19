@@ -295,6 +295,7 @@
     {"name":"snd_menu_move","order":1,"path":"sounds/snd_menu_move/snd_menu_move.yy",},
     {"name":"snd_text_default","order":2,"path":"sounds/snd_text_default/snd_text_default.yy",},
     {"name":"bg_battle","order":10,"path":"sprites/bg_battle/bg_battle.yy",},
+    {"name":"bg_forest_new","order":16,"path":"sprites/bg_forest_new/bg_forest_new.yy",},
     {"name":"bg_house","order":13,"path":"sprites/bg_house/bg_house.yy",},
     {"name":"bg_house2","order":12,"path":"sprites/bg_house2/bg_house2.yy",},
     {"name":"bg_menu","order":5,"path":"sprites/bg_menu/bg_menu.yy",},

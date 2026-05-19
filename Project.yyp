@@ -359,6 +359,7 @@
     {"id":{"name":"snd_menu_move","path":"sounds/snd_menu_move/snd_menu_move.yy",},},
     {"id":{"name":"snd_text_default","path":"sounds/snd_text_default/snd_text_default.yy",},},
     {"id":{"name":"bg_battle","path":"sprites/bg_battle/bg_battle.yy",},},
+    {"id":{"name":"bg_forest_new","path":"sprites/bg_forest_new/bg_forest_new.yy",},},
     {"id":{"name":"bg_house","path":"sprites/bg_house/bg_house.yy",},},
     {"id":{"name":"bg_house2","path":"sprites/bg_house2/bg_house2.yy",},},
     {"id":{"name":"bg_menu","path":"sprites/bg_menu/bg_menu.yy",},},
