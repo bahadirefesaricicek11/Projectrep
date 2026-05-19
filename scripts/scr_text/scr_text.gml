@@ -256,6 +256,37 @@ global.text[$ "music 2"] = [
         })
     ];
 	
+	//-----------------SLIME DAD APPEARS---------------------
+global.text[$ "slime_dad_scene1"] = [
+    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
+    TEXT("...You killed them."),
+    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+    TEXT("They attacked me first."),
+    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
+    TEXT("They were my children."),
+    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+    TEXT("I didn't know..."),
+    SPEAKER(spr_portrait_slime_dad_shadow, PORTRAIT_SIDE.LEFT),
+    TEXT("It doesn't matter now."),
+    EXECUTE(function(textbox) {
+        // Signal controller that dialogue scene 1 is done
+        global.cutscene_dialogue_done = true;
+    }),
+];
+
+global.text[$ "slime_dad_scene2"] = [
+    SPEAKER(spr_portrait_slime_dad, PORTRAIT_SIDE.LEFT),
+    TEXT("Face me."),
+    SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
+    TEXT("W-wait—"),
+    SPEAKER(spr_portrait_slime_dad, PORTRAIT_SIDE.LEFT),
+    TEXT("No more words."),
+    EXECUTE(function(textbox) {
+        global.cutscene_dialogue_done = true;
+    }),
+];
+//-----------------SLIME DAD APPEARS---------------------
+	
     //-----------------TRIGGERS------------------
     global.text[$ "Trigger 1"] = [
         TEXT("There is nothing after this."),
