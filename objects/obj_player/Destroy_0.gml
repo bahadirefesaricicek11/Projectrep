@@ -1,1 +1,0 @@
-instance_destroy(my_light);

@@ -4,6 +4,7 @@ down_key = InputCheck(INPUT_VERB.DOWN);
 right_key = InputCheck(INPUT_VERB.RIGHT);
 run_key = InputCheck(INPUT_VERB.CANCEL);
 inventory_key = InputPressed(INPUT_VERB.INVENTORY);
+menu_key = InputPressed(INPUT_VERB.PAUSE);
 
 
 if obj_player.can_move == true
@@ -55,6 +56,14 @@ if obj_player.can_move == true
 } else {
 	image_speed = 0;
 	image_index = 0;
+}
+
+if (menu_key) {		
+    if (instance_exists(obj_ingame_menu)) {
+        instance_destroy(obj_ingame_menu);
+    } else {
+        instance_create_layer(x, y, "Instances", obj_ingame_menu);
+    }
 }
 
 if instance_exists(obj_textbox) {

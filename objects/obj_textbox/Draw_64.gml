@@ -25,7 +25,7 @@ if (sprite_exists(portrait_sprite)) {
 		draw_portrait_xscale = -1;
 	}
 	
-	draw_sprite(spr_portrait, 0, draw_portrait_x, draw_portrait_y + 5);
+	draw_sprite(spr_portrait, 0, draw_portrait_x-8, draw_portrait_y-12 );
 	
 	var subimg = 0;
 	if (!finished)

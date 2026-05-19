@@ -225,6 +225,32 @@ function scr_text() {
             item_add(global.item_list.iron_sword);
         })
     ];
+	
+	//-----------------NPC 4---------------------
+    global.text[$ "NPC 4"] = [
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        EXECUTE(function(textbox) {
+            obj_textbox.background = spr_textbox_slime;
+            obj_textbox.option_background = spr_option_special;
+        }),
+        CHOICE("Hey. i have even more special textbox",
+            OPTION("Hey", "npc4 opt1"),
+            OPTION("...", "npc4 opt2")),
+    ];
+    
+    global.text[$ "npc4 opt1"] = [
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        CHOICE("You wanna fight?",
+            OPTION("sure", "npc4 opt1_1"),
+            OPTION("no", "npc4 opt2"))    
+    ];
+
+    global.text[$ "npc4 opt1_1"] = [
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("i wont."),
+        TEXT("dont take anything tho.")
+    ];
+	
 
 	global.text[$ "music 1"] = [
         TEXT("Here's the angelic music"),

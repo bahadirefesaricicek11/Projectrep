@@ -12,22 +12,6 @@ lerpAmt = 0.15;
 xo = 0;
 menu_left_margin = 50;
 
-
-enum menu_page {
-    main,
-    settings,
-    audio,
-    graphics
-}
-
-enum menu_element_type {
-    script_runner,
-    page_transfer,
-    slider,
-    shift,
-    toggle
-}
-
 ds_menu_main = create_menu_page(
     ["START GAME", menu_element_type.script_runner, scr_send_nameScreen],
     ["LOAD GAME", menu_element_type.script_runner, scr_load_game],

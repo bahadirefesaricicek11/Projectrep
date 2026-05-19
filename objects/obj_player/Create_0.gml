@@ -13,6 +13,7 @@ run = false
 
 
 can_move = true;
+can_open_menu = true;
 xspd = 0;
 yspd = 0;
 
