@@ -259,39 +259,6 @@ function scr_text() {
         })
     ];
 	
-    //-----------------SLIME DAD APPEARS---------------------
-    global.text[$ "slime_dad_scene1"] = [
-        // FIX 2: replaced spr_portrait_slime_dad_shadow with spr_portrait_1
-        // (placeholder until you draw a real Slime Dad shadow portrait)
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        TEXT("...You killed them."),
-        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-        TEXT("They attacked me first."),
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        TEXT("They were my children."),
-        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-        TEXT("I didn't know..."),
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        TEXT("It doesn't matter now."),
-        EXECUTE(function(textbox) {
-            global.cutscene_dialogue_done = true;
-        }),
-    ];
-
-    global.text[$ "slime_dad_scene2"] = [
-        // FIX 2: replaced spr_portrait_slime_dad with spr_portrait_1
-        // (placeholder until you draw a real Slime Dad portrait)
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        TEXT("Face me."),
-        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.RIGHT),
-        TEXT("W-wait—"),
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        TEXT("No more words."),
-        EXECUTE(function(textbox) {
-            global.cutscene_dialogue_done = true;
-        }),
-    ];
-    //-----------------SLIME DAD APPEARS---------------------
 	
     //-----------------TRIGGERS------------------
     global.text[$ "Trigger 1"] = [

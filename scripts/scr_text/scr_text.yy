@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_text",
   "parent":{
-    "name":"textb_scripts",
-    "path":"folders/Textbox System/textb_scripts.yy",
+    "name":"Textbox Scripts",
+    "path":"folders/Textbox System/Textbox Scripts.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
