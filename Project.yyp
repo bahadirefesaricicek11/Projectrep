@@ -342,6 +342,7 @@
     {"id":{"name":"scr_text","path":"scripts/scr_text/scr_text.yy",},},
     {"id":{"name":"scr_typing","path":"scripts/scr_typing/scr_typing.yy",},},
     {"id":{"name":"intro_cutscene","path":"sequences/intro_cutscene/intro_cutscene.yy",},},
+    {"id":{"name":"msc_forest","path":"sounds/msc_forest/msc_forest.yy",},},
     {"id":{"name":"msc_menu","path":"sounds/msc_menu/msc_menu.yy",},},
     {"id":{"name":"snd_menu_move","path":"sounds/snd_menu_move/snd_menu_move.yy",},},
     {"id":{"name":"snd_text_default","path":"sounds/snd_text_default/snd_text_default.yy",},},
