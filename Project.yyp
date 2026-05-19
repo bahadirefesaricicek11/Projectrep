@@ -392,6 +392,7 @@
     {"id":{"name":"spr_npc_alternate","path":"sprites/spr_npc_alternate/spr_npc_alternate.yy",},},
     {"id":{"name":"spr_npc","path":"sprites/spr_npc/spr_npc.yy",},},
     {"id":{"name":"spr_option_arrow","path":"sprites/spr_option_arrow/spr_option_arrow.yy",},},
+    {"id":{"name":"spr_option_special","path":"sprites/spr_option_special/spr_option_special.yy",},},
     {"id":{"name":"spr_option","path":"sprites/spr_option/spr_option.yy",},},
     {"id":{"name":"spr_player_battle_attack","path":"sprites/spr_player_battle_attack/spr_player_battle_attack.yy",},},
     {"id":{"name":"spr_player_battle_down","path":"sprites/spr_player_battle_down/spr_player_battle_down.yy",},},

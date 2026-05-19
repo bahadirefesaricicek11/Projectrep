@@ -326,6 +326,7 @@
     {"name":"spr_normal_shield","order":12,"path":"sprites/spr_normal_shield/spr_normal_shield.yy",},
     {"name":"spr_npc_alternate","order":1,"path":"sprites/spr_npc_alternate/spr_npc_alternate.yy",},
     {"name":"spr_option_arrow","order":1,"path":"sprites/spr_option_arrow/spr_option_arrow.yy",},
+    {"name":"spr_option_special","order":6,"path":"sprites/spr_option_special/spr_option_special.yy",},
     {"name":"spr_option","order":2,"path":"sprites/spr_option/spr_option.yy",},
     {"name":"spr_player_battle_attack","order":7,"path":"sprites/spr_player_battle_attack/spr_player_battle_attack.yy",},
     {"name":"spr_player_battle_down","order":9,"path":"sprites/spr_player_battle_down/spr_player_battle_down.yy",},

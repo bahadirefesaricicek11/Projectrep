@@ -18,6 +18,7 @@ text_width = width - padding * 2;
 
 has_background = true;
 background = spr_textbox;
+option_background = spr_option;
 
 text_skippable = true;
 
@@ -31,7 +32,7 @@ option_selection_indent = 24;
 option_width = 53;
 option_height = 24;
 option_text_x = 5;
-option_text_y = 3;
+option_text_y = 0;
 option_text_color = c_white;
 
 actions = [];

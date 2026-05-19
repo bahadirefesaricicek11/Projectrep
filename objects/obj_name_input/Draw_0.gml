@@ -33,7 +33,7 @@ for (var yy = 0; yy < grid_height; yy++) {
 			draw_set_colour(c_yellow);
 			var soul_x = start_x + (visual_x * spacing_x) - 24;
 			var soul_y = start_y + (visual_y * spacing_y);
-            draw_sprite(spr_cursor,-1,soul_x, soul_y-11.5); 
+            draw_sprite(spr_cursor,-1,soul_x, soul_y-10.5); 
 	        } else {
 	            draw_set_color(c_white);
 	        }

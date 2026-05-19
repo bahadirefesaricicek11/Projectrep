@@ -156,6 +156,7 @@ function scr_text() {
 		SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
 		EXECUTE(function(textbox) {
 			obj_textbox.background = spr_textbox_special;
+			obj_textbox.option_background = spr_option_special;
 		}),
 		CHOICE("Hey. i have special textbox",
 			OPTION("Hey", "npc2 opt1"),

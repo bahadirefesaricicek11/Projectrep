@@ -22,13 +22,14 @@ function save_game()
 
 	ini_open("save.ini");
 	ini_write_string("SAVE","roomID",room_get_name(room));
-	ini_write_string("SAVE","name",obj_player.name);
+	ini_write_string("SAVE","Name",obj_player.name);
+	ini_write_real("SAVE","Health",global.player_hp);
+	ini_write_real("SAVE","Gold",global.player_gold);
+	
 	ini_write_real("SAVE","Date", _current_date);
 	ini_write_real("SAVE","x",obj_player.x);
 	ini_write_real("SAVE","y",obj_player.y);
 	ini_write_real("SAVE","player_face",obj_player.face);
-	
-	
 	
 	ini_close();
 	show_debug_message("Game Saved");
@@ -60,7 +61,10 @@ function load_game()
 		
 		ini_open("save.ini");
 		var r_name = ini_read_string("SAVE", "roomID", "");
-		obj_player.name = ini_read_string("SAVE","name","");
+		obj_player.name = ini_read_string("SAVE","Name","");
+		global.player_hp = ini_read_real("SAVE", "Health", 0);
+		global.player_gold = ini_read_real("SAVE", "Gold", 0);
+		
 		global.date = ini_read_real("SAVE","Date", 0);
 		obj_player.x = ini_read_real("SAVE","x", 0);
 		obj_player.y = ini_read_real("SAVE","y", 0);
