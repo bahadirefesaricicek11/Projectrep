@@ -9,8 +9,8 @@
   "name":"obj_warp_slope",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Warp",
+    "path":"folders/Objects/Warp.yy",
   },
   "parentObjectId":null,
   "persistent":false,

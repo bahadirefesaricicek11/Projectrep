@@ -8,18 +8,16 @@ background = spr_shop_background;
 obj_player.can_move = false;
 
 tabs_x = 16;
-tabs_y = 81;
+tabs_y = 80;
 tabs_margin = 50;
-tabs_text_padding = 8;
+tabs_text_padding = 9;
 
-tabs[3] = "";
+pos = 0;
 
-tabs[0] = "Items";
+tabs[0] = "Buy";
 tabs[1] = "Talk";
 tabs[2] = "Map";
 
-option = 0;
+items[0] = ""
 
-
-
-
+tab_length = array_length(tabs);
