@@ -28,6 +28,11 @@ if obj_item_manager.inv_open == true
 	}
 }
 
+if inv_length == max_inv_length
+{
+	inv_full = true;
+}
+
 if instance_exists(obj_textbox)
 {
 	inv_open = false;

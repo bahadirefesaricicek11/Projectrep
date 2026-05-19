@@ -7,14 +7,14 @@ if (menu_option[page] != previous_menu_option) {
 previous_menu_option = menu_option[page];
 xo = lerp(xo, -15, lerpAmt);
 
-var input_up_p = InputPressed(INPUT_VERB.UP) || keyboard_check_pressed(vk_up);
-var input_down_p = InputPressed(INPUT_VERB.DOWN) || keyboard_check_pressed(vk_down);
-var input_right_p = InputPressed(INPUT_VERB.RIGHT) || keyboard_check_pressed(vk_right);
-var input_left_p = InputPressed(INPUT_VERB.LEFT) || keyboard_check_pressed(vk_left);
-var input_right_c = InputCheck(INPUT_VERB.RIGHT) || keyboard_check(vk_right);
-var input_left_c = InputCheck(INPUT_VERB.LEFT) || keyboard_check(vk_left);
-var input_enter_p = InputPressed(INPUT_VERB.ACCEPT) || keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space);
-var input_back_p = InputPressed(INPUT_VERB.CANCEL) || keyboard_check_pressed(vk_escape);
+var input_up_p = InputPressed(INPUT_VERB.UP);
+var input_down_p = InputPressed(INPUT_VERB.DOWN);
+var input_right_p = InputPressed(INPUT_VERB.RIGHT);
+var input_left_p = InputPressed(INPUT_VERB.LEFT);
+var input_right_c = InputCheck(INPUT_VERB.RIGHT);
+var input_left_c = InputCheck(INPUT_VERB.LEFT);
+var input_enter_p = InputPressed(INPUT_VERB.ACCEPT);
+var input_back_p = InputPressed(INPUT_VERB.CANCEL);
 
 if ((input_down_p || input_up_p) && !inputting) {
     audio_play_sound(snd_menu_move, 0, false);

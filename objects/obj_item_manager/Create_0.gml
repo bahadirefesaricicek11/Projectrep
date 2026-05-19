@@ -24,10 +24,11 @@ selected_item = -1;
 
 posx = 0;
 
-function create_item(_name, _desc, _ico, _effect, _rarity, _itemType, _canDrop) constructor
+function create_item(_name, _desc, _price, _ico, _effect, _rarity, _itemType, _canDrop) constructor
 	{
 		name = _name;
 		description = _desc;
+		price = _price;
 		icon = _ico;
 		effect = _effect;
 		rarity = _rarity;
@@ -37,6 +38,7 @@ function create_item(_name, _desc, _ico, _effect, _rarity, _itemType, _canDrop) 
 	
 inv = array_create(0);
 inv_length = max_inv_length;
+inv_full = false;
 
 // Simple equipment system
 equipped = [undefined, undefined, undefined, undefined, undefined];
@@ -51,6 +53,7 @@ global.item_list = {
 	apple : new create_item(
 		"Apple",
 		"recovers 10 HP.",
+		10,
 		spr_apple,
 		function ()
 		{
@@ -64,6 +67,7 @@ global.item_list = {
 	bread : new create_item(
 		"Bread",
 		"recovers 5 HP.",
+		5,
 		spr_bread,
 		function ()
 		{
@@ -77,6 +81,7 @@ global.item_list = {
 	hamburger : new create_item(
 		"Hamburger",
 		"recovers 25 HP.",
+		35,
 		spr_hamburger,
 		function ()
 		{
@@ -90,6 +95,7 @@ global.item_list = {
 	iron_helmet : new create_item(
 		"Iron Helmet",
 		"+5 Armor Density.",
+		100,
 		spr_iron_helmet,
 		function ()
 		{
@@ -105,6 +111,7 @@ global.item_list = {
 		"Iron Chestplate",
 		"+10 Armor Density.",
 		spr_iron_chestplate,
+		100,
 		function ()
 		{
 			equipped[1] = global.item_list.iron_chestplate;
@@ -119,6 +126,7 @@ global.item_list = {
 		"Iron Bottom",
 		"+5 Armor Density.",
 		spr_iron_bottom,
+		100,
 		function ()
 		{
 			equipped[2] = global.item_list.iron_bottom;
@@ -133,6 +141,7 @@ global.item_list = {
 		"Normal Shield",
 		"+5 Armor Density.",
 		spr_normal_shield,
+		100,
 		function ()
 		{
 			equipped[3] = global.item_list.normal_shield;
@@ -147,6 +156,7 @@ global.item_list = {
 		"Iron Sword",
 		"+5 Strength.",
 		spr_iron_sword,
+		100,
 		function ()
 		{
 			equipped[4] = global.item_list.iron_sword;
