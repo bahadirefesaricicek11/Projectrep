@@ -223,7 +223,39 @@ function scr_text() {
         })
     ];
 
-
+	global.text[$ "music 1"] = [
+        TEXT("Here's the angelic music"),
+        EXECUTE(function(textbox) {
+            audio_stop_sound(msc_ambient);
+            audio_stop_sound(msc_ambient_distorted_and_early_boss_fight);
+            audio_stop_sound(msc_early_boss_fight_loop);
+            if (!audio_is_playing(msc_ambient_angelic)) {
+                audio_play_sound(msc_ambient_angelic, 10, true);
+            }
+        })
+    ];
+     
+global.text[$ "music 2"] = [
+        TEXT("Here's the distorted music"),
+        EXECUTE(function(textbox) {
+            audio_stop_sound(msc_ambient);
+            audio_stop_sound(msc_ambient_angelic);
+            audio_stop_sound(msc_early_boss_fight_loop);
+            audio_stop_sound(msc_ambient_distorted_and_early_boss_fight);
+            audio_play_sound(msc_ambient_distorted_and_early_boss_fight, 10, false);
+            var intro_duration = audio_sound_length(msc_ambient_distorted_and_early_boss_fight);
+            var ts = time_source_create(time_source_global, intro_duration, time_source_units_seconds, function() {
+                if (audio_is_playing(msc_ambient_distorted_and_early_boss_fight)) {
+                    audio_stop_sound(msc_ambient_distorted_and_early_boss_fight);
+                }
+                if (!audio_is_playing(msc_early_boss_fight_loop)) {
+                    audio_play_sound(msc_early_boss_fight_loop, 10, true);
+                }
+            });
+            time_source_start(ts);
+        })
+    ];
+	
     //-----------------TRIGGERS------------------
     global.text[$ "Trigger 1"] = [
         TEXT("There is nothing after this."),

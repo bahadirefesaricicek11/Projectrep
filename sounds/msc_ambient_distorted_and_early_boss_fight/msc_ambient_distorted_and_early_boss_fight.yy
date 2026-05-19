@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":197.54097,
+  "duration":167.53444,
   "exportDir":"",
   "name":"msc_ambient_distorted_and_early_boss_fight",
   "parent":{

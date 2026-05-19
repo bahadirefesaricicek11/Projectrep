@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":72.89061,
+  "duration":72.0,
   "exportDir":"",
   "name":"msc_early_boss_fight_loop",
   "parent":{

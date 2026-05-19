@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":128.1771,
+  "duration":70.0,
   "exportDir":"",
   "name":"msc_ambient_angelic",
   "parent":{
