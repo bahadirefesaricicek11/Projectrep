@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"seq_slime_daddy_Events",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"seq_slime_daddy_Events",
+  "parent":{
+    "name":"Sequences",
+    "path":"folders/Sequences.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

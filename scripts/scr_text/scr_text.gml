@@ -285,6 +285,10 @@ function scr_text() {
         })
     ];
 	
+	global.text[$ "slime_daddy_cutscene_1"] = [
+        TEXT("Yakup?"),
+    ];
+	
 	
     //-----------------TRIGGERS------------------
     global.text[$ "Trigger 1"] = [
