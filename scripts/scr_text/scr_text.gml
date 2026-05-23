@@ -137,7 +137,7 @@ function scr_text() {
     //-----------------NPC 1---------------------
     global.text[$ "NPC 1"] = [
         SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
-        CHOICE("Hey " + _name,
+        CHOICE("Hey This is a really long dialogue to test if the system is right",
             OPTION("Hey", "npc1 opt1"),
             OPTION("...", "npc1 opt2"))    
     ];

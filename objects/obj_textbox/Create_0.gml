@@ -12,7 +12,7 @@ y = display_get_gui_height() - height - margin;
 text_font = Project_Font;
 text_color = c_white;
 text_speed = 0.3;
-text_x = padding + 20;
+text_x = padding + 5;
 text_y = padding;
 text_width = width - padding * 2;
 

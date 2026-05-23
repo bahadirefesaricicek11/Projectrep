@@ -10,7 +10,7 @@ function DialogueAction() constructor {
 }
 
 function TextAction(_text) : DialogueAction() constructor {
-	text = _text;
+	text = "* "+ _text;
 
 	act = function(textbox) {
 		textbox.setText(text);
@@ -34,7 +34,7 @@ function SpeakerAction(_sprite = undefined, _side = undefined): DialogueAction()
 }
 
 function ChoiceAction(_text) : DialogueAction() constructor {
-	text = _text;
+	text ="* " + _text;
 
 	options = [];
 	for (var i = 1; i < argument_count; i++)

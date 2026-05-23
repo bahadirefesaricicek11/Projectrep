@@ -19,7 +19,7 @@
   "height":216,
   "HTile":false,
   "layers":[
-    {"$GMImageLayer":"","%Name":"b8f4c416-b5eb-4019-bde7-95dffd1c191e","blendMode":0,"displayName":"default","isLocked":false,"name":"b8f4c416-b5eb-4019-bde7-95dffd1c191e","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
+    {"$GMImageLayer":"","%Name":"cf8a5f18-8be4-488b-bd18-38d6453476b8","blendMode":0,"displayName":"default","isLocked":false,"name":"cf8a5f18-8be4-488b-bd18-38d6453476b8","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
   ],
   "name":"bg_forest_new",
   "nineSlice":null,

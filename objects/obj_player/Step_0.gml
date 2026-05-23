@@ -6,59 +6,113 @@ run_key = InputCheck(INPUT_VERB.CANCEL);
 inventory_key = InputPressed(INPUT_VERB.INVENTORY);
 menu_key = InputPressed(INPUT_VERB.PAUSE);
 
-
 if obj_player.can_move == true
 {
-	
-	
-	
-	if (run_key) {
-		image_speed = 0.2;
-		spd = run_spd;
-	} else {
-		spd = walk_spd;
-		image_speed = 2;
-	}
-	
-	if xspd == 0 and yspd == 0 or can_move == false {
-		image_speed = 0;
-		image_index = 0;
-	} else {
-		image_speed = 2;
-	}
-	
-	xspd = (right_key - left_key) * spd;
-	yspd = (down_key -  up_key) * spd;
+    if (run_key) {
+        image_speed = 0.2;
+        spd = run_spd;
+    } else {
+        spd = walk_spd;
+        image_speed = 2;
+    }
+    
+    if xspd == 0 and yspd == 0 or can_move == false {
+        image_speed = 0;
+        image_index = 0;
+    } else {
+        image_speed = 2;
+    }
+    
+    xspd = (right_key - left_key) * spd;
+    yspd = (down_key -  up_key) * spd;
 
-	if (place_meeting(x+xspd, y, obj_solid))
-	{
-		xspd = 0;
-	}
-	if (place_meeting(x ,y+yspd, obj_solid))
-	{
-		yspd = 0;
-	}
+    if (xspd != 0) 
+    {
+        if (place_meeting(x + xspd, y, obj_solid)) 
+        {
+            var climbed = false;
+            var slope_height = spd + 2; 
+            
+            for (var i = 1; i <= slope_height; i++) 
+            {
+                if (!place_meeting(x + xspd, y - i, obj_solid)) 
+                {
+                    y -= i;
+                    climbed = true;
+                    break;
+                }
+                if (!place_meeting(x + xspd, y + i, obj_solid)) 
+                {
+                    y += i;
+                    climbed = true;
+                    break;
+                }
+            }
+            
+            if (!climbed) 
+            {
+                while (!place_meeting(x + sign(xspd), y, obj_solid)) {
+                    x += sign(xspd);
+                }
+                xspd = 0;
+            }
+        }
+    }
 
-	mask_index = sprite[FACE_DOWN];
-	if yspd == 0 {
-		if xspd > 0 {face = FACE_RIGHT};
-		if xspd < 0 {face = FACE_LEFT};
-	}
-	if xspd == 0 {
-		if yspd > 0 {face = FACE_DOWN};
-		if yspd < 0 {face = FACE_UP};
-	}
+    if (yspd != 0)
+    {
+        if (place_meeting(x, y + yspd, obj_solid))
+        {
+            var descended = false;
+            var slope_width = spd + 2;
 
-	sprite_index = sprite[face];
+            for (var i = 1; i <= slope_width; i++)
+            {
+                if (!place_meeting(x - i, y + yspd, obj_solid))
+                {
+                    x -= i;
+                    descended = true;
+                    break;
+                }
+                if (!place_meeting(x + i, y + yspd, obj_solid))
+                {
+                    x += i;
+                    descended = true;
+                    break;
+                }
+            }
+			
+            if (!descended)
+            {
+                while (!place_meeting(x, y + sign(yspd), obj_solid))
+                {
+                    y += sign(yspd);
+                }
+                yspd = 0;
+            }
+        }
+    }
 
-	x += xspd;
-	y += yspd;
+    mask_index = sprite[FACE_DOWN];
+    if yspd == 0 {
+        if xspd > 0 {face = FACE_RIGHT};
+        if xspd < 0 {face = FACE_LEFT};
+    }
+    if xspd == 0 {
+        if yspd > 0 {face = FACE_DOWN};
+        if yspd < 0 {face = FACE_UP};
+    }
+
+    sprite_index = sprite[face];
+
+    x += xspd;
+    y += yspd;
 } else {
-	image_speed = 0;
-	image_index = 0;
+    image_speed = 0;
+    image_index = 0;
 }
 
-if (menu_key) {		
+if (menu_key) {        
     if (instance_exists(obj_ingame_menu)) {
         instance_destroy(obj_ingame_menu);
     } else {
@@ -67,25 +121,25 @@ if (menu_key) {
 }
 
 if instance_exists(obj_textbox) {
-	obj_player.can_move = false
+    obj_player.can_move = false
 }
 
 if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
-	obj_item_manager.inv_open = true;
-	obj_player.can_move = false;
+    obj_item_manager.inv_open = true;
+    obj_player.can_move = false;
 } 
 else if (inventory_key == true) and (obj_item_manager.inv_open == true){
-	obj_item_manager.inv_open = false;
-	obj_player.can_move = true;
+    obj_item_manager.inv_open = false;
+    obj_player.can_move = true;
 } 
 
 if (global.player_hp > 100)
 {
-	global.player_hp = 100;
+    global.player_hp = 100;
 }
 if (global.player_gold > 99999)
 {
-	global.player_gold = 99999;
+    global.player_gold = 99999;
 }
 
 depth = -bbox_bottom;

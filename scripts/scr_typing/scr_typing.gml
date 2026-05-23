@@ -16,14 +16,7 @@ function type(x, y, text, progress, width) {
         
         var new_char = string_char_at(text, progress);
         
-        if (new_char != " " && new_char != "\n" && ctime - last_sound_time > 10000) {
-			if !audio_is_playing(snd_text_default)
-			{
-				audio_play_sound(snd_text_default, 0, false);
-			}
-            
-			last_sound_time = ctime;
-        }
+        
     }
     previous_progress = progress;
     
@@ -35,7 +28,7 @@ function type(x, y, text, progress, width) {
     
         if (char == "\n") {
             draw_x = 0;
-            draw_y += string_height("A");
+            draw_y += string_height("A")-8;
         }
         else if (char == " ") {
             draw_x += string_width(char);
@@ -50,13 +43,13 @@ function type(x, y, text, progress, width) {
                 word_width += string_width(word_char);
                 if (draw_x + word_width > width) {
                     draw_x = 0;
-                    draw_y += string_height("A");
+                    draw_y += string_height("A")-8;
                     break;
                 }
             }
         }
         else {
-            draw_text(x + draw_x, y + draw_y, char);
+            draw_text(x + draw_x, y + draw_y-4, char);
             draw_x += string_width(char);
         }
     }

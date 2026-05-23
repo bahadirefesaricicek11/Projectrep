@@ -5,3 +5,5 @@ if dstnc < 2 and obj_item_manager.inv_full == false and obj_player.can_move && (
 	item_add(item);
 	instance_destroy();
 }
+
+depth = -bbox_bottom;
