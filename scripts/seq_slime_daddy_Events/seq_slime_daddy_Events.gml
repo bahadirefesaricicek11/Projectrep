@@ -10,5 +10,5 @@ function canmove()
 
 function eventDialogueStarter()
 {
-	startDialogue("slime_daddy_cutscene_1")
+	startDialogue("slime_daddy_cutscene_1");
 }

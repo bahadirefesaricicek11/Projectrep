@@ -287,6 +287,7 @@ function scr_text() {
 	
 	global.text[$ "slime_daddy_cutscene_1"] = [
         TEXT("Yakup?"),
+        TEXT("Ender?")
     ];
 	
 	
