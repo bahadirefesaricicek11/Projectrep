@@ -348,6 +348,7 @@
     {"id":{"name":"scr_start_game","path":"scripts/scr_start_game/scr_start_game.yy",},},
     {"id":{"name":"scr_text","path":"scripts/scr_text/scr_text.yy",},},
     {"id":{"name":"scr_typing","path":"scripts/scr_typing/scr_typing.yy",},},
+    {"id":{"name":"seq_slime_daddy","path":"sequences/seq_slime_daddy/seq_slime_daddy.yy",},},
     {"id":{"name":"msc_ambient_angelic","path":"sounds/msc_ambient_angelic/msc_ambient_angelic.yy",},},
     {"id":{"name":"msc_ambient_distorted_and_early_boss_fight","path":"sounds/msc_ambient_distorted_and_early_boss_fight/msc_ambient_distorted_and_early_boss_fight.yy",},},
     {"id":{"name":"msc_ambient","path":"sounds/msc_ambient/msc_ambient.yy",},},
