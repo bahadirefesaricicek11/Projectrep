@@ -7,7 +7,7 @@ function startDialogue(topic) {
 }
 
 function type(x, y, text, progress, width) {
-	
+    
     static previous_progress = 0;
     static last_sound_time = 0;
     
@@ -16,9 +16,17 @@ function type(x, y, text, progress, width) {
         
         var new_char = string_char_at(text, progress);
         
-        
+        if (new_char != " " && new_char != "\n") {
+			
+            if (ctime - last_sound_time > 60000) { 
+                
+                audio_play_sound(snd_text_default, 1, false);
+                last_sound_time = ctime;
+            }
+        }
     }
     previous_progress = progress;
+    
     
     var draw_x = 0;
     var draw_y = 0;
