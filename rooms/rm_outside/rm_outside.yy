@@ -37,7 +37,6 @@
     {"name":"inst_259D8EFF","path":"rooms/rm_outside/rm_outside.yy",},
     {"name":"inst_7B78369D","path":"rooms/rm_outside/rm_outside.yy",},
     {"name":"inst_75BC010D","path":"rooms/rm_outside/rm_outside.yy",},
-    {"name":"inst_78CBA65A","path":"rooms/rm_outside/rm_outside.yy",},
   ],
   "isDnd":false,
   "layers":[
@@ -76,7 +75,6 @@
         {"$GMRInstance":"v4","%Name":"inst_CC8B3E4","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_CC8B3E4","objectId":{"name":"obj_item_ingame","path":"objects/obj_item_ingame/obj_item_ingame.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":96.0,"y":320.0,},
         {"$GMRInstance":"v4","%Name":"inst_6F540C13","colour":4294967295,"frozen":false,"hasCreationCode":true,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_6F540C13","objectId":{"name":"obj_item_ingame","path":"objects/obj_item_ingame/obj_item_ingame.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":416.0,"y":192.0,},
         {"$GMRInstance":"v4","%Name":"inst_7EE0A113","colour":4294967295,"frozen":false,"hasCreationCode":true,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_7EE0A113","objectId":{"name":"obj_npc","path":"objects/obj_npc/obj_npc.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":32.0,"y":192.0,},
-        {"$GMRInstance":"v4","%Name":"inst_78CBA65A","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_78CBA65A","objectId":{"name":"obj_lighting","path":"objects/obj_lighting/obj_lighting.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":299.0,"y":120.0,},
       ],"layers":[],"name":"Instances","properties":[],"resourceType":"GMRInstanceLayer","resourceVersion":"2.0","userdefinedDepth":false,"visible":true,},
     {"$GMRBackgroundLayer":"","%Name":"Background","animationFPS":30.0,"animationSpeedType":0,"colour":4294967295,"depth":300,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"hspeed":0.0,"htiled":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"layers":[],"name":"Background","properties":[],"resourceType":"GMRBackgroundLayer","resourceVersion":"2.0","spriteId":{"name":"bg_outside","path":"sprites/bg_outside/bg_outside.yy",},"stretch":false,"userdefinedAnimFPS":false,"userdefinedDepth":false,"visible":true,"vspeed":0.0,"vtiled":false,"x":0,"y":0,},
   ],
