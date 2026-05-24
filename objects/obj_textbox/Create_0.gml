@@ -1,5 +1,6 @@
 max_input_delay = 0;
 input_delay = max_input_delay;
+sequence_to_resume = noone;
 
 margin = 8;
 padding = 8;
@@ -70,14 +71,22 @@ setTopic = function(topic) {
 }
 
 next = function() {
-	current_action++;
-	if (current_action >= array_length(actions)) {
-		instance_destroy();
-		obj_player.can_move = true;
-	}
-	else {
-		actions[current_action].act(id);
-	}
+    current_action++;
+    if (current_action >= array_length(actions)) {
+        // --- SEQUENCE RESUME SYSTEM ---
+        if (variable_instance_exists(id, "sequence_to_resume") && sequence_to_resume != noone) {
+            layer_sequence_play(sequence_to_resume);
+        } else {
+            // Only give back player controls if we aren't in a tight cutscene sequence
+            if (instance_exists(obj_player)) obj_player.can_move = true;
+        }
+        // ------------------------------
+        
+        instance_destroy();
+    }
+    else {
+        actions[current_action].act(id);
+    }
 }
 
 setText = function(newText) {

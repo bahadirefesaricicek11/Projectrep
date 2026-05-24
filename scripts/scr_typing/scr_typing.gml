@@ -1,9 +1,17 @@
-function startDialogue(topic) {
-	if (instance_exists(obj_textbox))
-		return;
-		
-	var inst = instance_create_depth(x, y, -999, obj_textbox);
-	inst.setTopic(topic);
+function startDialogue(topic, _sequence_element_id = noone) {
+    if (instance_exists(obj_textbox))
+        return;
+        
+    // Fix the coordinate bug: default to 0,0 if the caller doesn't have x/y
+    var spawn_x = variable_instance_exists(id, "x") ? x : 0;
+    var spawn_y = variable_instance_exists(id, "y") ? y : 0;
+        
+    var inst = instance_create_depth(spawn_x, spawn_y, -999, obj_textbox);
+    
+    // Track the sequence so we can talk to it later
+    inst.sequence_to_resume = _sequence_element_id; 
+    
+    inst.setTopic(topic);
 }
 
 function type(x, y, text, progress, width) {

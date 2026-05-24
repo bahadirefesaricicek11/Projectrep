@@ -23,7 +23,18 @@
   "lockOrigin":false,
   "moments":{
     "$KeyframeStore<MomentsEventKeyframe>":"",
-    "Keyframes":[],
+    "Keyframes":[
+      {"$Keyframe<MomentsEventKeyframe>":"","Channels":{
+          "0":{"$MomentsEventKeyframe":"","Events":[
+              "seq_moment_trigger_textbox",
+            ],"resourceType":"MomentsEventKeyframe","resourceVersion":"2.0",},
+        },"Disabled":false,"id":"ec5da505-6188-4889-835b-22c30930d29c","IsCreationKey":false,"Key":836.0,"Length":1.0,"resourceType":"Keyframe<MomentsEventKeyframe>","resourceVersion":"2.0","Stretch":false,},
+      {"$Keyframe<MomentsEventKeyframe>":"","Channels":{
+          "0":{"$MomentsEventKeyframe":"","Events":[
+              "canmove",
+            ],"resourceType":"MomentsEventKeyframe","resourceVersion":"2.0",},
+        },"Disabled":false,"id":"ff7317f2-0b53-436e-9773-306a416098ad","IsCreationKey":false,"Key":1187.0,"Length":1.0,"resourceType":"Keyframe<MomentsEventKeyframe>","resourceVersion":"2.0","Stretch":false,},
+    ],
     "resourceType":"KeyframeStore<MomentsEventKeyframe>",
     "resourceVersion":"2.0",
   },
@@ -38,7 +49,7 @@
   "resourceType":"GMSequence",
   "resourceVersion":"2.0",
   "seqHeight":216.0,
-  "seqWidth":576.0,
+  "seqWidth":584.0,
   "showBackdrop":true,
   "showBackdropImage":false,
   "spriteId":null,

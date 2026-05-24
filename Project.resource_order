@@ -332,6 +332,7 @@
     {"name":"spr_iron_helmet","order":8,"path":"sprites/spr_iron_helmet/spr_iron_helmet.yy",},
     {"name":"spr_iron_sword","order":11,"path":"sprites/spr_iron_sword/spr_iron_sword.yy",},
     {"name":"spr_item_placeholder","order":6,"path":"sprites/spr_item_placeholder/spr_item_placeholder.yy",},
+    {"name":"spr_light","order":12,"path":"sprites/spr_light/spr_light.yy",},
     {"name":"spr_main_portrait","order":5,"path":"sprites/spr_main_portrait/spr_main_portrait.yy",},
     {"name":"spr_mirror_shadow","order":3,"path":"sprites/spr_mirror_shadow/spr_mirror_shadow.yy",},
     {"name":"spr_name","order":3,"path":"sprites/spr_name/spr_name.yy",},
