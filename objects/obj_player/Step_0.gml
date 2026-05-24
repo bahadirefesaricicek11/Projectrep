@@ -142,4 +142,7 @@ if (global.player_gold > 99999)
     global.player_gold = 99999;
 }
 
+
+
+
 depth = -bbox_bottom;

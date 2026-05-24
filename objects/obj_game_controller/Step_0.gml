@@ -21,3 +21,8 @@ else
         audio_stop_sound(msc_menu);
     }
 }
+
+if (!instance_exists(obj_lighting)) {
+    // Spawn it safely into the room asset layer
+    instance_create_layer(0, 0, "Instances", obj_lighting);
+}

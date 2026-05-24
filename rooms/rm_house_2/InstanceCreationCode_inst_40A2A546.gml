@@ -1,3 +1,3 @@
-target_x = 86;
-target_y = 141;
+target_x = 95;
+target_y = 175;
 target_rm = rm_outside;

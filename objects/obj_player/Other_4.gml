@@ -1,7 +1,5 @@
 
 if (room == rm_outside) {
-    x = 90;
-    y = 150;
     can_move = true;
 }
 
