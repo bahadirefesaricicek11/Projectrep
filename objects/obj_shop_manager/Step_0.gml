@@ -81,8 +81,8 @@ else if (menu_state == "LEAVE_CONFIRM") {
             obj_player.can_move = true;
 			display_set_gui_size(global.dguiW,global.dguiH);
 			room_goto(rm_outside);
-			obj_player.x = 270;
-			obj_player.y = 150;
+			obj_player.x = 280;
+			obj_player.y = 175;
             instance_destroy();
         } else {
             menu_state = "TABS";

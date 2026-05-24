@@ -124,14 +124,17 @@ if instance_exists(obj_textbox) {
     obj_player.can_move = false
 }
 
-if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
-    obj_item_manager.inv_open = true;
-    obj_player.can_move = false;
-} 
-else if (inventory_key == true) and (obj_item_manager.inv_open == true){
-    obj_item_manager.inv_open = false;
-    obj_player.can_move = true;
-} 
+if (instance_exists(obj_ingame_menu) == false)
+{
+	if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
+	    obj_item_manager.inv_open = true;
+	    obj_player.can_move = false;
+	} 
+	else if (inventory_key == true) and (obj_item_manager.inv_open == true){
+	    obj_item_manager.inv_open = false;
+	    obj_player.can_move = true;
+	}
+}
 
 if (global.player_hp > 100)
 {

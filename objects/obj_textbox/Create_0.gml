@@ -21,6 +21,10 @@ has_background = true;
 background = spr_textbox;
 option_background = spr_option;
 
+is_auto_advance = false;
+auto_advance_max_delay = 90;
+auto_advance_timer = 0;
+
 text_skippable = true;
 
 portrait_x = padding + 20;

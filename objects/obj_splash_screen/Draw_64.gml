@@ -1,1 +1,1 @@
-draw_sprite_stretched(bg_title, 0, 0,0, 1920,1080);
+draw_sprite_stretched(bg_title, 0, 0,0, 384,216);

@@ -4,6 +4,7 @@
     {"name":"Battle System","order":19,"path":"folders/Battle System.yy",},
     {"name":"Cutscene System","order":21,"path":"folders/Cutscene System.yy",},
     {"name":"Fonts","order":10,"path":"folders/Fonts.yy",},
+    {"name":"Resolution","order":25,"path":"folders/Resolution.yy",},
     {"name":"Input","order":17,"path":"folders/Input.yy",},
     {"name":"Callbacks","order":1,"path":"folders/Input/(System)/Callbacks.yy",},
     {"name":"Classes","order":2,"path":"folders/Input/(System)/Classes.yy",},

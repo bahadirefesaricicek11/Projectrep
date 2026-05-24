@@ -1,28 +1,17 @@
-if (room == rm_init || room == rm_splash)
-{
-    if (instance_exists(obj_player)) obj_player.can_move = false;
-}
-
-if (room == rm_menuRoom || room == rm_nameScreen)
-{
-    draw_sprite_tiled(spr_warp_transition, 0, 0, 0);
-    if (instance_exists(obj_player)) obj_player.can_move = false;
+if (keyboard_check_pressed(vk_f4) || keyboard_check_pressed(vk_f11)) {
     
-    // Menü müziğini güvenle çal
-    if (!audio_is_playing(msc_menu)) {
-        audio_play_sound(msc_menu, 1, true); // Döngü (loop) true olsun ki menüde müzik bitmesin
+    if (window_get_fullscreen()) { 
+        
+        window_set_fullscreen(false);
+        
+        // Reset the window to your exact 3x border layout size (416 * 3 = 1248, 256 * 3 = 768)
+        window_set_size(1248, 768);
+        
+        // Trigger Alarm 0 on the next frame to center the window cleanly
+        alarm[0] = 1; 
     }
-} 
-else 
-{
-    // BURADAKİ audio_stop_all(); YAZISINI SİLDİK!
-    // Sadece menü odasından BAŞKA bir odaya geçildiği an menü müziğini tek seferlik durduruyoruz:
-    if (audio_is_playing(msc_menu)) {
-        audio_stop_sound(msc_menu);
+    else {
+        // SWITCH TO FULLSCREEN MODE
+        window_set_fullscreen(true);
     }
-}
-
-if (!instance_exists(obj_lighting)) {
-    // Spawn it safely into the room asset layer
-    instance_create_layer(0, 0, "Instances", obj_lighting);
 }

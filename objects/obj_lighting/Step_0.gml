@@ -26,3 +26,5 @@ if (current_alpha == 0.0) {
 
 // 4. Update the global animation clock
 pulse_timer += 0.05;
+
+depth = -99999;

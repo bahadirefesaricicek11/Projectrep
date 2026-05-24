@@ -16,6 +16,7 @@
     {"$GMFolder":"","%Name":"Battle System","folderPath":"folders/Battle System.yy","name":"Battle System","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Cutscene System","folderPath":"folders/Cutscene System.yy","name":"Cutscene System","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Fonts","folderPath":"folders/Fonts.yy","name":"Fonts","resourceType":"GMFolder","resourceVersion":"2.0",},
+    {"$GMFolder":"","%Name":"Resolution","folderPath":"folders/Resolution.yy","name":"Resolution","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Input","folderPath":"folders/Input.yy","name":"Input","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"(System)","folderPath":"folders/Input/(System).yy","name":"(System)","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Callbacks","folderPath":"folders/Input/(System)/Callbacks.yy","name":"Callbacks","resourceType":"GMFolder","resourceVersion":"2.0",},
