@@ -13,7 +13,7 @@ else if (room == rm_outside_3)
 {
 	draw_sprite_tiled(bg_forest_new, 1, _camx * _p, _camy * _p);
 	draw_sprite_tiled(bg_forest_new, 2, _camx * 0.40, _camy * 0.40);
-	draw_sprite_tiled(bg_forest_new, 3, _camx * 0.30, _camy * 0.30);
-	draw_sprite_tiled(bg_forest_new, 4, _camx * 0.20, _camy * 0.20);
-	draw_sprite_tiled(bg_forest_new, 5, _camx * 0.10, _camy * 0.10);
+	draw_sprite_tiled(bg_forest_new, 3, _camx * 0.35, _camy * 0.35);
+	draw_sprite_tiled(bg_forest_new, 4, _camx * 0.30, _camy * 0.30);
+	draw_sprite_tiled(bg_forest_new, 5, _camx * 0.25, _camy * 0.25);
 }

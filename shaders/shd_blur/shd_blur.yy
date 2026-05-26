@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"shd_blur",
+  "name":"shd_blur",
+  "parent":{
+    "name":"Objects",
+    "path":"folders/Objects.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

@@ -29,8 +29,8 @@
   "nineSlice":null,
   "origin":0,
   "parent":{
-    "name":"Backgrounds",
-    "path":"folders/Sprites/Backgrounds.yy",
+    "name":"forest_new",
+    "path":"folders/Sprites/Backgrounds/forest_new.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",
