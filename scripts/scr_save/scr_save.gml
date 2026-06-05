@@ -93,6 +93,10 @@ function load_game()
 
 function save_settings()
 {
+	if(file_exists("settings.ini")){
+		file_delete("settings.ini");
+	}
+	
     var _master = audio_get_master_gain(0); 
     var _vfx    = audio_group_get_gain(audiogroup_sound);
     var _ost    = audio_group_get_gain(audiogroup_music);
@@ -100,7 +104,7 @@ function save_settings()
     
     ini_open("settings.ini");
     ini_write_real("SETTINGS", "MASTER", _master);
-    ini_write_real("SETTINGS", "SOUNDS", _vfx);
+    ini_write_real("AUSETTINGSDIO", "SFX", _vfx);
     ini_write_real("SETTINGS", "MUSIC",  _ost);
     ini_write_real("SETTINGS", "FULLSCREEN", _flscrn);
     ini_close();
@@ -111,21 +115,22 @@ function load_settings()
     if (file_exists("settings.ini"))
     {
         ini_open("settings.ini");
-        
-        global.vol_master = ini_read_real("SETTINGS", "MASTER", 1);
-        global.vol_sfx    = ini_read_real("SETTINGS", "SOUNDS", 1);
-        global.vol_music  = ini_read_real("SETTINGS", "MUSIC", 1);
-        var _flscrn       = ini_read_real("SETTINGS", "FULLSCREEN", 0);
-        
-        ini_close();    
-
-        audio_master_gain(global.vol_master); 
-        audio_group_set_gain(audiogroup_sound, global.vol_sfx, 0);
-        audio_group_set_gain(audiogroup_music, global.vol_music, 0);
-        window_set_fullscreen(_flscrn);
-        
-        show_debug_message("Settings Loaded from File");
-    }
+    
+	    // Read your audio settings...
+	    global.vol_master = ini_read_real("SETTINGS", "MASTER", 1);
+	    global.vol_sfx = ini_read_real("SETTINGS", "SFX", 1);
+	    global.vol_music = ini_read_real("SETTINGS", "MUSIC", 1);
+    
+	    // Read and apply the fullscreen setting
+	    var _fs = ini_read_real("SETTINGS", "FULLSCREEN", 0);
+	    if (_fs == 1) {
+	        window_set_fullscreen(true);
+	    } else {
+	        window_set_fullscreen(false);
+	    }
+    
+	    ini_close();
+	}
 }
 	
 	

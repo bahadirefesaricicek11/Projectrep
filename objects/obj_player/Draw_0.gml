@@ -89,9 +89,3 @@ if (_nearest_light != noone) {
         shader_reset();
     }
 }
-
-// =========================================================================
-// 6. DIAGNOSTIC OVERLAY
-// =========================================================================
-draw_set_color(c_white);
-draw_text(x, y - 40, "Light Detected: " + (_nearest_light != noone ? "True" : "False"));

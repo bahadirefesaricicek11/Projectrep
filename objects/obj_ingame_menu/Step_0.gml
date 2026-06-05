@@ -18,10 +18,10 @@ if (prompt_exit) {
         switch (prompt_option) {
             case 0: // Save and Exit
                 scr_save_game();
-                room_goto(rm_main_menu); 
+                room_goto(rm_menuRoom); 
                 break;
             case 1: // Exit without saving
-                room_goto(rm_main_menu); 
+                room_goto(rm_menuRoom); 
                 break;
             case 2: // Cancel
                 prompt_exit = false;
@@ -71,9 +71,20 @@ if (inputting) {
             break;
             
         case menu_element_type.toggle:
-            if (input_right_p || input_left_p) {
+            var hinput = input_right_p - input_left_p;
+            if (hinput != 0) {
                 ds_grid[# 3, menu_option[page]] = 1 - ds_grid[# 3, menu_option[page]];
-                script_execute(ds_grid[# 2, menu_option[page]], ds_grid[# 3, menu_option[page]]);
+                audio_play_sound(snd_menu_move, 0, false);
+            }
+            
+            if (input_enter_p) {
+                var current_setting_val = ds_grid[# 3, menu_option[page]];
+                
+                scr_change_window_mode(current_setting_val);
+                
+                inputting = false;
+                io_clear();
+                keyboard_clear(vk_enter);
             }
             break;
     }

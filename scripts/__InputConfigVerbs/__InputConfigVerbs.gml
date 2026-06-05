@@ -13,6 +13,7 @@ function __InputConfigVerbs()
         ACTION,
         SPECIAL,
         PAUSE,
+		FULLSCREEN,
     }
     
     enum INPUT_CLUSTER
@@ -24,16 +25,16 @@ function __InputConfigVerbs()
     
     if (not INPUT_ON_SWITCH)
     {
-        InputDefineVerb(INPUT_VERB.UP,         "up",         [vk_up,     "W"],    [-gp_axislv]);
-        InputDefineVerb(INPUT_VERB.DOWN,       "down",       [vk_down,   "S"],    [ gp_axislv]);
-        InputDefineVerb(INPUT_VERB.LEFT,       "left",       [vk_left,   "A"],    [-gp_axislh]);
-        InputDefineVerb(INPUT_VERB.RIGHT,      "right",      [vk_right,  "D"],    [ gp_axislh]);
+        InputDefineVerb(INPUT_VERB.UP,         "up",         [vk_up,     "W"],    [-gp_axislv, gp_padu]);
+        InputDefineVerb(INPUT_VERB.DOWN,       "down",       [vk_down,   "S"],    [ gp_axislv, gp_padd]);
+        InputDefineVerb(INPUT_VERB.LEFT,       "left",       [vk_left,   "A"],    [-gp_axislh, gp_padl]);
+        InputDefineVerb(INPUT_VERB.RIGHT,      "right",      [vk_right,  "D"],    [ gp_axislh, gp_padr]);
         InputDefineVerb(INPUT_VERB.ACCEPT,     "accept",     [vk_enter,  "Z"],    [gp_face1]);
         InputDefineVerb(INPUT_VERB.CANCEL,     "cancel",     [vk_shift,  "X"],    [gp_face2]);
-        InputDefineVerb(INPUT_VERB.INVENTORY,  "inventory",  [  "C" ,  "E"  ],    [gp_padd]);
+        InputDefineVerb(INPUT_VERB.INVENTORY,  "inventory",  [  "C" ,  "E"  ],    [gp_face4]);
         InputDefineVerb(INPUT_VERB.ACTION,     "action",     [vk_space,     ],    [gp_face3]);
-        InputDefineVerb(INPUT_VERB.SPECIAL,    "special",    [vk_backspace  ],    [gp_face4]);
         InputDefineVerb(INPUT_VERB.PAUSE,      "pause",      [vk_escape,    ],    [gp_start]);
+        InputDefineVerb(INPUT_VERB.FULLSCREEN, "fullscreen", [vk_f11,  vk_f4],    [gp_select]);
     }
     else //Flip A/B over on Switch
     {

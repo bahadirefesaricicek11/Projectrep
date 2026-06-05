@@ -39,9 +39,20 @@ if (inputting) {
             break;
             
         case menu_element_type.toggle:
-            if (input_right_p || input_left_p) {
+            var hinput = input_right_p - input_left_p;
+            if (hinput != 0) {
                 ds_grid[# 3, menu_option[page]] = 1 - ds_grid[# 3, menu_option[page]];
-                script_execute(ds_grid[# 2, menu_option[page]], ds_grid[# 3, menu_option[page]]);
+                audio_play_sound(snd_menu_move, 0, false);
+            }
+            
+            if (input_enter_p) {
+                var current_setting_val = ds_grid[# 3, menu_option[page]];
+                
+                scr_change_window_mode(current_setting_val);
+                
+                inputting = false;
+                io_clear();
+                keyboard_clear(vk_enter);
             }
             break;
     }
@@ -73,6 +84,26 @@ else {
                 inputting = true;
                 break;
         }
+    }
+    
+    if (input_back_p) {
+		if (page != menu_page.main)
+		{
+			audio_play_sound(snd_menu_move, 0, false);
+		}
+		
+        switch (page) {
+            case menu_page.settings:
+                page = menu_page.main;
+                break;
+                
+            case menu_page.audio:
+            case menu_page.graphics:
+                page = menu_page.settings;
+                break;
+        }
+        
+        input_back_p = false;
     }
 }
 

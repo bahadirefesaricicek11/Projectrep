@@ -103,14 +103,21 @@ for (var i = 0; i < ds_height; i++) {
             break;
 
         case menu_element_type.toggle:
-            current_val = ds_grid[# 3, i];
-            if (inputting && i == menu_option[page]) col = c_yellow;
-
-            var on_col = (current_val == 1) ? col : c_gray;
-            var off_col = (current_val == 0) ? col : c_gray;
+            var current_val = ds_grid[# 3, i];
+            var options = ds_grid[# 4, i];
             
-            draw_text_color(rtx, y_pos, "ON", on_col, on_col, on_col, on_col, 1);
-            draw_text_color(rtx + 32, y_pos, "OFF", off_col, off_col, off_col, off_col, 1);
+            var active_col = is_selected ? c_yellow : c_white;
+            if (inputting && i == menu_option[page]) {
+                active_col = c_yellow; 
+            }
+            
+            var display_string = options[current_val];
+            
+            if (is_selected && inputting) {
+                display_string = "< " + display_string + " >";
+            }
+            
+            draw_text_color(rtx, y_pos, display_string, active_col, active_col, active_col, active_col, 1);
             break;
     }
 }

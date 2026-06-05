@@ -32,10 +32,13 @@ ds_menu_audio = create_menu_page(
     ["GO BACK",      menu_element_type.page_transfer, menu_page.settings]
 );
 
-var _fs_val = window_get_fullscreen() ? 0 : 1;
+ini_open("settings.ini");
+var _saved_fs_val = ini_read_real("SETTINGS", "FULLSCREEN", 0); 
+ini_close();
+
 ds_menu_graphics = create_menu_page(
-    ["FULLSCREEN",   menu_element_type.toggle,        scr_change_window_mode, _fs_val, ["FULLSCREEN", "WINDOWED"]],
-    ["GO BACK",      menu_element_type.page_transfer, menu_page.settings]
+    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _saved_fs_val, ["WINDOWED", "FULLSCREEN"]],
+    ["BACK", menu_element_type.page_transfer, menu_page.settings]
 );
 
 page = menu_page.main;

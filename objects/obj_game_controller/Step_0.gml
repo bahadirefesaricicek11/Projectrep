@@ -1,4 +1,4 @@
-if (keyboard_check_pressed(vk_f4) || keyboard_check_pressed(vk_f11)) {
+if InputPressed(INPUT_VERB.FULLSCREEN) {
     
     if (window_get_fullscreen()) { 
         

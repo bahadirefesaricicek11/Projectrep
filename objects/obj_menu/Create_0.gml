@@ -12,6 +12,10 @@ lerpAmt = 0.15;
 xo = 0;
 menu_left_margin = 50;
 
+global.vol_music = 1;
+global.vol_sfx = 1;
+global.vol_master = 1;
+
 ds_menu_main = create_menu_page(
     ["START GAME", menu_element_type.script_runner, scr_send_nameScreen],
     ["LOAD GAME", menu_element_type.script_runner, scr_load_game],
@@ -32,9 +36,15 @@ ds_menu_audio = create_menu_page(
     ["BACK",   menu_element_type.page_transfer, menu_page.settings]
 );
 
-var _fs_val = window_get_fullscreen() ? 0 : 1;
+// 1. Open the ini file to see what the player last saved
+ini_open("settings.ini");
+// Read the saved value. If the file doesn't exist yet, default to 0 (WINDOWED)
+var _saved_fs_val = ini_read_real("SETTINGS", "FULLSCREEN", 0); 
+ini_close();
+
+// 2. Pass that exact saved number (0 or 1) directly into the grid index slot (argument index 3)
 ds_menu_graphics = create_menu_page(
-    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _fs_val, ["FULLSCREEN", "WINDOWED"]],
+    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _saved_fs_val, ["WINDOWED", "FULLSCREEN"]],
     ["BACK", menu_element_type.page_transfer, menu_page.settings]
 );
 

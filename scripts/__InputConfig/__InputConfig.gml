@@ -40,7 +40,7 @@
 // Minimum threshold for directional (thumbstick) axes. This value is used for detecting gamepad
 // input when hotswapping so make sure you set it above 0. This value can further be overriden per
 // player by using the `InputPlayerSetMinThreshold()` function.
-#macro INPUT_GAMEPAD_THUMBSTICK_MIN_THRESHOLD  0.25
+#macro INPUT_GAMEPAD_THUMBSTICK_MIN_THRESHOLD  0.50
 
 // Maximum threshold for directional (thumbstick) axes. This value can be overriden per player by
 // using the `InputPlayerSetMaxThreshold()` function.
