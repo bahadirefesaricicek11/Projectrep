@@ -16,14 +16,24 @@ tabs_text_padding = 35;
 items_x = 20;
 items_y = 110;
 
-info_x = 300;
-info_y = 120;
-
+info_text_x = 305; 
+info_text_y = 122;
 pos = 0;
 
 tabs[0] = "Buy";
 tabs[1] = "Talk";
 tabs[2] = "Map";
+
+shop_text = "Welcome.";
+
+map_scale = 0.5;
+
+menu_x = 40;
+menu_y = 60;
+
+talk_options = ["Ask about items", "Ask about town", "Goodbye"];
+shopkeeper_response = "Welcome to my shop, traveler!";
+talk_pos = 0;
 
 tab_length = array_length(tabs);
 

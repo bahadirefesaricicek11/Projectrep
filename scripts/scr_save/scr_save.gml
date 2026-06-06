@@ -116,9 +116,9 @@ function load_settings()
         ini_open("settings.ini");
     
 	    // Read your audio settings...
-	    global.vol_master = ini_read_real("SETTINGS", "MASTER", 1);
-	    global.vol_sfx = ini_read_real("SETTINGS", "SFX", 1);
-	    global.vol_music = ini_read_real("SETTINGS", "MUSIC", 1);
+	    global.vol_master = ini_read_real("SETTINGS", "MASTER", 0);
+	    global.vol_sfx = ini_read_real("SETTINGS", "SFX", 0);
+	    global.vol_music = ini_read_real("SETTINGS", "MUSIC", 0);
     
 	    // Read and apply the fullscreen setting
 	    global.fullscreen = ini_read_real("SETTINGS", "FULLSCREEN", 0);

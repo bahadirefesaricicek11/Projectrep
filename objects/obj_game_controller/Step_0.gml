@@ -1,6 +1,6 @@
 if InputPressed(INPUT_VERB.FULLSCREEN) {
     
-    if (window_get_fullscreen()) { 
+    if (window_get_fullscreen() == true) { 
         
         window_set_fullscreen(false);
         

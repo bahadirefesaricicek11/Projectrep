@@ -15,9 +15,6 @@ function scr_change_window_mode(_val) {
         with (obj_menu) {
             alarm[0] = 1;
         }
-        with (obj_ingame_menu) {
-            alarm[0] = 1;
-        }
     }
     
     // Maintain GUI scale consistency 

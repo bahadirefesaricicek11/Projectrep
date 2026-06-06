@@ -33,7 +33,7 @@ if inv_length == max_inv_length
 	inv_full = true;
 }
 
-if (instance_exists(obj_textbox) or instance_exists(obj_ingame_menu))
+if (instance_exists(obj_textbox) or instance_exists(obj_menu))
 {
 	inv_open = false;
 }

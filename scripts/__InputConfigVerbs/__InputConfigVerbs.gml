@@ -14,6 +14,8 @@ function __InputConfigVerbs()
         SPECIAL,
         PAUSE,
 		FULLSCREEN,
+		L1,
+		R1,
     }
     
     enum INPUT_CLUSTER
@@ -35,6 +37,8 @@ function __InputConfigVerbs()
         InputDefineVerb(INPUT_VERB.ACTION,     "action",     [vk_space,     ],    [gp_face3]);
         InputDefineVerb(INPUT_VERB.PAUSE,      "pause",      [vk_escape,    ],    [gp_start]);
         InputDefineVerb(INPUT_VERB.FULLSCREEN, "fullscreen", [vk_f11,  vk_f4],    [gp_select]);
+        InputDefineVerb(INPUT_VERB.L1,		   "l1",		 undefined,			  [gp_shoulderl]);
+        InputDefineVerb(INPUT_VERB.R1,		   "r1",		 undefined,			  [gp_shoulderr]);
     }
     else //Flip A/B over on Switch
     {

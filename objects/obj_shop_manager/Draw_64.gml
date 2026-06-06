@@ -34,6 +34,8 @@ for (var i = 0; i < tab_length; i++)
     current_tab_x += _tabW + 4;
 }
 
+
+//--- BUY TAB ---
 if (pos == 0) {
     var _item_count = array_length(shop_items);
 	var statscale = 0.35;
@@ -52,12 +54,72 @@ if (pos == 0) {
         draw_text_transformed_colour(items_x + 150, _item_y, string(shop_items[j].price) + "G", statscale, statscale, 0, _item_color, _item_color, _item_color, _item_color, 1);
 		
         var subtabs = menu_state == "BUY_SUB";
-		var _itemText = subtabs ? string(shop_items[sub_pos].description) : "Welcome.";
 		
-		draw_text_transformed(info_x, info_y, _itemText , statscale, statscale, 0);
     }
 }
 
+var _content_x = items_x;
+var _content_y = items_y;
+var statscale = 0.35;
+
+// --- TALK TAB ---
+if (pos == 1) {
+    for (var i = 0; i < array_length(talk_options); i++) {
+        var _is_selected = (menu_state == "TALK_SUB" && sub_pos == i);
+        var _c = _is_selected ? c_yellow : c_white;
+        var _txt = _is_selected ? "> " + talk_options[i] : talk_options[i];
+        draw_text_transformed_colour(_content_x, _content_y + (i * 20), _txt, statscale, statscale, 0, _c, _c, _c, _c, 1);
+    }
+}
+
+// --- MAP TAB ---
+else if (pos == 2) {
+    draw_text_transformed(_content_x, _content_y, "Current Location: Shop", statscale, statscale, 0);
+    
+    var _mx = _content_x + 20;
+    var _my = _content_y + 30;
+	//------------TURN THIS INTO A MINIMAP-------------------------------
+	//------------TURN THIS INTO A MINIMAP-------------------------------
+	//------------TURN THIS INTO A MINIMAP-------------------------------
+	//------------TURN THIS INTO A MINIMAP-------------------------------
+    draw_rectangle_colour(_mx, _my, _mx + 80, _my + 50, c_gray, c_gray, c_gray, c_gray, false);
+    draw_circle_colour(_mx + 40, _my + 25, 4, c_yellow, c_yellow, false); // Player
+}
+
+// --- BUY TAB ---
+else if (pos == 0) {
+    // Your existing Buy tab loop remains here, 
+    // it will now naturally sit in the same spot as Talk/Map
+    var _item_count = array_length(shop_items);
+    for (var j = 0; j < _item_count; j++) {
+        // ... (your existing buy rendering code)
+    }
+}
+// --- INFO TEXT ---
+var _statscale = 0.3; 
+var _max_width = 250;
+var _line_sep = 50;
+
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
+
+var _displayText = "";
+
+// 1. Determine the text content
+if (pos == 0) { // BUY TAB
+    _displayText = (menu_state == "BUY_SUB") ? shop_items[sub_pos].description : "Buy some items.";
+} 
+else if (pos == 1) { // TALK TAB
+    // Show the shopkeeper's response here
+    _displayText = shopkeeper_response; 
+} 
+else if (pos == 2) { // MAP TAB
+    _displayText = "You are currently inside the shop. The town exit is to the east.";
+}
+
+// 2. Draw the text with wrap and line height
+// info_text_x/y should be the start point just under the "INFO" label
+draw_text_ext_transformed(info_text_x, info_text_y, _displayText, _line_sep, _max_width, _statscale, _statscale, 0);
 
 if (menu_state == "BUY_CONFIRM") {
 	var statscale = 0.25;

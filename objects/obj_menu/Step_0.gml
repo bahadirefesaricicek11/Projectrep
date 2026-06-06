@@ -1,3 +1,40 @@
+
+if (is_ingame && prompt_exit) {
+    var input_up_p    = InputPressed(INPUT_VERB.UP);
+    var input_down_p  = InputPressed(INPUT_VERB.DOWN);
+    var input_enter_p = InputPressed(INPUT_VERB.ACCEPT);
+    var input_back_p  = InputPressed(INPUT_VERB.CANCEL);
+    
+    var prompt_nav = input_down_p - input_up_p;
+    if (prompt_nav != 0) {
+        audio_play_sound(snd_menu_move, 0, false);
+        prompt_option = (prompt_option + prompt_nav + 3) % 3;
+    }
+    
+    if (input_back_p) prompt_exit = false;
+    
+    if (input_enter_p) {
+        switch (prompt_option) {
+            case 0:
+				scr_save_game(); 
+				global.state = GAME_STATE.TITLE_SCREEN;
+				room_goto(rm_menuRoom); 
+				break;
+				
+            case 1: 
+				global.state = GAME_STATE.TITLE_SCREEN;
+				room_goto(rm_menuRoom);
+				break;
+				
+            case 2:
+				prompt_exit = false;
+				break;
+        }
+    }
+    exit;
+}
+
+// 2. Normal Menu Logic (Shared)
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
 
@@ -7,14 +44,14 @@ if (menu_option[page] != previous_menu_option) {
 previous_menu_option = menu_option[page];
 xo = lerp(xo, -15, lerpAmt);
 
-var input_up_p = InputPressed(INPUT_VERB.UP);
-var input_down_p = InputPressed(INPUT_VERB.DOWN);
+var input_up_p    = InputPressed(INPUT_VERB.UP);
+var input_down_p  = InputPressed(INPUT_VERB.DOWN);
 var input_right_p = InputPressed(INPUT_VERB.RIGHT);
-var input_left_p = InputPressed(INPUT_VERB.LEFT);
+var input_left_p  = InputPressed(INPUT_VERB.LEFT);
 var input_right_c = InputCheck(INPUT_VERB.RIGHT);
-var input_left_c = InputCheck(INPUT_VERB.LEFT);
+var input_left_c  = InputCheck(INPUT_VERB.LEFT);
 var input_enter_p = InputPressed(INPUT_VERB.ACCEPT);
-var input_back_p = InputPressed(INPUT_VERB.CANCEL);
+var input_back_p  = InputPressed(INPUT_VERB.CANCEL);
 
 if ((input_down_p || input_up_p) && !inputting) {
     audio_play_sound(snd_menu_move, 0, false);
@@ -25,8 +62,7 @@ if (inputting) {
         case menu_element_type.shift:
             var hinput = input_right_p - input_left_p;
             if (hinput != 0) {
-                ds_grid[# 3, menu_option[page]] = clamp(ds_grid[# 3, menu_option[page]] + hinput, 
-                0, array_length_1d(ds_grid[# 4, menu_option[page]]) - 1);
+                ds_grid[# 3, menu_option[page]] = clamp(ds_grid[# 3, menu_option[page]] + hinput, 0, array_length(ds_grid[# 4, menu_option[page]]) - 1);
             }
             break;
             
@@ -47,9 +83,7 @@ if (inputting) {
             
             if (input_enter_p) {
                 var current_setting_val = ds_grid[# 3, menu_option[page]];
-                
                 scr_change_window_mode(current_setting_val);
-                
                 inputting = false;
                 io_clear();
                 keyboard_clear(vk_enter);
@@ -73,11 +107,9 @@ else {
             case menu_element_type.script_runner:
                 script_execute(ds_grid[# 2, menu_option[page]]);
                 break;
-                
             case menu_element_type.page_transfer:
                 page = ds_grid[# 2, menu_option[page]]; 
                 break;
-                
             case menu_element_type.shift:
             case menu_element_type.slider:
             case menu_element_type.toggle:
@@ -87,33 +119,19 @@ else {
     }
     
     if (input_back_p) {
-		if (page != menu_page.main)
-		{
-			audio_play_sound(snd_menu_move, 0, false);
-		}
-		
-        switch (page) {
-            case menu_page.settings:
-                page = menu_page.main;
-                break;
-                
-            case menu_page.audio:
-            case menu_page.graphics:
-                page = menu_page.settings;
-                break;
+        var _parent = menu_parent[page];
+        if (_parent != -1) {
+            audio_play_sound(snd_menu_move, 0, false);
+            page = _parent; 
+        } else {
+            if (is_ingame) instance_destroy(); 
         }
-        
-        input_back_p = false;
     }
 }
 
-
-if (fade_active)
-{
+if (fade_active) {
     fade_alpha -= fade_speed;
-
-    if (fade_alpha <= 0)
-    {
+    if (fade_alpha <= 0) {
         fade_alpha = 0;
         fade_active = false;
     }

@@ -112,11 +112,15 @@ if obj_player.can_move == true
     image_index = 0;
 }
 
-if (menu_key) {        
-    if (instance_exists(obj_ingame_menu)) {
-        instance_destroy(obj_ingame_menu);
-    } else {
-        instance_create_layer(x, y, "Instances", obj_ingame_menu);
+if (menu_key) {
+    if (global.state == GAME_STATE.PLAYING) {
+        instance_create_layer(x, y, "Instances", obj_menu);
+        global.state = GAME_STATE.MENU;
+    }
+    else if (global.state == GAME_STATE.MENU) {
+        if (instance_exists(obj_menu) && obj_menu.is_ingame) {
+            instance_destroy(obj_menu);
+        }
     }
 }
 
@@ -124,7 +128,7 @@ if instance_exists(obj_textbox) {
     obj_player.can_move = false
 }
 
-if (instance_exists(obj_ingame_menu) == false)
+if (instance_exists(obj_menu) == false)
 {
 	if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
 	    obj_item_manager.inv_open = true;

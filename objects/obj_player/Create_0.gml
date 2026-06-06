@@ -5,6 +5,7 @@ global.player_attack = 5;
 global.player_defense = 0;
 global.player_gold = 0;
 
+gamepad_set_axis_deadzone(1, 0.5)
 
 spd = 1.5;
 walk_spd = 1.5;
