@@ -32,12 +32,8 @@ ds_menu_audio = create_menu_page(
     ["GO BACK",      menu_element_type.page_transfer, menu_page.settings]
 );
 
-ini_open("settings.ini");
-var _saved_fs_val = ini_read_real("SETTINGS", "FULLSCREEN", 0); 
-ini_close();
-
 ds_menu_graphics = create_menu_page(
-    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _saved_fs_val, ["WINDOWED", "FULLSCREEN"]],
+    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, global.fullscreen, ["WINDOWED", "FULLSCREEN"]],
     ["BACK", menu_element_type.page_transfer, menu_page.settings]
 );
 

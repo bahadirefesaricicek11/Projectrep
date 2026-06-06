@@ -36,26 +36,16 @@ ds_menu_audio = create_menu_page(
     ["BACK",   menu_element_type.page_transfer, menu_page.settings]
 );
 
-// 1. Open the ini file to see what the player last saved
-ini_open("settings.ini");
-// Read the saved value. If the file doesn't exist yet, default to 0 (WINDOWED)
-var _saved_fs_val = ini_read_real("SETTINGS", "FULLSCREEN", 0); 
-ini_close();
-
-// 2. Pass that exact saved number (0 or 1) directly into the grid index slot (argument index 3)
 ds_menu_graphics = create_menu_page(
-    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, _saved_fs_val, ["WINDOWED", "FULLSCREEN"]],
+    ["FULLSCREEN", menu_element_type.toggle, scr_change_window_mode, global.fullscreen, ["WINDOWED", "FULLSCREEN"]],
     ["BACK", menu_element_type.page_transfer, menu_page.settings]
 );
-
-
 
 page = 0;
 menu_pages = [ds_menu_main, ds_menu_settings, ds_menu_audio, ds_menu_graphics];
 for (var i = 0; i < array_length(menu_pages); i++) {
     menu_option[i] = 0;
 }
-
 
 inputting = false;
 previous_menu_option = -1;

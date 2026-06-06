@@ -17,19 +17,18 @@ function save_game()
 		file_delete("save.ini");
 	}
 	
-	var _current_date = date_current_datetime()
+	var _current_date = date_current_datetime();
 	
-
 	ini_open("save.ini");
-	ini_write_string("SAVE","roomID",room_get_name(room));
 	ini_write_string("SAVE","Name",obj_player.name);
 	ini_write_real("SAVE","Health",global.player_hp);
 	ini_write_real("SAVE","Gold",global.player_gold);
 	
-	ini_write_real("SAVE","Date", _current_date);
-	ini_write_real("SAVE","x",obj_player.x);
-	ini_write_real("SAVE","y",obj_player.y);
-	ini_write_real("SAVE","player_face",obj_player.face);
+	ini_write_real("DATA","Date", _current_date);
+	ini_write_string("DATA","roomID",room_get_name(room));
+	ini_write_real("DATA","x",obj_player.x);
+	ini_write_real("DATA","y",obj_player.y);
+	ini_write_real("DATA","player_face",obj_player.face);
 	
 	ini_close();
 	show_debug_message("Game Saved");
@@ -104,7 +103,7 @@ function save_settings()
     
     ini_open("settings.ini");
     ini_write_real("SETTINGS", "MASTER", _master);
-    ini_write_real("AUSETTINGSDIO", "SFX", _vfx);
+    ini_write_real("SETTINGS", "SFX", _vfx);
     ini_write_real("SETTINGS", "MUSIC",  _ost);
     ini_write_real("SETTINGS", "FULLSCREEN", _flscrn);
     ini_close();
@@ -122,8 +121,8 @@ function load_settings()
 	    global.vol_music = ini_read_real("SETTINGS", "MUSIC", 1);
     
 	    // Read and apply the fullscreen setting
-	    var _fs = ini_read_real("SETTINGS", "FULLSCREEN", 0);
-	    if (_fs == 1) {
+	    global.fullscreen = ini_read_real("SETTINGS", "FULLSCREEN", 0);
+	    if (global.fullscreen == 1) {
 	        window_set_fullscreen(true);
 	    } else {
 	        window_set_fullscreen(false);

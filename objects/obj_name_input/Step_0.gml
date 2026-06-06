@@ -1,6 +1,7 @@
 var move_h = InputPressed(INPUT_VERB.RIGHT) -InputPressed(INPUT_VERB.LEFT);
 var move_v = InputPressed(INPUT_VERB.DOWN) - InputPressed(INPUT_VERB.UP);
-var accept = InputPressed(INPUT_VERB.ACCEPT)
+var accept = InputPressed(INPUT_VERB.ACCEPT);
+var back = InputPressed(INPUT_VERB.CANCEL);
 
 if (move_h != 0 || move_v != 0) {
     cursor_x += move_h;
@@ -40,4 +41,9 @@ if (accept) {
     } else if (string_length(final_name) < max_len) {
         final_name += char;
     }
+}
+
+if(back)
+{
+	room_goto(rm_menuRoom);
 }
