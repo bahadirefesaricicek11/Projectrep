@@ -1,6 +1,5 @@
 load_settings();
 
-// Automatically determine if this is the main menu or the pause menu
 is_ingame = (room != rm_menuRoom);
 
 if (is_ingame && instance_exists(obj_player)) {
@@ -57,7 +56,7 @@ ds_menu_graphics = create_menu_page(
 page = 0;
 menu_pages = [ds_menu_main, ds_menu_settings, ds_menu_audio, ds_menu_graphics];
 for (var i = 0; i < array_length(menu_pages); i++) {
-    menu_option[i] = 0;
+	menu_option[i] = 0;
 }
 
 // Unified Back Logic Mapping

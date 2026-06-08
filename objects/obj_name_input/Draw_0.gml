@@ -1,14 +1,14 @@
 draw_set_halign(fa_center);
 draw_set_valign(fa_middle);
 
-// Calculate the center of the grid
 var grid_offset_x = ((grid_width - 1) * spacing_x) / 2;
-var start_x = (room_width / 2) - grid_offset_x;
-var start_y = (room_height / 3); 
-
+var gwidth = global.view_width;
+var gheight = global.view_height;
+var start_x = (gwidth / 2) - grid_offset_x;
+var start_y = (gheight / 3); 
 
 draw_set_color(c_white);
-draw_text_transformed(room_width / 2, start_y - 50, "NAME: " + final_name, 1.5, 1.5, 0);
+draw_text_transformed(gwidth / 2, start_y - 50, "NAME: " + final_name, 1*1.5,1*1.5,0);
 
 for (var yy = 0; yy < grid_height; yy++) {
     for (var xx = 0; xx < grid_width; xx++) {
@@ -39,4 +39,26 @@ for (var yy = 0; yy < grid_height; yy++) {
 	        }
         }
     }
+}
+
+if (prompt_exit) {
+    var box_w = 320;
+    var box_h = 110;
+    var box_x = (gwidth / 2) - (box_w / 2);
+    var box_y = (gheight / 2) - (box_h / 2);
+    
+    draw_sprite_stretched(spr_box,0, box_x, box_y, box_w, box_h);
+    
+    draw_set_halign(fa_center); 
+    draw_set_valign(fa_middle);
+    
+    draw_text_ext(gwidth / 2, box_y + 30, "Do you wish to go back? Your name will be discarded.", 25, 300);
+    
+    draw_set_color(prompt_option == 0 ? c_yellow : c_white);
+    draw_text(gwidth / 2 - 50, box_y + 80, "Go Back");
+
+    draw_set_color(prompt_option == 1 ? c_yellow : c_white);
+    draw_text(gwidth / 2 + 50, box_y + 80, "Cancel");
+    
+    draw_set_color(c_white);
 }

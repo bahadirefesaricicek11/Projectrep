@@ -1,9 +1,8 @@
-
 if (room == rm_outside) {
     can_move = true;
 }
 
-if (room == rm_init or room == rm_splash or room == rm_menuRoom or room == rm_nameScreen or room == rm_introCutscene)
+if (room == rm_init || room == rm_splash || room == rm_menuRoom || room == rm_nameScreen || room == rm_introCutscene)
 {
 	x = -50;
 	y = -50;

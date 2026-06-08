@@ -16,7 +16,7 @@ if obj_player.can_move == true
         image_speed = 2;
     }
     
-    if xspd == 0 and yspd == 0 or can_move == false {
+    if xspd == 0 && yspd == 0 || can_move == false {
         image_speed = 0;
         image_index = 0;
     } else {
@@ -130,11 +130,11 @@ if instance_exists(obj_textbox) {
 
 if (instance_exists(obj_menu) == false)
 {
-	if (inventory_key == true) and (obj_item_manager.inv_open == false) and obj_player.can_move == true{
+	if (inventory_key == true) && (obj_item_manager.inv_open == false) && obj_player.can_move == true{
 	    obj_item_manager.inv_open = true;
 	    obj_player.can_move = false;
 	} 
-	else if (inventory_key == true) and (obj_item_manager.inv_open == true){
+	else if (inventory_key == true) && (obj_item_manager.inv_open == true){
 	    obj_item_manager.inv_open = false;
 	    obj_player.can_move = true;
 	}

@@ -13,8 +13,8 @@ tabs_y = 80;
 tabs_margin = 50;
 tabs_text_padding = 35;
 
-items_x = 20;
-items_y = 110;
+content_x = 15;
+content_y = 110;
 
 info_text_x = 305; 
 info_text_y = 122;
@@ -23,8 +23,6 @@ pos = 0;
 tabs[0] = "Buy";
 tabs[1] = "Talk";
 tabs[2] = "Map";
-
-shop_text = "Welcome.";
 
 map_scale = 0.5;
 

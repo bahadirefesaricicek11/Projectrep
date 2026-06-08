@@ -1,4 +1,3 @@
-// Grid Setup
 grid_width = 10;
 grid_height = 7;
 
@@ -19,6 +18,9 @@ visual_y = 0;
 
 final_name = "";
 max_len = 12;
+
+prompt_exit = false;
+prompt_option = 1;
 
 spacing_x = 32; 
 spacing_y = 24;

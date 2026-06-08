@@ -77,7 +77,7 @@ function load_game()
 		else
 		{
 			var r = asset_get_index(r_name);
-			if r != -1 and asset_get_type(r_name) == asset_room
+			if r != -1 && asset_get_type(r_name) == asset_room
 			{
 				room_goto(r);
 			}
@@ -115,12 +115,10 @@ function load_settings()
     {
         ini_open("settings.ini");
     
-	    // Read your audio settings...
 	    global.vol_master = ini_read_real("SETTINGS", "MASTER", 0);
 	    global.vol_sfx = ini_read_real("SETTINGS", "SFX", 0);
 	    global.vol_music = ini_read_real("SETTINGS", "MUSIC", 0);
     
-	    // Read and apply the fullscreen setting
 	    global.fullscreen = ini_read_real("SETTINGS", "FULLSCREEN", 0);
 	    if (global.fullscreen == 1) {
 	        window_set_fullscreen(true);

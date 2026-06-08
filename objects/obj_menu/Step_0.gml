@@ -34,7 +34,6 @@ if (is_ingame && prompt_exit) {
     exit;
 }
 
-// 2. Normal Menu Logic (Shared)
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
 

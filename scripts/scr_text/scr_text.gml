@@ -14,7 +14,6 @@ function scr_text() {
     
     global.text = {};
     
-    // FIX 1: Initialize cutscene flag here so it always exists before the cutscene runs
     global.cutscene_dialogue_done = false;
     
     //-----------------INTRO---------------------
@@ -51,8 +50,6 @@ function scr_text() {
 		EXECUTE(function(textbox) {
 			obj_introcutscene.change = true;
 		}),
-		// MÜZİĞİ ODA GEÇİŞİNDEN BİR ÖNCEKİ ADIMA ALDIK. 
-		// BU YAZI EKRANA GELDİĞİ AN MÜZİK ARKADA ÇALMAYA BAŞLAYACAK.
 		EXECUTE(function(textbox) {
 			audio_play_sound(msc_ambient, 10, true); 
 		}),

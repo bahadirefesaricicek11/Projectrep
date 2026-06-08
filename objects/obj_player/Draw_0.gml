@@ -1,15 +1,7 @@
-// =========================================================================
-// 1. CONFIGURATION: CHOOSE YOUR TORCH OBJECT
-// If your torch object in your asset browser is named something else 
-// (e.g., obj_light_source or obj_light), change obj_torch below to match it!
-// =========================================================================
 var _light_asset = obj_torch; 
 
-// =========================================================================
-// 2. FIND THE NEAREST LIGHT SOURCE
-// =========================================================================
 var _nearest_light = noone;
-var _min_dist = 500; // Maximum distance (in pixels) the player can detect light
+var _min_dist = 500;
 
 if (instance_exists(_light_asset)) {
     with (_light_asset) {

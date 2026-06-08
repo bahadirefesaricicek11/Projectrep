@@ -1,4 +1,3 @@
-// 1. Get Inputs
 right_key = InputPressed(INPUT_VERB.RIGHT);
 left_key = InputPressed(INPUT_VERB.LEFT);
 down_key = InputPressed(INPUT_VERB.DOWN);
@@ -9,24 +8,20 @@ cancel_key = InputPressed(INPUT_VERB.CANCEL);
 var _l1 = InputPressed(INPUT_VERB.L1);
 var _r1 = InputPressed(INPUT_VERB.R1);
 
-// 2. Quick Tab Switching (Works outside of confirmation dialogs)
 if (menu_state != "BUY_CONFIRM" && menu_state != "LEAVE_CONFIRM") {
     if (_r1 || _l1) {
         if (_r1) pos++;
         if (_l1) pos--;
         
-        // Wrap tabs
         if (pos >= tab_length) pos = 0;
         if (pos < 0) pos = tab_length - 1;
         
-        // Force state to the selected tab's sub-menu
         if (pos == 0) { menu_state = "BUY_SUB"; sub_pos = 0; }
         else if (pos == 1) { menu_state = "TALK_SUB"; sub_pos = 0; }
-        else if (pos == 2) { menu_state = "MAP_SUB"; sub_pos = 0; }
+        else if (pos == 2) { menu_state = "TABS";}
     }
 }
 
-// 3. State Machine
 if (menu_state == "TABS") {
     pos += right_key - left_key;
     if (pos >= tab_length) pos = 0;
@@ -35,7 +30,6 @@ if (menu_state == "TABS") {
     if (down_key || accept_key) {
         if (pos == 0) { menu_state = "BUY_SUB"; sub_pos = 0; }
         else if (pos == 1) { menu_state = "TALK_SUB"; sub_pos = 0; }
-        else if (pos == 2) { menu_state = "MAP_SUB"; sub_pos = 0; }
     }
     
     if (cancel_key) {

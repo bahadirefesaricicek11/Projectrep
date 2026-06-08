@@ -1,7 +1,7 @@
 {
   "$GMFont":"",
   "%Name":"Project_Font",
-  "AntiAlias":1,
+  "AntiAlias":0,
   "applyKerning":0,
   "ascender":12,
   "ascenderOffset":0,
@@ -105,7 +105,7 @@
     "123":{"character":123,"h":34,"offset":0,"shift":7,"w":6,"x":57,"y":38,},
     "125":{"character":125,"h":34,"offset":0,"shift":7,"w":6,"x":49,"y":38,},
     "126":{"character":126,"h":34,"offset":0,"shift":12,"w":11,"x":42,"y":110,},
-    "9647":{"character":9647,"h":34,"offset":3,"shift":16,"w":10,"x":90,"y":146,},
+    "9647":{"character":9647,"h":34,"offset":3,"shift":16,"w":9,"x":90,"y":146,},
   },
   "hinting":0,
   "includeTTF":false,

@@ -17,7 +17,7 @@ if obj_item_manager.inv_open == true
 	if ud > 0 {posx -= 4};
 	if ud < 0 {posx += 4};
 	
-	if (posx < array_length(inv) and posx >= 0)
+	if (posx < array_length(inv) && posx >= 0)
 	{
 	    selected_item = posx;
     
@@ -33,7 +33,7 @@ if inv_length == max_inv_length
 	inv_full = true;
 }
 
-if (instance_exists(obj_textbox) or instance_exists(obj_menu))
+if (instance_exists(obj_textbox) || instance_exists(obj_menu))
 {
 	inv_open = false;
 }

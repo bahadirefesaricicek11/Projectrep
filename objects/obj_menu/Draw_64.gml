@@ -5,7 +5,6 @@ var gheight = global.view_height + (is_ingame ? 50 : 0);
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
 
-// 1. Draw Backgrounds & Headers
 if (is_ingame) {
     draw_set_color(c_black);
     draw_set_alpha(0.6);
@@ -30,7 +29,6 @@ if (is_ingame) {
     draw_set_font(Project_Font);
 }
 
-// 2. Handle In-Game Prompt Exit Overlay
 if (is_ingame && prompt_exit) {
     var prompt_box_w = 400;
     var prompt_box_h = 200;
@@ -50,10 +48,9 @@ if (is_ingame && prompt_exit) {
     }
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
-    exit; // Stop drawing rest of menu
+    exit;
 }
 
-// 3. Establish Layout Coordinates
 var y_buffer = 32;
 var start_y, divider_x, menu_left, rtx;
 
@@ -80,7 +77,6 @@ if (is_ingame) {
     draw_line(divider_x, start_y - y_buffer, divider_x, start_y + (ds_height * y_buffer));
 }
 
-// 4. SHARED DRAWING LOOP (Text, Sliders, Toggles)
 var selected = menu_option[page];
 draw_set_halign(fa_left);
 
@@ -133,7 +129,6 @@ for (var i = 0; i < ds_height; i++) {
     }
 }
 
-// 5. Fade Overlay
 if (fade_alpha > 0) {
     draw_set_color(c_black);
     draw_set_alpha(fade_alpha);
