@@ -1,6 +1,11 @@
 if (room == rm_outside) {
     can_move = true;
 }
+if (room == rm_shop)
+{
+	can_open_menu = false;
+}
+
 
 if (room == rm_init || room == rm_splash || room == rm_menuRoom || room == rm_nameScreen || room == rm_introCutscene)
 {

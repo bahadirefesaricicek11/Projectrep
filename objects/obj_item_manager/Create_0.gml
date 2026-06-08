@@ -110,8 +110,8 @@ global.item_list = {
 	iron_chestplate : new create_item(
 		"Iron Chestplate",
 		"+10 Armor Density.",
-		spr_iron_chestplate,
 		100,
+		spr_iron_chestplate,
 		function ()
 		{
 			equipped[1] = global.item_list.iron_chestplate;
@@ -125,8 +125,8 @@ global.item_list = {
 	iron_bottom : new create_item(
 		"Iron Bottom",
 		"+5 Armor Density.",
-		spr_iron_bottom,
 		100,
+		spr_iron_bottom,
 		function ()
 		{
 			equipped[2] = global.item_list.iron_bottom;
@@ -140,8 +140,8 @@ global.item_list = {
 	normal_shield : new create_item(
 		"Normal Shield",
 		"+5 Armor Density.",
-		spr_normal_shield,
 		100,
+		spr_normal_shield,
 		function ()
 		{
 			equipped[3] = global.item_list.normal_shield;
@@ -155,8 +155,8 @@ global.item_list = {
 	iron_sword : new create_item(
 		"Iron Sword",
 		"+5 Strength.",
-		spr_iron_sword,
 		100,
+		spr_iron_sword,
 		function ()
 		{
 			equipped[4] = global.item_list.iron_sword;
