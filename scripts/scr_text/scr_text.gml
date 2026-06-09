@@ -287,8 +287,8 @@ function scr_text() {
 	        textbox.is_auto_advance = true;     // Turn on auto mode
 	        textbox.auto_advance_max_delay = 90; // Wait 1.5 seconds after typing finishes
 	    }),
-	    TEXT("Yakup?"),
-	    TEXT("Ender?"),
+	    TEXT("Yo?"),
+	    TEXT("Wassup?"),
 	    EXECUTE(function(textbox) {
 	        textbox.is_auto_advance = false;    // Turn it off if you want normal gameplay behavior next
 	    })
