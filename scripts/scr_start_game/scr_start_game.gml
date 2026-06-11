@@ -4,7 +4,7 @@ function scr_send_nameScreen(){
 
 function scr_start_game(){
     global.state = GAME_STATE.PLAYING;
-    room_goto(rm_outside);
-	obj_player.x = 100;
-	obj_player.y = 175;
+    room_goto(rm_forest_1);
+	obj_player.x = 255;
+	obj_player.y = 180;
 }
