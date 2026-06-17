@@ -10,3 +10,5 @@ load_settings();
 audio_master_gain(global.vol_master);
 audio_group_set_gain(audiogroup_sound, global.vol_sfx);
 audio_group_set_gain(audiogroup_music, global.vol_music);
+
+battle_system_init();

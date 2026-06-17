@@ -6,6 +6,11 @@ run_key = InputCheck(INPUT_VERB.CANCEL);
 inventory_key = InputPressed(INPUT_VERB.INVENTORY);
 menu_key = InputPressed(INPUT_VERB.PAUSE);
 
+if (global.state != GAME_STATE.PLAYING) {
+    image_speed = 0;
+    exit;
+}
+
 if obj_player.can_move == true
 {
     if (run_key) {

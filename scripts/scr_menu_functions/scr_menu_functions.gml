@@ -17,6 +17,7 @@ enum GAME_STATE {
     PLAYING,
     MENU,
     BATTLE,
+	CARD_SELECTION,
     CUTSCENE,
     TITLE_SCREEN
 }

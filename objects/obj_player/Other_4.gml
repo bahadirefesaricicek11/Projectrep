@@ -1,4 +1,4 @@
-if (room == rm_outside) {
+if (room == rm_outside || room == rm_forest_1 || room == rm_outside_3) {
     can_move = true;
 }
 if (room == rm_shop)

@@ -13,8 +13,8 @@
   ],
   "name":"rm_battle",
   "parent":{
-    "name":"Rooms",
-    "path":"folders/Rooms.yy",
+    "name":"Battle System",
+    "path":"folders/Battle System.yy",
   },
   "parentRoom":null,
   "physicsSettings":{
