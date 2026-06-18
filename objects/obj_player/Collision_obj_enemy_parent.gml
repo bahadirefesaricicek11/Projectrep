@@ -1,17 +1,17 @@
 if (global.state == GAME_STATE.PLAYING) {
-    // 1. Freeze player input/movement variables immediately
     can_move = false; 
     hspeed = 0;
     vspeed = 0;
 
-    // 2. Capture the stats of the enemy we ran into
-    var _encounter_composition = [other.combat_stats]; 
+    // --- DYNAMIC PARTY DETERMINATION ---
+    // Instead of [other.enemy_id], we roll for the entire party composition array
+    var _encounter_composition = battle_generate_party(other.encounter_id); 
 
-    // 3. Destroy the overworld enemy instance so it's gone when we return
+    // Spawn the transition runner and hand off the newly rolled party array
+    var _inst = instance_create_layer(0, 0, "Instances", obj_battle_transition);
+    _inst.encounter_composition = _encounter_composition;
+
     with (other) {
         instance_destroy();
     }
-    
-    // 4. Go to battle room
-    battle_trigger_room_transition(_encounter_composition);
 }

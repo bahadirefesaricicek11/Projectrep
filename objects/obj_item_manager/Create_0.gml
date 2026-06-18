@@ -57,7 +57,7 @@ global.item_list = {
 		spr_apple,
 		function ()
 		{
-				global.player_hp += 10;
+				_target.hp = min(_target.hp + 10, _target.max_hp);
 				array_delete(inv,selected_item,1);
 		},
 		"common",
@@ -71,7 +71,7 @@ global.item_list = {
 		spr_bread,
 		function ()
 		{
-				global.player_hp += 5;
+				_target.hp = min(_target.hp + 10, _target.max_hp);
 				array_delete(inv,selected_item,1);
 		},
 		"rare",
@@ -85,7 +85,7 @@ global.item_list = {
 		spr_hamburger,
 		function ()
 		{
-				global.player_hp += 25;
+				_target.hp = min(_target.hp + 10, _target.max_hp);
 				array_delete(inv,selected_item,1);
 		},
 		"epic",
