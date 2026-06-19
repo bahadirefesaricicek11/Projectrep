@@ -1,10 +1,10 @@
-/// @description Initialize Battle Controller Core
+/// @description Initialize Battle Controller Core & UI Popups
 
 // --- 1. CORE STRUCTURAL PARTY STAT DATA ---
 party_members = [
-    { name: "Player",   hp: 100, max_hp: 100, display_hp: 100, atk: 12, def: 5, spd: 14, clover_leaves: 1, sprite: spr_player_battle_idle, img_idx: 0 },
-    { name: "Ally 1",   hp: 80,  max_hp: 80,  display_hp: 80,  atk: 8,  def: 4, spd: 18, clover_leaves: 3, sprite: spr_npc,                 img_idx: 0 },
-    { name: "Ally 2",   hp: 120, max_hp: 120, display_hp: 120, atk: 15, def: 8, spd: 8,  clover_leaves: 0, sprite: spr_npc_alternate,        img_idx: 0 }
+    { name: "Player",   hp: 100, max_hp: 100, display_hp: 100, atk: 12, def: 5, spd: 14, clover_leaves: 1, sprite: spr_player_battle_idle, img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false },
+    { name: "Ally 1",   hp: 80,  max_hp: 80,  display_hp: 80,  atk: 8,  def: 4, spd: 18, clover_leaves: 3, sprite: spr_npc,                 img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false },
+    { name: "Ally 2",   hp: 120, max_hp: 120, display_hp: 120, atk: 15, def: 8, spd: 8,  clover_leaves: 0, sprite: spr_npc_alternate,        img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false }
 ];
 
 party_input_index = 0; 
@@ -21,11 +21,27 @@ menu_stage  = BATTLE_MENU.MAIN;
 menu_cursor = 0;      
 card_cursor = 0;      
 
+// --- 4. TRANSIENT COMBAT TEXT POPUPS ---
+popup_numbers = [];
+
+// --- 5. CACHING & CONTEXT ROUTING EXTENSIONS ---
+menu_context = "fight";       // Track why we are selecting a target: "fight", "interact", or "item"
+selected_sub_action = "";     // Holds string names of sub-menus (e.g., "Check", "Defend")
+targeted_enemy_index = -1;    // Explicitly stores which enemy index is being targeted
+
+// --- 6. REAL-TIME HIT BAR ENGINE (DELTARUNE STYLE) ---
+hit_bar_active = false;
+hit_bar_progress = 1.0;       // Starts at 1.0 (far right) and drops towards 0.0 (far left)
+hit_bar_speed = 0.03;        // Adjust this value to alter the difficulty window
+hit_bar_target = 0.15;       // The sweet spot coordinate where the perfect strike bar sits
+hit_bar_multiplier = 0;       // Output damage scalar: 0 = Miss, 1.0 = Normal, 2.0 = Perfect
+hit_bar_verdict = "";         // Display text ("MISS", "GOOD", "PERFECT!")
+
 // Pre-defined static sub-menu options
 interact_options    = ["Check", "Taunt", "Talk"];
 take_action_options = ["Defend", "Flee", "Charge"];
 
-// --- 4. TURN PROCESSING & ENGINE MANAGEMENT ---
+// --- 7. TURN PROCESSING & ENGINE MANAGEMENT ---
 battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
 turn_queue       = [];        
 current_turn_act = noone;    
@@ -52,11 +68,18 @@ in_card_transition = false;
 // Layout tracking for the chosen card's journey
 chosen_card_start_x = 0;
 chosen_card_start_y = 0;
-chosen_card_angle   = 0;    // Added: Tracks dynamic lean angle during flight
+chosen_card_angle   = 0;    // Tracks dynamic lean angle during flight
 
 pending_item = undefined;
 
-// --- 6. FORCE REAL-TIME INITIALIZATION ---
+// --- 8. GLOBAL BACKEND FALLBACK PROTECTION & INITIALIZATION ---
+if (!variable_global_exists("state")) {
+    global.state = GAME_STATE.BATTLE;
+}
+if (!variable_global_exists("active_battle_enemies")) {
+    global.active_battle_enemies = [];
+}
+
 if (!variable_global_exists("card_pool")) {
     battle_system_init();
 } else {
