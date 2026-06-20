@@ -41,7 +41,7 @@ if (!prompt_exit) {
             final_name = string_delete(final_name, string_length(final_name), 1); 
         } else if (char == "DONE") { 
             if (string_length(final_name) > 0) { 
-                obj_player.name = final_name; 
+                global.player_name = final_name; 
                 room_goto(rm_introCutscene); 
                 scr_text(); 
             }; 

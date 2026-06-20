@@ -1,85 +1,128 @@
-/// @description Initialize Battle Controller Core & UI Popups
 
-// --- 1. CORE STRUCTURAL PARTY STAT DATA ---
-party_members = [
-    { name: "Player",   hp: 100, max_hp: 100, display_hp: 100, atk: 12, def: 5, spd: 14, clover_leaves: 1, sprite: spr_player_battle_idle, img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false },
-    { name: "Ally 1",   hp: 80,  max_hp: 80,  display_hp: 80,  atk: 8,  def: 4, spd: 18, clover_leaves: 3, sprite: spr_npc,                 img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false },
-    { name: "Ally 2",   hp: 120, max_hp: 120, display_hp: 120, atk: 15, def: 8, spd: 8,  clover_leaves: 0, sprite: spr_npc_alternate,        img_idx: 0, chosen_action_type: "", chosen_sub_action: "", chosen_target_index: -1, is_defending: false }
-];
 
-party_input_index = 0; 
 party_max_members = 3; 
 
-// --- 2. VISUAL ASSET ASSIGNMENTS ---
+// --- 2. STATUS EFFECT & CARD SELECTION TRACKERS ---
+// Tracks the buff structure data applied to each character's HUD slot
+global.active_combat_buffs = [];
+for (var _i = 0; _i < party_max_members; _i++) {
+    global.active_combat_buffs[_i] = noone;
+}
+
+party_input_index = 0; // Tracks which character is picking cards/actions
+card_cursor       = 0; // Highlight position on the 3 draft cards
+
+// --- 3. VISUAL HUD ASSET ASSIGNMENTS ---
 background    = bg_battle;     
-battle_font   = Project_Font;      
+battle_font   = Project_Font;       
 box_sprite    = spr_box;           
 option_sprite = spr_option_btn;    
 
-// --- 3. SELECTION CONTROL ENGINE (STATE DRIVEN) ---
-menu_stage  = BATTLE_MENU.MAIN;  
-menu_cursor = 0;      
-card_cursor = 0;      
+// Run this ONLY when transitioning into the Target Selection menu state:
+menu_stage = BATTLE_MENU.TARGET_SELECT;
+menu_cursor = 0;
 
-// --- 4. TRANSIENT COMBAT TEXT POPUPS ---
-popup_numbers = [];
-
-// --- 5. CACHING & CONTEXT ROUTING EXTENSIONS ---
-menu_context = "fight";       // Track why we are selecting a target: "fight", "interact", or "item"
-selected_sub_action = "";     // Holds string names of sub-menus (e.g., "Check", "Defend")
-targeted_enemy_index = -1;    // Explicitly stores which enemy index is being targeted
-
-// --- 6. REAL-TIME HIT BAR ENGINE (DELTARUNE STYLE) ---
-hit_bar_active = false;
-hit_bar_progress = 1.0;       // Starts at 1.0 (far right) and drops towards 0.0 (far left)
-hit_bar_speed = 0.03;        // Adjust this value to alter the difficulty window
-hit_bar_target = 0.15;       // The sweet spot coordinate where the perfect strike bar sits
-hit_bar_multiplier = 0;       // Output damage scalar: 0 = Miss, 1.0 = Normal, 2.0 = Perfect
-hit_bar_verdict = "";         // Display text ("MISS", "GOOD", "PERFECT!")
+// Populate it safely now that the battle is active and enemies exist!
+if (variable_global_exists("active_battle_enemies")) {
+    _options_array = global.active_battle_enemies;
+    _total_options = array_length(global.active_battle_enemies);
+} else {
+    _options_array = [];
+    _total_options = 0;
+}
 
 // Pre-defined static sub-menu options
 interact_options    = ["Check", "Taunt", "Talk"];
 take_action_options = ["Defend", "Flee", "Charge"];
 
-// --- 7. TURN PROCESSING & ENGINE MANAGEMENT ---
+menu_context         = "fight";     // "fight", "interact", or "item"
+selected_sub_action  = "";          // Holds string names of sub-menus
+targeted_enemy_index = -1;         // Target window array index
+pending_item         = undefined;
+
+// --- 5. TRANSIENT COMBAT TEXT POPUPS ---
+popup_numbers = [];
+popup_list = []; // Guarantees the array exists on frame 1
+
+// --- 6. REAL-TIME HIT BAR ENGINE (DELTARUNE STYLE) ---
+hit_bar_active     = false;
+hit_bar_progress   = 1.0;       // Starts at 1.0 (far right) and drops towards 0.0 (far left)
+hit_bar_speed      = 0.03;      // Alter the difficulty speed window ticker
+hit_bar_target     = 0.15;      // Sweet spot target pixel location
+hit_bar_multiplier = 0;        // Damage scale output
+hit_bar_verdict    = "";        // Display text overhead ("MISS", "GOOD", "PERFECT!")
+
+// --- 7. TURN PROCESSING & TIMERS ---
 battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
 turn_queue       = [];        
 current_turn_act = noone;    
 action_timer     = 0;        
 battle_text      = "";      
+text_char_count  = 0;
 
-// --- CARD ANIMATION SYSTEM ---
-card_intro_timer = 0;       // Tracks the entrance slide-in
-card_reveal_timer = -1;     // Tracks the auto-dismissal countdown (-1 means idle)
-card_flip_angle = 180;      // Starts at 180 (back of the card facing player)
-card_choice_locked = false; // Tracks if choice is validated
+// --- 8. CARD ANIMATION & TRANSITION FLIGHT PATHS ---
+card_intro_timer   = 0;        // Entrance linear interpolation weight slider
+card_reveal_timer  = -1;       // Auto-dismissal look counter (-1 means idle)
+card_flip_angle    = 180;      // Starts at 180 (back card face) down to 0 (face)
+card_choice_locked = false;    // Safety block while choices transition
 screenshake_amount = 0;
 
-// --- EXPANDED CARD EXIT ANIMATION ENGINE ---
-card_exit_phase = false;    
-card_exit_timer = 0;        
+card_exit_phase    = false;    
+card_exit_timer    = 0;        
 card_exit_duration = 20;    
 
-// Transition state control
-transition_timer = 0;
-transition_duration = 50;   // Slightly extended for a dramatic arc finish (~0.83s)
-in_card_transition = false; 
+transition_timer    = 0;
+transition_duration = 50;      // Fight arc flight duration (~0.83s)
+in_card_transition  = false; 
 
-// Layout tracking for the chosen card's journey
 chosen_card_start_x = 0;
 chosen_card_start_y = 0;
-chosen_card_angle   = 0;    // Tracks dynamic lean angle during flight
+chosen_card_angle   = 0;       // Rotation skew modifier during flight path
 
-pending_item = undefined;
-
-// --- 8. GLOBAL BACKEND FALLBACK PROTECTION & INITIALIZATION ---
+// --- 9. GLOBAL BACKEND PROTECTION & DECK POOL DRAFT SETUP ---
 if (!variable_global_exists("state")) {
     global.state = GAME_STATE.BATTLE;
 }
-if (!variable_global_exists("active_battle_enemies")) {
-    global.active_battle_enemies = [];
+
+// Ensure the active enemy tracking array is reset cleanly
+global.active_battle_enemies = [];
+
+/* STRUCTURAL FIX: If your overworld engine passes raw object IDs rather than live instances,
+  we read them here. For testing/fallback, we populate a default setup if empty.
+*/
+if (array_length(global.active_battle_enemies) == 0) {
+    // Replace these placeholder object names with your actual enemy object asset names!
+    var _enemy_spawn_pool = [obj_slime, obj_slime]; 
+    
+    var _spawn_layer = "Instances";
+    if (!layer_exists(_spawn_layer)) {
+        _spawn_layer = layer_create(-100, "Battle_Enemies");
+    }
+    
+    for (var _i = 0; _i < array_length(_enemy_spawn_pool); _i++) {
+        // Position layout coordinates matching a native 384x216 screen aspect ratio
+        var _spawn_x = 280; 
+        var _spawn_y = 60 + (_i * 45);
+        
+        // Physically instantiate the enemy inside the current battle arena room
+        var _live_enemy = instance_create_layer(_spawn_x, _spawn_y, _spawn_layer, _enemy_spawn_pool[_i]);
+        
+        // Inject a safety check to ensure it has required properties initialized
+        if (instance_exists(_live_enemy)) {
+            if (!variable_instance_exists(_live_enemy, "hp"))  _live_enemy.hp = 50;
+            if (!variable_instance_exists(_live_enemy, "max_hp")) _live_enemy.max_hp = 50;
+            if (!variable_instance_exists(_live_enemy, "atk")) _live_enemy.atk = 8;
+            if (!variable_instance_exists(_live_enemy, "def")) _live_enemy.def = 3;
+            if (!variable_instance_exists(_live_enemy, "spd")) _live_enemy.spd = 10;
+            if (!variable_instance_exists(_live_enemy, "name")) _live_enemy.name = "Enemy " + string(_i + 1);
+            
+            // Push the direct, valid pointer into the global target array
+            array_push(global.active_battle_enemies, _live_enemy);
+        }
+    }
 }
 
+// --- ORIGINAL DECK DRAFT LOGIC CONTINUES UNCHANGED ---
 if (!variable_global_exists("card_pool")) {
     battle_system_init();
 } else {

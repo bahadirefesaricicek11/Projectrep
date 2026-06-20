@@ -1,4 +1,4 @@
-name = global.plrName;
+name = global.player_name;
 global.player_hp = 100;
 global.player_hp_max = global.player_hp;
 global.player_attack = 5;

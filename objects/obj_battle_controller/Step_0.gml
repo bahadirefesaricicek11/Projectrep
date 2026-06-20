@@ -1,4 +1,4 @@
-/// @description Process Inputs, States & Popup Lifecycles
+/// @description Process Inputs, States & Turn Loop Lifecycles
 
 // --- 1. SCREENSHAKE DECAY ---
 if (screenshake_amount > 0) {
@@ -6,21 +6,86 @@ if (screenshake_amount > 0) {
     if (screenshake_amount < 0) screenshake_amount = 0;
 }
 
-// --- 2. TRANSIENT POPUP LIFECYCLE MANAGEMENT ---
-// Reverse-looping prevents array indexing skips during real-time structural deletion
-var _p_count = array_length(popup_numbers);
-for (var _i = _p_count - 1; _i >= 0; _i--) {
-    var _p = popup_numbers[_i];
-    
-    _p.life--;
-    _p.yy -= 0.5; // Upward float velocity vector
-    
-    if (_p.life <= 0) {
-        array_delete(popup_numbers, _i, 1);
+// --- 2. HP ODOMETER ROLLING ENGINE ---
+var _party_count = array_length(party_members);
+var _base_roll_speed = 0.15;
+
+for (var _i = 0; _i < _party_count; _i++) {
+    var _member = party_members[_i];
+    if (_member.display_hp != _member.hp) {
+        var _diff = _member.hp - _member.display_hp;
+        var _dir = sign(_diff);
+        var _step = _dir * _base_roll_speed;
+        
+        if (abs(_diff) <= abs(_step)) {
+            _member.display_hp = _member.hp;
+        } else {
+            _member.display_hp += _step;
+        }
     }
 }
 
-// --- 3. NATIVE INPUT ENGINE ---
+// --- 2b. ENEMY HP ODOMETER ROLLING ENGINE ---
+var _enemy_count = array_length(global.active_battle_enemies);
+var _enemy_roll_speed = 0.25;
+
+for (var _e_idx = 0; _e_idx < _enemy_count; _e_idx++) {
+    var _enemy_inst = global.active_battle_enemies[_e_idx];
+    if (instance_exists(_enemy_inst) && variable_instance_exists(_enemy_inst, "display_hp")) {
+        if (_enemy_inst.display_hp != _enemy_inst.hp) {
+            var _e_diff = _enemy_inst.hp - _enemy_inst.display_hp;
+            var _e_dir = sign(_e_diff);
+            var _e_step = _e_dir * _enemy_roll_speed;
+            
+            if (abs(_e_diff) <= abs(_e_step)) {
+                _enemy_inst.display_hp = _enemy_inst.hp;
+            } else {
+                _enemy_inst.display_hp += _e_step;
+            }
+        }
+    }
+}
+
+// --- 3. POPUP NUMBERS MECHANICAL MANAGEMENT ---
+if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
+    for (var _i = array_length(popup_numbers) - 1; _i >= 0; _i--) {
+        var _p = popup_numbers[_i];
+        if (is_undefined(_p) || _p == noone || !is_struct(_p)) {
+            array_delete(popup_numbers, _i, 1);
+            continue;
+        }
+        
+        if (variable_struct_exists(_p, "life")) {
+            _p.life -= 1;
+            if (_p.life <= 0) {
+                array_delete(popup_numbers, _i, 1);
+                continue;
+            }
+            
+            var _type = variable_struct_exists(_p, "type") ? _p.type : "number";
+            
+            if (_type == "jumping_number") {
+                if (!variable_struct_exists(_p, "ground_y")) {
+                    _p.ground_y = _p.y + 25;
+                }
+                
+                _p.x += _p.hspeed;
+                _p.y += _p.vspeed;
+                _p.vspeed += _p.gravity; 
+                
+                if (_p.y > _p.ground_y) {
+                    _p.y = _p.ground_y;
+                    _p.vspeed = -(_p.vspeed * 0.35);
+                    _p.hspeed *= 0.75;
+                }
+            } else {
+                _p.y -= 0.35;
+            }
+        }
+    }
+}
+
+// --- 4. NATIVE INPUT ENGINE ---
 var _key_left  = InputPressed(INPUT_VERB.LEFT);
 var _key_right = InputPressed(INPUT_VERB.RIGHT);
 var _key_up    = InputPressed(INPUT_VERB.UP);
@@ -33,16 +98,12 @@ var _key_back  = InputPressed(INPUT_VERB.CANCEL);
 // ==========================================
 if (global.state == GAME_STATE.CARD_SELECTION) {
     var _card_count = array_length(global.selected_cards);
-    
     if (_card_count > 0) {
-        // Animate the cards sliding up into view from the bottom when the screen opens
         if (card_intro_timer < 1.0) {
-            card_intro_timer += 0.03; 
+            card_intro_timer += 0.03;
         }
         
-        // PHASE 1: CHOOSE A BLIND CARD
         if (!variable_instance_exists(id, "card_choice_locked") || !card_choice_locked) {
-            
             if (_key_left) {
                 card_cursor--;
                 if (card_cursor < 0) card_cursor = _card_count - 1; 
@@ -55,60 +116,77 @@ if (global.state == GAME_STATE.CARD_SELECTION) {
             
             if (_key_conf) {
                 var _chosen_card = global.selected_cards[card_cursor];
-                
                 if (!_chosen_card.is_revealed) {
                     card_choice_locked = true;
                     global.chosen_battle_card = _chosen_card;
                     
-                    // Capture layout origins exactly as they sit onscreen right now
                     var _card_w = 76; 
                     var _spacing = 12;
                     var _total_w = (_card_count * _card_w) + ((_card_count - 1) * _spacing);
                     var _start_x = (display_get_gui_width() - _total_w) / 2;
-                    
                     chosen_card_start_x = _start_x + (card_cursor * (_card_w + _spacing));
                     chosen_card_start_y = (display_get_gui_height() - 120) / 2;
                     
-                    // Force reveal ALL underlying structural data instantly
                     for (var _i = 0; _i < _card_count; _i++) {
                         global.selected_cards[_i].is_revealed = true;
                     }
                     
-                    // Start the auto-dismissal timer (60 frames = 1 second preview)
                     card_reveal_timer = 60;
                     exit;
                 }
             }
         }
-        // PHASE 2: AUTOMATIC REVEAL ANIMATION LOOP (No inputs accepted)
         else if (!in_card_transition) {
-            // Smoothly animate the card flip angle down to 0 degrees
             card_flip_angle = lerp(card_flip_angle, 0, 0.15);
-            
-            // Countdown the display timer
             if (card_reveal_timer > 0) {
                 card_reveal_timer--;
             } else {
-                // Hand off to the flight path interpolation system
                 in_card_transition = true;
                 transition_timer = 0;
             }
         }
     }
     
-    // --- TRANSITION FLIGHT PATH MATH ---
     if (in_card_transition) {
         if (transition_timer < transition_duration) {
             transition_timer++;
         } else {
-            // Hand off sequence over! Clean up and drop safely into combat state
             in_card_transition = false;
             card_choice_locked = false;
             card_intro_timer = 0;
             card_flip_angle = 180;
             card_reveal_timer = -1;
             
-            battle_apply_card_buff(global.chosen_battle_card.card_info);
+            var _chosen_card_struct = global.chosen_battle_card.card_info;
+            var _leader = party_members[0];
+            
+            if (_chosen_card_struct.buff_type == "atk")    _leader.atk += _chosen_card_struct.value;
+            if (_chosen_card_struct.buff_type == "def")    _leader.def += _chosen_card_struct.value;
+            if (_chosen_card_struct.buff_type == "spd")    _leader.spd += _chosen_card_struct.value;
+            if (_chosen_card_struct.buff_type == "max_hp") _leader.max_hp += _chosen_card_struct.value;
+            
+            global.active_combat_buffs[0] = _chosen_card_struct;
+            var _leftover_index = 0;
+            var _total_pool_cards = array_length(global.selected_cards);
+            
+            for (var _i = 0; _i < _total_pool_cards; _i++) {
+                var _checked_card = global.selected_cards[_i];
+                if (_checked_card != global.chosen_battle_card) {
+                    var _ally_party_idx = 1 + _leftover_index;
+                    if (_ally_party_idx < party_max_members) {
+                        var _ally = party_members[_ally_party_idx];
+                        var _ally_card_data = _checked_card.card_info;
+                        
+                        if (_ally_card_data.buff_type == "atk")    _ally.atk += _ally_card_data.value;
+                        if (_ally_card_data.buff_type == "def")    _ally.def += _ally_card_data.value;
+                        if (_ally_card_data.buff_type == "spd")    _ally.spd += _ally_card_data.value;
+                        if (_ally_card_data.buff_type == "max_hp") _ally.max_hp += _ally_card_data.value;
+                        
+                        global.active_combat_buffs[_ally_party_idx] = _ally_card_data;
+                    }
+                    _leftover_index++;
+                }
+            }
             
             global.state = GAME_STATE.BATTLE;
             battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
@@ -117,7 +195,7 @@ if (global.state == GAME_STATE.CARD_SELECTION) {
             party_input_index = 0;
         }
     }
-    exit; 
+    exit;
 }
 
 // ==========================================
@@ -125,6 +203,58 @@ if (global.state == GAME_STATE.CARD_SELECTION) {
 // ==========================================
 if (global.state == GAME_STATE.BATTLE) {
     
+    // --- CRITERIA A: CHECK FOR GAME OVER ---
+    var _all_dead = true;
+    var _p_count = array_length(party_members);
+    
+    for (var _p = 0; _p < _p_count; _p++) {
+        var _member = party_members[_p];
+        if (is_struct(_member) || instance_exists(_member)) {
+            if (_member.hp > 0) {
+                _all_dead = false;
+                break;
+            }
+        }
+    }
+    
+    if (_all_dead) {
+        global.state = GAME_STATE.GAMEOVER;
+        room_goto(rm_gameOver);
+        exit;
+    }
+
+    // --- CRITERIA B: CHECK FOR VICTORY ---
+    var _enemies_alive = false;
+    var _e_count = array_length(global.active_battle_enemies);
+    
+    for (var _e = 0; _e < _e_count; _e++) {
+        var _enemy = global.active_battle_enemies[_e];
+        if (instance_exists(_enemy) && _enemy.hp > 0) {
+            _enemies_alive = true;
+            break;
+        }
+    }
+    
+    if (!_enemies_alive) {
+        global.state = GAME_STATE.PLAYING;
+        for (var _e = 0; _e < _e_count; _e++) {
+            var _enemy = global.active_battle_enemies[_e];
+            if (instance_exists(_enemy)) {
+                instance_destroy(_enemy);
+            }
+        }
+        
+        // Check if the fallback variable exists first to prevent crashes
+        if (variable_global_exists("overworld_room_fallback") && room_exists(global.overworld_room_fallback)) {
+            room_goto(global.overworld_room_fallback);
+        } else {
+            // Default safe fallback if nothing was initialized
+            room_goto_previous(); 
+        }
+        exit;
+    }
+    
+    // --- TEXT PACING ACCELERATOR ---
     if (battle_text != "") {
         if (text_char_count < string_length(battle_text)) {
             text_char_count += 0.5;
@@ -132,17 +262,15 @@ if (global.state == GAME_STATE.BATTLE) {
     }
 
     // ------------------------------------------
-    // SUB-STATE: PLAYER INPUT LATCHING
+    // SUB-STATE 1: PLAYER INPUT LATCHING
     // ------------------------------------------
     if (battle_sub_state == BATTLE_STATE.PLAYER_INPUT) {
         
-        // --- CRITICAL BOUNDARY PROTECTION: CHIEF ENGINE SHIELD ---
         if (party_input_index >= party_max_members) {
             battle_sub_state = BATTLE_STATE.TURN_SORTING;
             exit;
         }
         
-        // Safety lock: if current character is dead, instantly skip ahead
         if (party_members[party_input_index].hp <= 0) {
             party_input_index++;
             if (party_input_index >= party_max_members) {
@@ -151,65 +279,69 @@ if (global.state == GAME_STATE.BATTLE) {
             exit;
         }
         
-        // Handle the real-time Hit Bar sequence if engaged
+        // Handle the real-time Hit Bar calculation sequence
         if (menu_stage == BATTLE_MENU.HIT_BAR) {
             hit_bar_progress -= hit_bar_speed;
+            var _current_actor = party_members[party_input_index];
             
             if (hit_bar_progress <= 0) {
-                hit_bar_multiplier = 0;
-                hit_bar_verdict = "MISS";
-                event_user(0); // Trigger Damage Resolution Script
+                _current_actor.chosen_hit_multiplier = 0.0;
+                _current_actor.chosen_hit_verdict = "MISS";
+                
+                party_input_index++; 
+                menu_stage = BATTLE_MENU.MAIN;
+                menu_cursor = 0;
+                if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
             }
             
             if (_key_conf) {
                 var _distance = abs(hit_bar_progress - hit_bar_target);
-                
                 if (_distance <= 0.04) {
-                    hit_bar_multiplier = 2.0;
-                    hit_bar_verdict = "PERFECT!";
+                    _current_actor.chosen_hit_multiplier = 2.0;
+                    _current_actor.chosen_hit_verdict = "PERFECT!";
                 } else if (_distance <= 0.12) {
-                    hit_bar_multiplier = 1.2;
-                    hit_bar_verdict = "GOOD";
+                    _current_actor.chosen_hit_multiplier = 1.2;
+                    _current_actor.chosen_hit_verdict = "GOOD";
                 } else {
-                    hit_bar_multiplier = 0.6;
-                    hit_bar_verdict = "WEAK";
+                    _current_actor.chosen_hit_multiplier = 0.6;
+                    _current_actor.chosen_hit_verdict = "WEAK";
                 }
-                event_user(0); // Trigger Damage Resolution Script
+                
+                party_input_index++;
+                menu_stage = BATTLE_MENU.MAIN;
+                menu_cursor = 0;
+                if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
             }
-            exit; 
+            exit;
         }
         
         switch (menu_stage) {
-            
             case BATTLE_MENU.MAIN:
-                var _max_actions = 4; 
-                
+                var _max_actions = 4;
                 if (_key_left)  menu_cursor = (menu_cursor - 1 + _max_actions) % _max_actions;
                 if (_key_right) menu_cursor = (menu_cursor + 1) % _max_actions;
                 
                 if (_key_conf) {
                     var _current_actor = party_members[party_input_index];
-                    
                     switch (menu_cursor) {
                         case 0: // FIGHT
-                            menu_stage = BATTLE_MENU.TARGET_SELECT; 
+                            menu_stage = BATTLE_MENU.TARGET_SELECT;
                             menu_context = "fight";
-                            
-                            // Initialize action types safely right on selection declaration
                             _current_actor.chosen_action_type = "fight";
                             _current_actor.chosen_sub_action  = "";
                             break;
                         case 1: // INTERACT
-                            menu_stage = BATTLE_MENU.INTERACT;      
+                            menu_stage = BATTLE_MENU.INTERACT;
                             break;
                         case 2: // TAKE ACTION
-                            menu_stage = BATTLE_MENU.TAKE_ACTION;   
+                            menu_stage = BATTLE_MENU.TAKE_ACTION;
                             break;
                         case 3: // ITEM
-                            menu_stage = BATTLE_MENU.ITEM_USE;       
+                            menu_stage = BATTLE_MENU.ITEM_USE;
                             break;
                     }
-                    menu_cursor = 0; 
+                    menu_cursor = 0;
+                    _key_conf = false; 
                 }
                 break;
                 
@@ -218,10 +350,11 @@ if (global.state == GAME_STATE.BATTLE) {
                 if (_enemy_count > 0) {
                     if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _enemy_count) % _enemy_count;
                     if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _enemy_count;
-                    
                     if (_key_back) {
                         menu_stage = (menu_context == "interact") ? BATTLE_MENU.INTERACT : BATTLE_MENU.MAIN;
                         menu_cursor = 0; 
+                        _key_back = false; 
+                        exit;
                     }
                     
                     if (_key_conf) {
@@ -230,14 +363,8 @@ if (global.state == GAME_STATE.BATTLE) {
                         
                         if (instance_exists(_target) && _target.hp > 0) {
                             var _current_actor = party_members[party_input_index];
-                            
                             if (menu_context == "fight") {
-                                // Lock structural intent targets down onto character
                                 _current_actor.chosen_target_index = targeted_enemy_index;
-                                
-                                // Advance our character turn select array counter
-                                party_input_index++;
-                                
                                 menu_stage = BATTLE_MENU.HIT_BAR;
                                 hit_bar_progress = 1.0;
                                 hit_bar_verdict = "";
@@ -250,12 +377,16 @@ if (global.state == GAME_STATE.BATTLE) {
                                 party_input_index++;
                                 menu_stage = BATTLE_MENU.MAIN;
                                 menu_cursor = 0;
-                                
-                                if (party_input_index >= party_max_members) {
-                                    battle_sub_state = BATTLE_STATE.TURN_SORTING;
-                                }
+                                if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
                             }
+                            _key_conf = false;
                         }
+                    }
+                } else {
+                    if (_key_back || _key_conf) {
+                        menu_stage = BATTLE_MENU.MAIN;
+                        menu_cursor = 0;
+                        _key_back = false;
                     }
                 }
                 break;
@@ -266,10 +397,9 @@ if (global.state == GAME_STATE.BATTLE) {
                     if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _count) % _count;
                     if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _count;
                 }
-                
-                if (_key_back) {
+                if (_key_back) { 
                     menu_stage = BATTLE_MENU.MAIN;
-                    menu_cursor = 1; 
+                    menu_cursor = 1; _key_back = false; exit; 
                 }
                 
                 if (_key_conf && _count > 0) {
@@ -277,6 +407,7 @@ if (global.state == GAME_STATE.BATTLE) {
                     menu_stage = BATTLE_MENU.TARGET_SELECT;
                     menu_context = "interact";
                     menu_cursor = 0;
+                    _key_conf = false;
                 }
                 break;
                 
@@ -286,10 +417,9 @@ if (global.state == GAME_STATE.BATTLE) {
                     if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _count) % _count;
                     if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _count;
                 }
-                
-                if (_key_back) {
+                if (_key_back) { 
                     menu_stage = BATTLE_MENU.MAIN;
-                    menu_cursor = 2; 
+                    menu_cursor = 2; _key_back = false; exit; 
                 }
                 
                 if (_key_conf && _count > 0) {
@@ -299,18 +429,13 @@ if (global.state == GAME_STATE.BATTLE) {
                     _current_actor.chosen_action_type = "take_action";
                     _current_actor.chosen_sub_action  = _chosen_action;
                     _current_actor.chosen_target_index = -1;
-                    
-                    if (_chosen_action == "Defend") {
-                        _current_actor.is_defending = true; 
-                    }
+                    if (_chosen_action == "Defend") _current_actor.is_defending = true; 
                     
                     party_input_index++;
                     menu_stage = BATTLE_MENU.MAIN;
                     menu_cursor = 0;
-                    
-                    if (party_input_index >= party_max_members) {
-                        battle_sub_state = BATTLE_STATE.TURN_SORTING;
-                    }
+                    if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
+                    _key_conf = false;
                 }
                 break;
                 
@@ -319,20 +444,32 @@ if (global.state == GAME_STATE.BATTLE) {
                 var _item_count = array_length(_inv);
 
                 if (_item_count == 0) {
-                    if (_key_back || _key_conf) {
+                    if (_key_back || _key_conf) { 
                         menu_stage = BATTLE_MENU.MAIN;
-                        menu_cursor = 3;
+                        menu_cursor = 3; 
                     }
                     break;
                 }
 
                 var _cols = 2;
-                if (_key_right) { if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _item_count) menu_cursor += 1; else menu_cursor -= (menu_cursor % _cols); }
-                if (_key_left)  { if (menu_cursor % _cols > 0) menu_cursor -= 1; else { var _tr = menu_cursor + (_cols - 1); menu_cursor = (_tr < _item_count) ? _tr : _item_count - 1; } }
-                if (_key_down)  { if (menu_cursor + _cols < _item_count) menu_cursor += _cols; else menu_cursor = menu_cursor % _cols; }
-                if (_key_up)    { if (menu_cursor - _cols >= 0) menu_cursor -= _cols; else { var _lr = menu_cursor; while (_lr + _cols < _item_count) { _lr += _cols; } menu_cursor = _lr; } }
+                if (_key_right) { 
+                    if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _item_count) menu_cursor += 1;
+                    else menu_cursor -= (menu_cursor % _cols); 
+                }
+                if (_key_left)  { 
+                    if (menu_cursor % _cols > 0) menu_cursor -= 1;
+                    else { var _tr = menu_cursor + (_cols - 1); menu_cursor = (_tr < _item_count) ? _tr : _item_count - 1; } 
+                }
+                if (_key_down)  { 
+                    if (menu_cursor + _cols < _item_count) menu_cursor += _cols;
+                    else menu_cursor = menu_cursor % _cols; 
+                }
+                if (_key_up)    { 
+                    if (menu_cursor - _cols >= 0) menu_cursor -= _cols;
+                    else { var _lr = menu_cursor; while (_lr + _cols < _item_count) { _lr += _cols; } menu_cursor = _lr; } 
+                }
 
-                if (_key_back) {
+                if (_key_back) { 
                     menu_stage = BATTLE_MENU.MAIN;
                     menu_cursor = 3; 
                 }
@@ -344,12 +481,11 @@ if (global.state == GAME_STATE.BATTLE) {
                     menu_cursor = 0; 
                 }
                 break;
-            
+                
             case BATTLE_MENU.ITEM_TARGET_SELECT:
                 var _party_count = array_length(party_members);
                 if (_key_up || _key_left)    menu_cursor = (menu_cursor - 1 + _party_count) % _party_count;
                 if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _party_count;
-
                 if (_key_back) {
                     menu_stage = BATTLE_MENU.ITEM_USE;
                     menu_cursor = obj_item_manager.selected_item; 
@@ -366,35 +502,42 @@ if (global.state == GAME_STATE.BATTLE) {
                     party_input_index++;
                     menu_stage = BATTLE_MENU.MAIN;
                     menu_cursor = 0;
-                    
-                    if (party_input_index >= party_max_members) {
-                        battle_sub_state = BATTLE_STATE.TURN_SORTING;
-                    }
+                    if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
                 }
                 break;
         }
     }
-
     // ------------------------------------------
-    // SUB-STATE: TURN SORTING & QUEUE BUILDING
+    // SUB-STATE 2: TURN SORTING & QUEUE BUILDING
     // ------------------------------------------
-    if (battle_sub_state == BATTLE_STATE.TURN_SORTING) {
+    else if (battle_sub_state == BATTLE_STATE.TURN_SORTING) {
         turn_queue = [];
+        var _living_party_count = 0;
         
-        // 1. Gather all living party actions
-        var _party_count = array_length(party_members);
-        for (var _i = 0; _i < _party_count; _i++) {
+        for (var _i = 0; _i < array_length(party_members); _i++) {
             var _member = party_members[_i];
             if (_member.hp > 0) {
+                _living_party_count++;
+                
+                // Pack active choices directly from menu caching layer into action queue
                 array_push(turn_queue, {
                     actor_type: "party",
                     actor_index: _i,
-                    spd: _member.spd
+                    spd: _member.spd,
+                    chosen_action_type: variable_instance_exists(_member, "chosen_action_type") ? _member.chosen_action_type : "fight",
+                    chosen_target_index: variable_instance_exists(_member, "chosen_target_index") ? _member.chosen_target_index : 0,
+                    chosen_sub_action: variable_instance_exists(_member, "chosen_sub_action") ? _member.chosen_sub_action : "",
+                    chosen_item_reference: variable_instance_exists(_member, "chosen_item_reference") ? _member.chosen_item_reference : undefined,
+                    chosen_item_inventory_idx: variable_instance_exists(_member, "chosen_item_inventory_idx") ? _member.chosen_item_inventory_idx : -1
                 });
             }
         }
         
-        // 2. Gather all living enemy actions & build automatic target sets
+        if (_living_party_count == 0) {
+            global.state = GAME_STATE.GAMEOVER;
+            exit;
+        }
+        
         var _enemy_count = array_length(global.active_battle_enemies);
         for (var _i = 0; _i < _enemy_count; _i++) {
             var _enemy = global.active_battle_enemies[_i];
@@ -403,7 +546,6 @@ if (global.state == GAME_STATE.BATTLE) {
                 var _target_party_idx = irandom(array_length(party_members) - 1);
                 while (party_members[_target_party_idx].hp <= 0) {
                     _target_party_idx = irandom(array_length(party_members) - 1);
-                    if (party_members[0].hp <= 0 && party_members[1].hp <= 0 && party_members[2].hp <= 0) break;
                 }
                 
                 array_push(turn_queue, {
@@ -416,85 +558,121 @@ if (global.state == GAME_STATE.BATTLE) {
             }
         }
         
-        // 3. Dynamic speed-sorting algorithm
         array_sort(turn_queue, function(_element1, _element2) {
             return _element2.spd - _element1.spd;
         });
-        
         battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
-        exit;
     }
-
     // ------------------------------------------
-    // SUB-STATE: EXECUTING INDIVIDUAL QUEUE ENTRIES
+    // SUB-STATE 3: EXECUTING INDIVIDUAL QUEUE ENTRIES
     // ------------------------------------------
-    if (battle_sub_state == BATTLE_STATE.TURN_PROCESSING) {
+    else if (battle_sub_state == BATTLE_STATE.TURN_PROCESSING) {
         if (array_length(turn_queue) == 0) {
-            // Round finished! Strip defense shields across the team
             for (var _i = 0; _i < array_length(party_members); _i++) {
                 party_members[_i].is_defending = false;
             }
-            
             party_input_index = 0;
             battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
             menu_stage = BATTLE_MENU.MAIN;
             menu_cursor = 0;
+
+            battle_text = "";
+            text_char_count = 0; 
             exit;
         }
         
         current_turn_act = array_shift(turn_queue);
-        action_timer = 90; 
+        action_timer = 120; 
         text_char_count = 0;
         
         // --- PROCESS PARTY MEMBER TURN ---
         if (current_turn_act.actor_type == "party") {
             var _actor = party_members[current_turn_act.actor_index];
-            
-            // Mid-turn safety: check if player died before getting to act this round
             if (_actor.hp <= 0) {
                 battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
                 exit;
             }
-            
-            switch (_actor.chosen_action_type) {
+    
+            switch (current_turn_act.chosen_action_type) {
                 case "fight":
-                    // Text details generated directly via event_user 0 inside hit_bar resolve hooks
+                    var _target = global.active_battle_enemies[current_turn_act.chosen_target_index];
+                    if (instance_exists(_target) && _target.hp > 0) {
+        
+                        var _mult = variable_instance_exists(_actor, "chosen_hit_multiplier") ? _actor.chosen_hit_multiplier : 1.0;
+                        var _verd = variable_instance_exists(_actor, "chosen_hit_verdict") ? _actor.chosen_hit_verdict : "HIT";
+                        if (is_undefined(_mult) || !is_real(_mult)) _mult = 1.0;
+                        
+                        var _damage = max(1, _actor.atk - _target.def);
+                        _damage = ceil(_damage * _mult);
+        
+                        _target.hp = max(0, _target.hp - _damage);
+                        var _spawn_x = _target.x - camera_get_view_x(view_camera[0]);
+                        var _spawn_y = (_target.y - camera_get_view_y(view_camera[0])) - 15;
+        
+                        if (!variable_instance_exists(_target, "display_hp")) {
+                            _target.display_hp = _target.hp + _damage;
+                        }
+        
+                        array_push(popup_numbers, {
+                            type: "jumping_number", 
+                            x: _spawn_x,
+                            y: _spawn_y,
+                            hspeed: random_range(-1.5, 1.5),
+                            vspeed: random_range(-4.0, -2.0),
+                            gravity: 0.2,
+                            text: string(_damage),
+                            life: 45,
+                            max_life: 45,
+                            color: (_mult >= 1.5) ? c_yellow : c_white
+                        });
+                        battle_text = string(_actor.name) + " attacks " + string(_target.name) + "! " + string(_verd);
+                        screenshake_amount = (_mult >= 1.5) ? 5 : 2;
+                    } else {
+                        battle_text = _actor.name + " swung, but the target was gone!";
+                    }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
-                    
+            
                 case "interact":
-                    var _target = global.active_battle_enemies[_actor.chosen_target_index];
+                    var _target = global.active_battle_enemies[current_turn_act.chosen_target_index];
                     if (instance_exists(_target) && _target.hp > 0) {
-                        battle_text = _actor.name + " used " + _actor.chosen_sub_action + " on " + string(_target.name) + "!";
-                        if (_actor.chosen_sub_action == "Check") {
+                        var _e_name = variable_instance_exists(_target, "name") ? _target.name : "Enemy";
+                        battle_text = _actor.name + " used " + current_turn_act.chosen_sub_action + " on " + string(_e_name) + "!";
+                        if (current_turn_act.chosen_sub_action == "Check") {
                             battle_text += " ATK: " + string(_target.atk) + " DEF: " + string(_target.def);
                         }
                     } else {
-                        battle_text = _actor.name + " tried to look for an enemy, but it was already gone!";
+                        battle_text = _actor.name + " looked for the target, but it was already gone!";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
                     
                 case "take_action":
-                    if (_actor.chosen_sub_action == "Defend") {
+                    if (current_turn_act.chosen_sub_action == "Defend") { 
                         battle_text = _actor.name + " is guarding safely!";
-                    } else if (_actor.chosen_sub_action == "Flee") {
+                    } else if (current_turn_act.chosen_sub_action == "Flee") { 
                         battle_text = "Escaping from battle layout...";
-                    } else {
+                    } else { 
                         battle_text = _actor.name + " focused power!";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
                     
                 case "item":
-                    var _target = party_members[_actor.chosen_target_index];
-                    var _item = _actor.chosen_item_reference;
-                    
-                    if (_target.hp > 0 || _item.name == "Revive") { 
-                        _item.effect(_target);
-                        battle_text = _actor.name + " used " + _item.name + " on " + _target.name + "!";
+                    var _target = party_members[current_turn_act.chosen_target_index];
+                    var _item = current_turn_act.chosen_item_reference;
+                    if (is_struct(_item)) {
+                        if (_target.hp > 0 || _item.name == "Revive") { 
+                            _item.effect(_target);
+                            battle_text = _actor.name + " used " + _item.name + " on " + _target.name + "!";
+                            if (instance_exists(obj_item_manager)) {
+                                array_delete(obj_item_manager.inv, current_turn_act.chosen_item_inventory_idx, 1);
+                            }
+                        } else {
+                            battle_text = _actor.name + " tried to use an item, but the target was down!";
+                        }
                     } else {
-                        battle_text = _actor.name + " tried to use an item, but the target was down!";
+                        battle_text = _actor.name + " fumbled with their inventory!";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
@@ -503,45 +681,59 @@ if (global.state == GAME_STATE.BATTLE) {
         // --- PROCESS ENEMY AUTOMATIC TURN ---
         else if (current_turn_act.actor_type == "enemy") {
             var _enemy = current_turn_act.actor_instance;
-            
-            // Mid-turn safety: check if enemy died before getting to act this round
             if (!instance_exists(_enemy) || _enemy.hp <= 0) {
                 battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
                 exit;
             }
-            
+    
             var _target = party_members[current_turn_act.target_index];
-            battle_text = string(_enemy.name) + " strikes " + string(_target.name) + "!";
-            
+            var _e_name = variable_instance_exists(_enemy, "name") ? _enemy.name : "Enemy";
+            battle_text = string(_e_name) + " strikes " + string(_target.name) + "!";
             var _damage = max(1, _enemy.atk - _target.def);
             if (_target.is_defending) _damage = ceil(_damage * 0.5);
-            
+    
             _target.hp = max(0, _target.hp - _damage);
             
-          
-            // Push damage tracking parameters out, assigning max_life and color safely
+            var _target_idx = current_turn_act.target_index;
+            var _row_start_y = 52;
+            var _row_vert_spacing = 50;
+    
+            var _spawn_x = 75;
+            var _spawn_y = _row_start_y + (_target_idx * _row_vert_spacing) + 10;
+            
             array_push(popup_numbers, {
-                xx: 100, // Replace with your target drawing positions later
-                yy: 150, 
+                x: _spawn_x, 
+                y: _spawn_y, 
                 text: string(_damage),
                 life: 45,
                 max_life: 45,
-                color: c_red // Added to resolve Draw GUI coloration crash
+                color: c_red 
             });
             
+            var _particle_count = 8;
+            for (var _p_idx = 0; _p_idx < _particle_count; _p_idx++) {
+                array_push(popup_numbers, {
+                    type: "particle",
+                    x: _spawn_x,
+                    y: _spawn_y,
+                    hspeed: random_range(-2.5, 2.5),
+                    vspeed: random_range(-3.0, -1.0), 
+                    gravity: 0.15,
+                    life: random_range(20, 35),
+                    color: choose(c_red, c_orange, c_white)
+                });
+            }
+    
             screenshake_amount = 3; 
             battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
         }
-        exit;
     }
-
     // ------------------------------------------
-    // SUB-STATE: ACTION RESOLUTION TIMING WINDOWS
+    // SUB-STATE 4: ACTION RESOLUTION TIMING WINDOWS
     // ------------------------------------------
-    if (battle_sub_state == BATTLE_STATE.ACTION_RESOLUTION) {
+    else if (battle_sub_state == BATTLE_STATE.ACTION_RESOLUTION) {
         if (action_timer > 0) {
             action_timer--;
-            
             if (_key_conf && text_char_count >= string_length(battle_text)) {
                 action_timer = 0;
             }
@@ -550,6 +742,6 @@ if (global.state == GAME_STATE.BATTLE) {
             current_turn_act = noone;
             battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
         }
-        exit;
     }
 }
+exit;

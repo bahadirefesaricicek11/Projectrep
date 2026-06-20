@@ -1,12 +1,8 @@
 function scr_text() {
     
-    var _name = global.plrName;
+    var _name = global.player_name;
     global.gold_amount = 0;
     
-    if (instance_exists(obj_player)) {
-        _name = obj_player.name;
-        global.plrName = obj_player.name;
-    }
     
     if (instance_exists(obj_gold_stack)) {
         global.gold_amount = obj_gold_stack.amount;

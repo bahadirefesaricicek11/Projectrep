@@ -16,7 +16,7 @@ if obj_item_manager.inv_open == true
     
 	draw_set_halign(fa_center);
 
-	var player_name = string(obj_player.name);
+	var player_name = string(global.player_name);
 	var max_width = 50;
 	var max_scale = 0.25;
 

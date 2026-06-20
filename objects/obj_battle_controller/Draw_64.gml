@@ -1,14 +1,16 @@
-/// @description Render UI & Tactical Layouts 
+// --- 1. GLOBAL DRAW INITIALIZATION & VECTOR SETUP ---
+var _gui_w = display_get_gui_width();
+var _gui_h = display_get_gui_height();
 
-var _gui_w = display_get_gui_width(); 
-var _gui_h = display_get_gui_height(); 
+// Reset text parameters to baseline before any rendering passes
+draw_set_font(battle_font);
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
 
-// Apply screen shake vectors dynamically
+// Apply screen shake vectors dynamically at the start so ALL layers can use them
 var _sx = random_range(-screenshake_amount, screenshake_amount); 
 var _sy = random_range(-screenshake_amount, screenshake_amount); 
 
-draw_set_font(battle_font); 
-draw_set_valign(fa_top); 
 
 // ========================================== 
 // STATE: GAME OVER LAYOUT SCREEN
@@ -175,30 +177,115 @@ if (global.state == GAME_STATE.BATTLE) {
         draw_rectangle(0, 0, _gui_w, _gui_h, false); 
     } 
 
-    // --- 1. HUD: CLOVER METER --- 
-    var _player_member = (array_length(party_members) > 0) ? party_members[0] : noone; 
-
-    if (_player_member != noone && variable_struct_exists(_player_member, "clover_leaves") && sprite_exists(spr_clover)) { 
-        draw_set_halign(fa_center); 
-        var _clover_x = 192 + _sx;  
-        var _clover_y = 20 + _sy;   
-        var _img_frame = clamp(_player_member.clover_leaves, 0, 4); 
-        draw_sprite_ext(spr_clover, _img_frame, _clover_x, _clover_y, 1.0, 1.0, 0, c_white, 1.0); 
-    } 
-
     var _row_start_y = 52; 
-    var _row_vert_spacing = 42; 
+    var _row_vert_spacing = 50; 
 
-    // --- 2. FIELD LAYER: PLAYER & ALLY SPRITES --- 
-    draw_set_halign(fa_left);  
-    var _player_field_x = 42 + _sx;  
+    // --- 2. HUD: VERTICAL HEALTH BOX SYSTEM (STACKED TO THE LEFT OF ALLIES) ---
+    draw_set_font(Small_Font);
+    
+    var _native_w = 74;
+    var _native_h = 84;
+    var _scale = 0.75; // Slightly reduced to gracefully stack vertically alongside positions
+    
+    var _box_w = _native_w * _scale;
+    var _box_h = _native_h * _scale;
+
+    for (var _i = 0; _i < party_max_members; _i++) {
+        var _member = party_members[_i];
+        if (!is_struct(_member) && !instance_exists(_member)) continue;
+        
+        // Pin health layout directly to the left side of the row line positions
+        var _current_box_x = 5 + _sx;
+        var _current_box_y = (_i * _row_vert_spacing) + 30 + _sy;
+        
+        // 1. Draw Background Frame
+        if (sprite_exists(spr_hp_box)) {
+            draw_sprite_ext(spr_hp_box, 0, _current_box_x, _current_box_y, _scale, _scale, 0, c_white, 1.0);
+        }
+        
+        // 2. Integrated Character Names
+        draw_set_halign(fa_left);
+        var _name_color = (_member.hp <= 0) ? c_red : c_white;
+        var _text_local_x = _current_box_x + (8 * _scale) + 1;
+        var _text_local_y = _current_box_y + (10 * _scale);
+        
+        draw_text_transformed_color(_text_local_x, _text_local_y, string_upper(_member.name), 0.5, 0.5, 0, _name_color, _name_color, _name_color, _name_color, 1);
+        
+        // 3. Four-Frame Odometer Logic
+        var _hp_val = max(0, _member.display_hp);
+        var _whole_hp = floor(_hp_val);
+        var _global_fraction = _hp_val - _whole_hp; 
+        
+        if (_global_fraction < 0.05 || _global_fraction > 0.95) {
+            _global_fraction = 0;
+        }
+        
+        var _hund_digit = floor(_whole_hp / 100) % 10;
+        var _tens_digit = floor(_whole_hp / 10) % 10;
+        var _ones_digit = _whole_hp % 10;
+        
+        var _hund_frame = _hund_digit * 4;
+        var _tens_frame = _tens_digit * 4;
+        var _ones_frame = _ones_digit * 4;
+        
+        if (_global_fraction > 0) {
+            var _sub_offset = floor(_global_fraction * 4);
+            _ones_frame += _sub_offset;
+            
+            if (_ones_digit == 0) {
+                _tens_frame += _sub_offset;
+                if (_tens_digit == 0) {
+                    _hund_frame += _sub_offset;
+                }
+            }
+        }
+
+        // 4. Draw Odometer Digits
+        if (sprite_exists(spr_roller)) {
+            var _native_local_x = 25; 
+            var _native_local_y = 25; 
+            var _native_digit_w = 7;  
+            var _pixel_margin   = 1; 
+            
+            var _roller_start_x  = _current_box_x + (_native_local_x * _scale);
+            var _roller_draw_y   = _current_box_y + (_native_local_y * _scale);
+            var _digit_stride    = (_native_digit_w + _pixel_margin) * _scale;
+            
+            draw_sprite_ext(spr_roller, _hund_frame, _roller_start_x, _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
+            draw_sprite_ext(spr_roller, _tens_frame, _roller_start_x + _digit_stride, _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
+            draw_sprite_ext(spr_roller, _ones_frame, _roller_start_x + (_digit_stride * 2), _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
+        }
+        
+        // 5. Global Selection Card Display
+        if (_i < array_length(global.active_combat_buffs)) {
+            var _card_data = global.active_combat_buffs[_i];
+            if (_card_data != noone && variable_struct_exists(_card_data, "icon_sprite")) {
+                if (sprite_exists(_card_data.icon_sprite)) {
+                    var _icon_local_x = 36; 
+                    var _icon_local_y = 47; 
+                    var _icon_draw_x = _current_box_x + (_icon_local_x * _scale);
+                    var _icon_draw_y = _current_box_y + (_icon_local_y * _scale);
+                    var _target_frame = variable_struct_exists(_card_data, "icon_frame") ? _card_data.icon_frame : 0;
+                    
+                    draw_sprite_ext(_card_data.icon_sprite, _target_frame, _icon_draw_x, _icon_draw_y, _scale, _scale, 0, c_white, 1.0);
+                }
+            }
+        }
+    }
+    
+    draw_set_halign(fa_left);
+    draw_set_font(battle_font);
+
+    // --- 3. FIELD LAYER: PLAYER & ALLY SPRITES --- 
+    // Shifted right slightly to prevent overlaps with the new vertical boxes layout
+    var _player_field_x = 54 + _sx;  
     var _p_count = array_length(party_members);
 
     for (var _p = 0; _p < _p_count; _p++) { 
         var _m = party_members[_p]; 
         if (!is_struct(_m) && !instance_exists(_m)) continue;
         if (_m.hp > 0) { 
-            var _py = _row_start_y + (_p * _row_vert_spacing) + _sy; 
+            var _py = _row_start_y + (_p * _row_vert_spacing) + _sy - 20; 
              
             var _is_active_input = (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && party_input_index == _p && menu_stage != BATTLE_MENU.HIT_BAR && battle_text == "");
             var _input_bounce_x = _is_active_input ? round(sin(current_time * 0.015) * 2) + 3 : 0;
@@ -217,88 +304,97 @@ if (global.state == GAME_STATE.BATTLE) {
                     }
                 }
             } 
-             
-            var _bar_w = 32; 
-            var _bar_h = 3; 
-            var _bar_x = _final_draw_x - (_bar_w / 2); 
-            var _bar_y = _py + 14;  
-             
-            draw_set_color(make_color_rgb(60, 20, 20)); 
-            draw_rectangle(_bar_x, _bar_y, _bar_x + _bar_w, _bar_y + _bar_h, false); 
-             
-            if (_m.max_hp > 0) { 
-                var _hp_percent = clamp(_m.display_hp / _m.max_hp, 0, 1); 
-                var _fill_w = _bar_w * _hp_percent; 
-                if (_fill_w > 0) { 
-                    var _hp_color = (_hp_percent > 0.5) ? c_lime : ((_hp_percent > 0.25) ? c_yellow : c_red);
-                    draw_set_color(_hp_color); 
-                    draw_rectangle(_bar_x, _bar_y, _bar_x + _fill_w, _bar_y + _bar_h, false); 
-                } 
-            }
-
-            draw_set_color(_is_active_input ? c_yellow : c_white);
-            var _num_str = string(_m.hp) + "/" + string(_m.max_hp);
-            draw_text_transformed(_bar_x + _bar_w + 5, _bar_y - 2, _num_str, 0.45, 0.45, 0);
         } 
     } 
 
-    // --- 3. FIELD LAYER: ENEMY SPRITES + HP METERS --- 
-    var _enemy_count = array_length(global.active_battle_enemies); 
-    if (_enemy_count > 0) { 
-        var _base_enemy_x = _gui_w - 55;  
-     
-        for (var _e = 0; _e < _enemy_count; _e++) { 
-            var _enemy_inst = global.active_battle_enemies[_e]; 
-         
-            if (instance_exists(_enemy_inst) && variable_instance_exists(_enemy_inst, "hp") && _enemy_inst.hp > 0) { 
-                var _x_offset = (_e == 1) ? -18 : 12; 
-                var _y_offset = (_e == 1) ? 0 : ((_e == 0) ? -6 : 6); 
-                
-                var _ex = _base_enemy_x + _x_offset + _sx;
-                var _ey = _row_start_y + (_e * _row_vert_spacing) + _y_offset + _sy;  
+// ==========================================
+    // HUD & SPRITE: ENEMY MASTER RENDER LAYOUT
+    // ==========================================
+    var _e_count = array_length(global.active_battle_enemies);
 
-                var _is_targeted = (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_cursor == _e && battle_sub_state == BATTLE_STATE.PLAYER_INPUT); 
-                var _blend = _is_targeted ? c_red : c_white; 
-             
-                var _enemy_sprite = noone; 
-                if (variable_instance_exists(_enemy_inst, "sprite") && sprite_exists(_enemy_inst.sprite)) { 
-                    _enemy_sprite = _enemy_inst.sprite; 
-                } else if (variable_instance_exists(_enemy_inst, "sprite_index") && sprite_exists(_enemy_inst.sprite_index)) { 
-                    _enemy_sprite = _enemy_inst.sprite_index; 
-                } 
+    for (var _j = 0; _j < _e_count; _j++) {
+        var _enemy_inst = global.active_battle_enemies[_j];
+        if (!instance_exists(_enemy_inst) || _enemy_inst.hp <= 0) continue;
+    
+        // TRANSLATION LAYER: Convert room space positions cleanly to GUI space
+        var _gui_x = _enemy_inst.x - camera_get_view_x(view_camera[0]);
+        var _gui_y = _enemy_inst.y - camera_get_view_y(view_camera[0]);
+    
+        // -------------------------------------------------------------
+        // A. ENEMY SPRITE DRAW PASS
+        // -------------------------------------------------------------
+        var _enemy_sprite = variable_instance_exists(_enemy_inst, "sprite_index") ? _enemy_inst.sprite_index : noone;
+        var _enemy_frame  = variable_instance_exists(_enemy_inst, "image_index")  ? _enemy_inst.image_index  : 0;
+        
+        var _blend_color = c_white;
+        if (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_cursor == _j) {
+            _blend_color = (current_time % 200 < 100) ? c_yellow : c_white;
+        }
+        
+        if (sprite_exists(_enemy_sprite)) {
+            draw_sprite_ext(
+                _enemy_sprite, 
+                _enemy_frame, 
+                _gui_x + _sx + 30, 
+                _gui_y + _sy, 
+                1.0, 1.0, 0, _blend_color, 1.0
+            );
+        } else {
+            draw_set_color(c_purple);
+            draw_rectangle(_gui_x - 16 + _sx, _gui_y - 16 + _sy, _gui_x + 16 + _sx, _gui_y + 16 + _sy, false);
+        }
 
-                if (sprite_exists(_enemy_sprite)) { 
-                    var _img_idx = variable_instance_exists(_enemy_inst, "image_index") ? _enemy_inst.image_index : 0; 
-                    draw_sprite_ext(_enemy_sprite, floor(_img_idx), _ex, _ey, 1.0, 1.0, 0, _blend, 1.0); 
-                    
-                    if (_is_targeted) {
-                        draw_set_halign(fa_center);
-                        draw_set_color(c_yellow);
-                        var _pulse_y = _ey - 22 + round(sin(current_time * 0.02) * 2);
-                        draw_text_transformed(_ex, _pulse_y, "v", 0.6, 0.6, 0);
-                    }
-                    
-                    var _e_bar_w = 20;
-                    var _e_bar_h = 2;
-                    var _e_bar_x = _ex - (_e_bar_w / 2);
-                    var _e_bar_y = _ey + 4; 
-                    
-                    draw_set_color(make_color_rgb(50, 10, 10));
-                    draw_rectangle(_e_bar_x, _e_bar_y, _e_bar_x + _e_bar_w, _e_bar_y + _e_bar_h, false);
-                    
-                    if (variable_instance_exists(_enemy_inst, "max_hp") && _enemy_inst.max_hp > 0) {
-                        var _e_pct = clamp(_enemy_inst.hp / _enemy_inst.max_hp, 0, 1);
-                        if (_e_pct > 0) {
-                            draw_set_color(_is_targeted ? c_orange : c_red);
-                            draw_rectangle(_e_bar_x, _e_bar_y, _e_bar_x + (_e_bar_w * _e_pct), _e_bar_y + _e_bar_h, false);
-                        }
-                    }
-                } 
-            } 
-        } 
-    } 
+        // -------------------------------------------------------------
+        // B. HEALTH BAR PASS (Aligned to Enemy Top)
+        // -------------------------------------------------------------
+        var _sprite_top_offset = 0;
+        if (sprite_exists(_enemy_sprite)) {
+            // Subtracts height from origin baseline to find the visual top edge
+            _sprite_top_offset = sprite_get_height(_enemy_sprite) - sprite_get_yoffset(_enemy_sprite);
+        } else {
+            _sprite_top_offset = 16; 
+        }
 
-    // --- 4. THE LOWER CHRONICLE (TEXT CONTROLLER) --- 
+        // Anchor coordinates safely relative to the calculated ENEMY TOP boundary
+        var _box_x = _gui_x + _sx + 30;
+        var _box_y = (_gui_y - _sprite_top_offset - 5) + _sy; // Exactly 14 pixels above their head
+        var _bar_w = 40;
+        var _bar_h = 4;
+    
+        // 1. Draw Name String
+        draw_set_font(Small_Font);
+        draw_set_halign(fa_center);
+        draw_set_color(c_white);
+        draw_text_transformed(_box_x, _box_y - 12, string_upper(_enemy_inst.name), 0.35, 0.35, 0);
+    
+        // 2. Draw Health Bar Track Background
+        draw_set_color(c_dkgray);
+        draw_rectangle(_box_x - (_bar_w / 2), _box_y, _box_x + (_bar_w / 2), _box_y + _bar_h, false);
+    
+        // 3. Compute Rolling Scale Value safely
+        var _hp_percent = 0;
+        if (_enemy_inst.max_hp > 0) {
+            var _current_display_hp = variable_instance_exists(_enemy_inst, "display_hp") ? _enemy_inst.display_hp : _enemy_inst.hp;
+            _hp_percent = clamp(_current_display_hp / _enemy_inst.max_hp, 0, 1);
+        }
+    
+        // 4. Draw Active Fill Slider
+        if (_hp_percent > 0) {
+            var _fill_end_x = (_box_x - (_bar_w / 2)) + (_bar_w * _hp_percent);
+            var _bar_color = (_hp_percent <= 0.25) ? c_orange : c_red; 
+        
+            draw_set_color(_bar_color);
+            draw_rectangle(_box_x - (_bar_w / 2), _box_y, _fill_end_x, _box_y + _bar_h, false);
+        }
+    
+        // 5. Draw Border Accent
+        draw_set_color(c_black);
+        draw_rectangle(_box_x - (_bar_w / 2) - 1, _box_y - 1, _box_x + (_bar_w / 2) + 1, _box_y + _bar_h + 1, true);
+    }
+	
+	draw_set_font(battle_font);
+	
+    // --- 5. THE LOWER CHRONICLE (TEXT CONTROLLER) --- 
     var _dash_w = _gui_w - 160; 
     var _dash_h = 64; 
     var _dash_x = 80 + _sx; 
@@ -325,18 +421,31 @@ if (global.state == GAME_STATE.BATTLE) {
         draw_text_ext_transformed(_dash_x + 10, _dash_y + 8, string_copy(battle_text, 1, floor(text_char_count)), _line_sep, _max_text_w, _text_scale, _text_scale, 0); 
     } 
 
-    // --- 5. CAROUSEL MAIN BUTTON SYSTEMS --- 
+	// --- 6. CAROUSEL MAIN BUTTON SYSTEMS --- 
     if (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && battle_text == "") { 
         var _btn_sprites = [spr_fight_btn, spr_int_btn, spr_action_btn, spr_use_btn]; 
         var _btn_count = array_length(_btn_sprites); 
          
         draw_set_halign(fa_center);  
-        var _card_spacing = 53;  
+        var _button_spacing = 53;  
         var _act_start_x = 112;  
-        var _act_y = _gui_h - 28;  
+        var _act_y = _gui_h - 32;  
 
         for (var _i = 0; _i < _btn_count; _i++) { 
-            var _ax = _act_start_x + (_i * _card_spacing) + _sx; 
+            // Calculate baseline horizontal position
+            var _ax = _act_start_x + (_i * _button_spacing); 
+            
+            // --- CLOVER ROOM MODIFICATION ---
+            // Push the 1st and 2nd choices left, push the 3rd and 4th choices right
+            // This cleanly opens up a wide gap right in the middle
+            if (_i <= 1) {
+                _ax -= 6;  // Pulls FIGHT and INT left by 6px
+            } else {
+                _ax += 6;  // Pushes ACTION and USE right by 6px
+            }
+            
+            // Apply screen shake vectors dynamically
+            _ax += _sx;
             var _ay = _act_y + _sy; 
              
             var _is_selected = (menu_stage == BATTLE_MENU.MAIN && menu_cursor == _i); 
@@ -352,13 +461,27 @@ if (global.state == GAME_STATE.BATTLE) {
                 if (_is_selected && menu_stage != BATTLE_MENU.MAIN) _alpha = 1.0; 
                  
                 var _selected_y_offset = _is_selected ? -2 : 0;
-                draw_sprite_ext(_current_sprite, _sub_image, _ax, _ay + _selected_y_offset, 1.0, 1.0, 0, c_white, _alpha); 
+                draw_sprite_ext(_current_sprite, _sub_image, _ax, _ay + _selected_y_offset, 1.2, 1.2, 0, c_white, _alpha); 
             } 
         } 
-        draw_set_halign(fa_left);  
-    } 
 
-    // --- 6. CONTEXT SUB-MENU OVERLAY --- 
+        // 🌟 CRIT CLOVER: Stays perfectly centered in the middle of the screen
+        var _player_member = (array_length(party_members) > 0) ? party_members[0] : noone; 
+        if (_player_member != noone && variable_struct_exists(_player_member, "clover_leaves") && sprite_exists(spr_clover)) { 
+            // Re-calculated midpoint between modified button 1 (INT) and button 2 (ACTION) positions
+            var _btn1_x = (_act_start_x + (1 * _button_spacing)) - 6;
+            var _btn2_x = (_act_start_x + (2 * _button_spacing)) + 6;
+            var _clover_x = ((_btn1_x + _btn2_x) / 2) + _sx;  
+            var _clover_y = _act_y - 2 + _sy;   
+            
+            var _img_frame = clamp(_player_member.clover_leaves, 0, 4); 
+            draw_sprite_ext(spr_clover, _img_frame, _clover_x, _clover_y, 1.0, 1.0, 0, c_white, 1.0); 
+        }
+
+        draw_set_halign(fa_left);  
+    }
+
+    // --- 7. CONTEXT SUB-MENU OVERLAY --- 
     if (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && menu_stage != BATTLE_MENU.MAIN && battle_text == "") { 
          
         if (menu_stage != BATTLE_MENU.HIT_BAR) {
@@ -376,12 +499,86 @@ if (global.state == GAME_STATE.BATTLE) {
         var _is_inventory = false; 
          
         switch (menu_stage) { 
-            case BATTLE_MENU.TARGET_SELECT:  
-                for(var _k=0; _k<array_length(global.active_battle_enemies); _k++) {
-                    var _item = global.active_battle_enemies[_k];
-                    if (instance_exists(_item)) array_push(_options_array, _item);  
+			case BATTLE_MENU.TARGET_SELECT:  
+                var _raw_enemy_count = array_length(global.active_battle_enemies);
+                
+                // FORCED FIX: Update the outer menu system's variable 
+                // so it realizes options DO exist and turns off the fallback text.
+                _total_options = _raw_enemy_count; 
+                
+                if (_raw_enemy_count == 0) {
+                    // Let the fallback handle it safely if there are truly no enemies
+                    break; 
                 }
-                break; 
+                
+                // ... rest of your target select drawing code remains exactly the same ...
+                
+                // 1. Calculate precise grid metrics restricted to INSIDE the box
+                var _cols = 2;
+                var _cell_w = (_dash_w - 32) / _cols; // Divide the box width cleanly into two columns
+                var _cell_h = 14;                     // Compact line height for retro fonts
+                
+                var _valid_enemy_index = 0; 
+                
+                for (var _k = 0; _k < _raw_enemy_count; _k++) {
+                    var _item = global.active_battle_enemies[_k];
+                    if (!instance_exists(_item)) continue; 
+        
+                    // Calculate column (0 or 1) and row dynamically
+                    var _col = _valid_enemy_index % _cols;
+                    var _row = floor(_valid_enemy_index / _cols);
+                    
+                    // Anchor coordinates perfectly inside your white border box margins
+                    var _item_x = _dash_x + 20 + (_col * _cell_w);
+                    var _item_y = _dash_y + 16 + (_row * _cell_h);
+        
+                    // Draw cursor indicator relative to the column item
+                    if (menu_cursor == _k) {
+                        draw_set_color(c_yellow); 
+                        draw_text_transformed(_item_x - 10, _item_y - 1, "*", 0.5, 0.5, 0); 
+                    } else {
+                        draw_set_color(c_white);
+                    }
+        
+                    // 2. Fetch and format target name
+                    var _enemy_name = variable_instance_exists(_item, "name") ? _item.name : "Enemy";
+                    var _text_color = c_white;
+                    
+                    if (variable_instance_exists(_item, "hp") && _item.hp <= 0) {
+                        _enemy_name = "[X] " + _enemy_name;
+                        _text_color = c_gray;
+                    }
+                    
+                    // Draw name with a forced safe pixel scale (0.5) to keep it inside columns
+                    draw_set_color(_text_color);
+                    draw_text_transformed(_item_x, _item_y, _enemy_name, 0.5, 0.5, 0);
+        
+                    // 3. Draw a micro HP bar shifted rightward inside the column cell
+                    var _bar_x = _item_x + 65; 
+                    var _bar_y = _item_y + 3;  
+                    var _bar_w = 24;           
+                    var _bar_h = 2;            
+        
+                    if (variable_instance_exists(_item, "max_hp") && _item.max_hp > 0) {
+                        var _hp_percent = clamp(_item.hp / _item.max_hp, 0, 1);
+            
+                        // Dark background track
+                        draw_set_color(c_dkgray);
+                        draw_rectangle(_bar_x, _bar_y, _bar_x + _bar_w, _bar_y + _bar_h, false);
+            
+                        // Dynamic health fill color
+                        if (_hp_percent > 0) {
+                            var _fill_color = (menu_cursor == _k) ? c_orange : c_lime;
+                            draw_set_color(_fill_color);
+                            draw_rectangle(_bar_x, _bar_y, _bar_x + (_bar_w * _hp_percent), _bar_y + _bar_h, false);
+                        }
+                    }
+                    
+                    _valid_enemy_index++;
+                }
+                draw_set_color(c_white);
+                break;
+				
             case BATTLE_MENU.INTERACT:      
                 _options_array = interact_options;  
                 break; 
@@ -440,8 +637,8 @@ if (global.state == GAME_STATE.BATTLE) {
                 break;
         } 
 
-        // --- GRID RENDERING SYSTEM ---
-        if (menu_stage != BATTLE_MENU.HIT_BAR) {
+        // ADD CONDITION: Completely skip this layout if the custom Target Selection layout is running
+        if (menu_stage != BATTLE_MENU.HIT_BAR && menu_stage != BATTLE_MENU.TARGET_SELECT) {
             var _cols = 2;
             var _max_visible = 4; 
             
@@ -456,12 +653,18 @@ if (global.state == GAME_STATE.BATTLE) {
             draw_set_halign(fa_left);
             draw_set_color(c_white);
 
+            // You can safely revert this back to its clean form now:
             if (_total_options == 0) {
-                draw_text_transformed(_dash_x + 20, _dash_y + 15, "NOTHING AVAILABLE", 0.6, 0.6, 0);
+                var _empty_string = "NOTHING AVAILABLE";
+                if (menu_stage == BATTLE_MENU.ITEM_USE)           _empty_string = "INVENTORY EMPTY";
+                if (menu_stage == BATTLE_MENU.INTERACT)           _empty_string = "NO INTERACTIONS AVAILABLE";
+                if (menu_stage == BATTLE_MENU.ITEM_TARGET_SELECT) _empty_string = "NO TARGETS AVAILABLE";
+                
+                draw_text_transformed(_dash_x + 20, _dash_y + 15, _empty_string, 0.6, 0.6, 0);
             } else {
                 for (var _i = _start_index; _i < _end_index; _i++) {
                     var _element = _options_array[_i];
-                    if (_element == undefined) continue;
+                    if (_element == undefined || _element == noone) continue;
 
                     var _relative_index = _i - _start_index;
                     var _col = _relative_index % _cols;
@@ -516,7 +719,7 @@ if (global.state == GAME_STATE.BATTLE) {
         }
     } 
 
-    // --- 7. TRANSIENT COMBAT TEXT OVERLAYS ---
+    // --- 8. TRANSIENT COMBAT TEXT OVERLAYS ---
     if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
         draw_set_halign(fa_center);
         draw_set_valign(fa_middle);
@@ -524,17 +727,39 @@ if (global.state == GAME_STATE.BATTLE) {
         var _pop_count = array_length(popup_numbers);
         for (var _i = 0; _i < _pop_count; _i++) {
             var _p = popup_numbers[_i];
+			var _pop_count = array_length(popup_numbers);
+            for (var _i = 0; _i < _pop_count; _i++) {
+                var _p = popup_numbers[_i];
+                if (!is_struct(_p)) continue;
+                
+				// --- CLEAN RE-ENGINEERED RENDERING PASS ---
+				if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
+				    for (var _i = 0; _i < array_length(popup_numbers); _i++) {
+				        var _p = popup_numbers[_i];
+        
+				        if (is_struct(_p) && variable_struct_exists(_p, "text")) {
+				            // Read coordinate configurations safely
+				            var _draw_x = variable_struct_exists(_p, "x") ? _p.x : (variable_struct_exists(_p, "xx") ? _p.xx : 0);
+				            var _draw_y = variable_struct_exists(_p, "y") ? _p.y : (variable_struct_exists(_p, "yy") ? _p.yy : 0);
             
-            var _life_pct = _p.life / _p.max_life;
-            var _alpha = clamp(_life_pct * 2, 0, 1); 
-            var _pop_scale = 0.65 + sin((1.0 - _life_pct) * pi) * 0.25; 
+				            var _col  = variable_struct_exists(_p, "color") ? _p.color : c_white;
+				            var _life = variable_struct_exists(_p, "life") ? _p.life : 30;
             
-            // Drop shadow text block pass
-            draw_text_transformed_color(_p.xx + 1, _p.yy + 1, _p.text, _pop_scale, _pop_scale, 0, c_black, c_black, c_black, c_black, _alpha);
-            // Main illuminated layer pass
-            draw_text_transformed_color(_p.xx, _p.yy, _p.text, _pop_scale, _pop_scale, 0, _p.color, _p.color, _p.color, _p.color, _alpha);
+				            // Text fading calculations as it expires
+				            var _alpha = clamp(_life / 15, 0, 1);
+            
+				            // Render the leaping text element
+				            draw_set_halign(fa_center);
+				            draw_text_transformed_color(_draw_x, _draw_y, string(_p.text), 0.5, 0.5, 0, _col, _col, _col, _col, _alpha);
+				            draw_set_halign(fa_left); // Reset alignment state
+				        }
+				    }
+				}
+			}
+			
+			
+            draw_set_valign(fa_top);
+            draw_set_halign(fa_left);
         }
-        draw_set_valign(fa_top);
-        draw_set_halign(fa_left);
     }
 }
