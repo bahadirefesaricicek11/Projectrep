@@ -85,13 +85,30 @@ if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
     }
 }
 
-// --- 4. NATIVE INPUT ENGINE ---
-var _key_left  = InputPressed(INPUT_VERB.LEFT);
-var _key_right = InputPressed(INPUT_VERB.RIGHT);
-var _key_up    = InputPressed(INPUT_VERB.UP);
-var _key_down  = InputPressed(INPUT_VERB.DOWN);
-var _key_conf  = InputPressed(INPUT_VERB.ACCEPT); 
-var _key_back  = InputPressed(INPUT_VERB.CANCEL);
+// --- 4. NATIVE INPUT ENGINE WITH SUB-STATE DECOUPLING ---
+var _key_left  = false;
+var _key_right = false;
+var _key_up    = false;
+var _key_down  = false;
+var _key_conf  = false;
+var _key_back  = false;
+
+// Only poll active physical buttons if we aren't displaying the victory message
+if (variable_instance_exists(id, "battle_sub_state") && battle_sub_state == BATTLE_STATE.VICTORY) {
+    // Check if our 1-second unskippable delay has cleared
+    if (variable_instance_exists(id, "victory_timer") && victory_timer >= 60) {
+        // Only accept a clean, fresh press to dismiss the screen
+        _key_conf = InputPressed(INPUT_VERB.ACCEPT);
+    }
+} else {
+    // Normal combat loop input reading
+    _key_left  = InputPressed(INPUT_VERB.LEFT);
+    _key_right = InputPressed(INPUT_VERB.RIGHT);
+    _key_up    = InputPressed(INPUT_VERB.UP);
+    _key_down  = InputPressed(INPUT_VERB.DOWN);
+    _key_conf  = InputPressed(INPUT_VERB.ACCEPT); 
+    _key_back  = InputPressed(INPUT_VERB.CANCEL);
+}
 
 // ==========================================
 // STATE LOGIC: CARD SELECTION
@@ -235,23 +252,21 @@ if (global.state == GAME_STATE.BATTLE) {
         }
     }
     
-    if (!_enemies_alive) {
-        global.state = GAME_STATE.PLAYING;
+    if (!_enemies_alive && battle_sub_state != BATTLE_STATE.VICTORY) {
+        battle_sub_state = BATTLE_STATE.VICTORY;
+        text_char_count = 0; 
+        battle_text = "Victory! You won the battle!"; 
+        
+        // FORCE INPUT CLEAR ON THE INITIAL MATRIX FRAMESHIFT
+        _key_conf = false; 
+        
+        // Flag them as dead so they stop acting
         for (var _e = 0; _e < _e_count; _e++) {
             var _enemy = global.active_battle_enemies[_e];
             if (instance_exists(_enemy)) {
-                instance_destroy(_enemy);
+                _enemy.is_dead = true; 
             }
         }
-        
-        // Check if the fallback variable exists first to prevent crashes
-        if (variable_global_exists("overworld_room_fallback") && room_exists(global.overworld_room_fallback)) {
-            room_goto(global.overworld_room_fallback);
-        } else {
-            // Default safe fallback if nothing was initialized
-            room_goto_previous(); 
-        }
-        exit;
     }
     
     // --- TEXT PACING ACCELERATOR ---
@@ -348,8 +363,52 @@ if (global.state == GAME_STATE.BATTLE) {
             case BATTLE_MENU.TARGET_SELECT:
                 var _enemy_count = array_length(global.active_battle_enemies);
                 if (_enemy_count > 0) {
-                    if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _enemy_count) % _enemy_count;
-                    if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _enemy_count;
+                    var _cols = 2; // Matches your Draw GUI column layout grid
+                    
+                    // --- GRID-BASED MENU NAVIGATION ---
+                    if (_key_right) {
+                        // Move right only if we aren't on the right edge and the target slot exists
+                        if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _enemy_count) {
+                            var _next = menu_cursor + 1;
+                            if (global.active_battle_enemies[_next].hp > 0) menu_cursor = _next;
+                        }
+                        _key_right = false;
+                    }
+                    if (_key_left) {
+                        // Move left only if we aren't on the left boundary column
+                        if (menu_cursor % _cols > 0) {
+                            var _prev = menu_cursor - 1;
+                            if (global.active_battle_enemies[_prev].hp > 0) menu_cursor = _prev;
+                        }
+                        _key_left = false;
+                    }
+                    if (_key_down) {
+                        // Jump down a full row block (+2 slots)
+                        if (menu_cursor + _cols < _enemy_count) {
+                            var _down = menu_cursor + _cols;
+                            if (global.active_battle_enemies[_down].hp > 0) menu_cursor = _down;
+                        }
+                        _key_down = false;
+                    }
+                    if (_key_up) {
+                        // Jump up a full row block (-2 slots)
+                        if (menu_cursor - _cols >= 0) {
+                            var _up = menu_cursor - _cols;
+                            if (global.active_battle_enemies[_up].hp > 0) menu_cursor = _up;
+                        }
+                        _key_up = false;
+                    }
+
+                    // Emergency safety sweep: If cursor lands on a dead target, find first living
+                    if (global.active_battle_enemies[menu_cursor].hp <= 0) {
+                        for (var _i = 0; _i < _enemy_count; _i++) {
+                            if (global.active_battle_enemies[_i].hp > 0) {
+                                menu_cursor = _i;
+                                break;
+                            }
+                        }
+                    }
+
                     if (_key_back) {
                         menu_stage = (menu_context == "interact") ? BATTLE_MENU.INTERACT : BATTLE_MENU.MAIN;
                         menu_cursor = 0; 
@@ -381,12 +440,6 @@ if (global.state == GAME_STATE.BATTLE) {
                             }
                             _key_conf = false;
                         }
-                    }
-                } else {
-                    if (_key_back || _key_conf) {
-                        menu_stage = BATTLE_MENU.MAIN;
-                        menu_cursor = 0;
-                        _key_back = false;
                     }
                 }
                 break;
@@ -595,7 +648,24 @@ if (global.state == GAME_STATE.BATTLE) {
     
             switch (current_turn_act.chosen_action_type) {
                 case "fight":
-                    var _target = global.active_battle_enemies[current_turn_act.chosen_target_index];
+                    var _t_idx = current_turn_act.chosen_target_index;
+                    var _target = global.active_battle_enemies[_t_idx];
+                    
+                    // --- ATTACK REDIRECTION ENGINE ---
+                    // If the selected enemy died earlier this turn, look for a new living threat
+                    if (!instance_exists(_target) || _target.hp <= 0) {
+                        var _enemy_count = array_length(global.active_battle_enemies);
+                        for (var _e = 0; _e < _enemy_count; _e++) {
+                            var _potential_foe = global.active_battle_enemies[_e];
+                            if (instance_exists(_potential_foe) && _potential_foe.hp > 0) {
+                                _t_idx = _e;
+                                _target = _potential_foe;
+                                current_turn_act.chosen_target_index = _e; // Redirect the action
+                                break;
+                            }
+                        }
+                    }
+                    
                     if (instance_exists(_target) && _target.hp > 0) {
         
                         var _mult = variable_instance_exists(_actor, "chosen_hit_multiplier") ? _actor.chosen_hit_multiplier : 1.0;
@@ -628,13 +698,29 @@ if (global.state == GAME_STATE.BATTLE) {
                         battle_text = string(_actor.name) + " attacks " + string(_target.name) + "! " + string(_verd);
                         screenshake_amount = (_mult >= 1.5) ? 5 : 2;
                     } else {
-                        battle_text = _actor.name + " swung, but the target was gone!";
+                        battle_text = _actor.name + " swung, but no enemies were left!";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
             
                 case "interact":
-                    var _target = global.active_battle_enemies[current_turn_act.chosen_target_index];
+                    var _t_idx = current_turn_act.chosen_target_index;
+                    var _target = global.active_battle_enemies[_t_idx];
+                    
+                    // --- INTERACT REDIRECTION ENGINE ---
+                    if (!instance_exists(_target) || _target.hp <= 0) {
+                        var _enemy_count = array_length(global.active_battle_enemies);
+                        for (var _e = 0; _e < _enemy_count; _e++) {
+                            var _potential_foe = global.active_battle_enemies[_e];
+                            if (instance_exists(_potential_foe) && _potential_foe.hp > 0) {
+                                _t_idx = _e;
+                                _target = _potential_foe;
+                                current_turn_act.chosen_target_index = _e; 
+                                break;
+                            }
+                        }
+                    }
+                    
                     if (instance_exists(_target) && _target.hp > 0) {
                         var _e_name = variable_instance_exists(_target, "name") ? _target.name : "Enemy";
                         battle_text = _actor.name + " used " + current_turn_act.chosen_sub_action + " on " + string(_e_name) + "!";
@@ -642,7 +728,7 @@ if (global.state == GAME_STATE.BATTLE) {
                             battle_text += " ATK: " + string(_target.atk) + " DEF: " + string(_target.def);
                         }
                     } else {
-                        battle_text = _actor.name + " looked for the target, but it was already gone!";
+                        battle_text = _actor.name + " looked around, but everything was quiet!";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
@@ -677,57 +763,8 @@ if (global.state == GAME_STATE.BATTLE) {
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
             }
-        } 
-        // --- PROCESS ENEMY AUTOMATIC TURN ---
-        else if (current_turn_act.actor_type == "enemy") {
-            var _enemy = current_turn_act.actor_instance;
-            if (!instance_exists(_enemy) || _enemy.hp <= 0) {
-                battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
-                exit;
-            }
-    
-            var _target = party_members[current_turn_act.target_index];
-            var _e_name = variable_instance_exists(_enemy, "name") ? _enemy.name : "Enemy";
-            battle_text = string(_e_name) + " strikes " + string(_target.name) + "!";
-            var _damage = max(1, _enemy.atk - _target.def);
-            if (_target.is_defending) _damage = ceil(_damage * 0.5);
-    
-            _target.hp = max(0, _target.hp - _damage);
-            
-            var _target_idx = current_turn_act.target_index;
-            var _row_start_y = 52;
-            var _row_vert_spacing = 50;
-    
-            var _spawn_x = 75;
-            var _spawn_y = _row_start_y + (_target_idx * _row_vert_spacing) + 10;
-            
-            array_push(popup_numbers, {
-                x: _spawn_x, 
-                y: _spawn_y, 
-                text: string(_damage),
-                life: 45,
-                max_life: 45,
-                color: c_red 
-            });
-            
-            var _particle_count = 8;
-            for (var _p_idx = 0; _p_idx < _particle_count; _p_idx++) {
-                array_push(popup_numbers, {
-                    type: "particle",
-                    x: _spawn_x,
-                    y: _spawn_y,
-                    hspeed: random_range(-2.5, 2.5),
-                    vspeed: random_range(-3.0, -1.0), 
-                    gravity: 0.15,
-                    life: random_range(20, 35),
-                    color: choose(c_red, c_orange, c_white)
-                });
-            }
-    
-            screenshake_amount = 3; 
-            battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
         }
-    }
+	}
     // ------------------------------------------
     // SUB-STATE 4: ACTION RESOLUTION TIMING WINDOWS
     // ------------------------------------------
@@ -741,6 +778,73 @@ if (global.state == GAME_STATE.BATTLE) {
             battle_text = "";
             current_turn_act = noone;
             battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
+        }
+    }
+	// ------------------------------------------
+    // SUB-STATE 5: VICTORY SCREEN HOLD WINDOW
+    // ------------------------------------------
+    else if (battle_sub_state == BATTLE_STATE.VICTORY) {
+        
+        if (!variable_instance_exists(id, "victory_timer")) {
+            victory_timer = 0;
+        }
+        
+        victory_timer++;
+        
+        var _text_is_finished = (text_char_count >= string_length(battle_text));
+        
+        if (_text_is_finished && _key_conf) {
+            
+            // --- GLOBAL PERSISTENCE WRITEBACK ---
+            global.player_hp = party_members[0].hp;
+            
+            // ... (keep your ally stats synchronization loop here) ...
+
+            // --- RE-ALIGN OVERWORLD FOLLOWERS BEFORE CHANGING ROOMS ---
+            if (instance_exists(obj_player)) {
+                // Clear the historical path buffer so they don't snap back in time
+                if (ds_exists(obj_player.pos_history, ds_type_list)) {
+                    ds_list_clear(obj_player.pos_history);
+                }
+                
+                // Force any active followers to immediately snap onto the player's tile
+                with (obj_follower) {
+                    x = obj_player.x;
+                    y = obj_player.y;
+                }
+            }
+            
+            // --- CARD CLEARING & ENGINE RESET ---
+            victory_timer = 0; 
+            battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
+            menu_stage = BATTLE_MENU.MAIN;
+            menu_cursor = 0;
+            party_input_index = 0;
+            battle_text = "";
+            text_char_count = 0;
+            
+            global.state = GAME_STATE.PLAYING;
+            
+            // Destructive scene management
+            var _e_count = array_length(global.active_battle_enemies);
+            for (var _e = 0; _e < _e_count; _e++) {
+                var _enemy = global.active_battle_enemies[_e];
+                if (instance_exists(_enemy)) {
+                    instance_destroy(_enemy);
+                }
+            }
+            
+            // --- 2. RESTORE OVERWORLD GUI RATIO RIGHT BEFORE EXIT ---
+            // If your overworld uses a different interface resolution (e.g., standard 1920x1080 or native window size)
+            // Restore it here before changing rooms so the overworld HUD doesn't stay tiny.
+            display_set_gui_size(499, 280); 
+            
+            if (variable_global_exists("overworld_room_fallback") && room_exists(global.overworld_room_fallback)) {
+                room_goto(global.overworld_room_fallback);
+            } else {
+                room_goto_previous();
+            }
+            exit;
         }
     }
 }

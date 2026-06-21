@@ -1,9 +1,13 @@
 name = global.player_name;
 global.player_hp = 100;
 global.player_hp_max = global.player_hp;
-global.player_attack = 5;
+global.player_attack = 45;
 global.player_defense = 0;
 global.player_gold = 0;
+
+/// Inside obj_player Create Event
+party_allies = []; // Starts empty (Solo player mode)
+pos_history = ds_list_create();
 
 gamepad_set_axis_deadzone(1, 0.5)
 

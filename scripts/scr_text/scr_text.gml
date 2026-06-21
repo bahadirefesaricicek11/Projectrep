@@ -125,6 +125,49 @@ function scr_text() {
     global.text[$ "Window 1"] = [
         TEXT("Nice view."),
     ];
+	
+	//-----------------NPC RECRUITABLE---------------------
+    global.text[$ "NPC RECRUITABLE"] = [
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        CHOICE("Hey you wanna recruit me",
+            OPTION("Sure", "NPC RECRUITABLE opt1"),
+            OPTION("Nah", "NPC RECRUITABLE opt2"))    
+    ];
+	
+	global.text[$ "NPC RECRUITABLE opt1"] = [
+        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        TEXT("Horray!!"),
+        EXECUTE(function(textbox) {
+            
+            // 1. Define the battle profile data for this new teammate
+            var _battle_blueprint = obj_npc.battle_blueprint;
+            
+            if (instance_exists(obj_player)) {
+                if (array_length(obj_player.party_allies) < 2) {
+                    
+                    // 2. Add to party data array
+                    array_push(obj_player.party_allies, _battle_blueprint);
+                    
+                    // 3. Spawn the physical follower instance instantly
+                    var _new_i = array_length(obj_player.party_allies) - 1;
+                    var _new_follower = instance_create_layer(obj_player.x, obj_player.y, "Instances", obj_follower);
+                    _new_follower.follower_index = _new_i;
+                    _new_follower.sprite_index = _battle_blueprint.sprite;
+                    
+                    // 4. FIND THE NPC INSTANCE AND MAKE IT A GHOST
+                    var _npc_instance = instance_nearest(obj_player.x, obj_player.y, obj_npc);
+                    if (instance_exists(_npc_instance)) {
+                        _npc_instance.visible = false;       // Hide the original static image completely
+                        _npc_instance.x = -9999;             // Teleport its coordinates far off-screen
+                        _npc_instance.y = -9999;             // This breaks the distance check so it can't be talked to again
+                        
+                        // Set a safe alarm on the NPC to destroy it in 10 frames (after textbox is gone)
+                        _npc_instance.alarm[0] = 10; 
+                    }
+                }
+            }
+        })
+    ];
 
 
     //-----------------NPC 1---------------------

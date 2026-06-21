@@ -156,5 +156,26 @@ if (global.player_gold > 99999)
 
 
 
+/// @description At the bottom of obj_player Step Event
+
+// Only log history if the player is actively moving or changing frames
+if (x != xprevious || y != yprevious || image_index != image_index) {
+    var _pos = {
+        x: x,
+        y: y,
+        sprite: sprite_index,
+        img_idx: image_index
+    };
+    // Insert the new coordinate at the front of the list
+    ds_list_insert(pos_history, 0, _pos);
+}
+
+// Keep the history capped based on how many allies you have
+// 25 frames of delay per follower provides a clean trailing spacing distance
+var _max_history_needed = array_length(party_allies) * 25;
+
+while (ds_list_size(pos_history) > _max_history_needed + 1) {
+    ds_list_delete(pos_history, ds_list_size(pos_history) - 1);
+}
 
 depth = -bbox_bottom;

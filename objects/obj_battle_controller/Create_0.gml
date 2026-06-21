@@ -1,6 +1,64 @@
+// Clear out whatever static array initialization you had before
+party_members = [];
+
+/// Inside obj_battle_controller (e.g., Create Event or Setup Script)
+
+// Hardcoded positions for up to 3 party members on screen
+// Matches your low-resolution presentation window baseline
+party_battle_positions = [
+    { x: 75,  y: 55 }, // Slot 0: Main Player
+    { x: 75,  y: 105  }, // Slot 1: Follower Ally 1
+    { x: 75,  y: 155 }  // Slot 2: Follower Ally 2
+];
+
+// Loop through your player's active party and spawn their battle visuals
+var _party_count = array_length(obj_player.party_allies);
+for (var i = 0; i < _party_count; i++) {
+    // If you use an object to draw party sprites in battle:
+    var _pos = party_positions[i];
+    var _ally_visual = instance_create_depth(_pos.x, _pos.y, 0, obj_battle_party_member);
+    _ally_visual.party_index = i; // Link visual object to the stats array index
+}
 
 
-party_max_members = 3; 
+// 1. DOCK THE PLAYER INTO THE BATTLE ENGINE SLOTS USING THE NEW GLOBAL METRICS
+array_push(party_members, {
+    name: global.player_name,
+    hp: global.player_hp,
+    max_hp: global.player_hp_max,
+    display_hp: global.player_hp, // Hook directly to your odometer rolling engine
+    atk: global.player_attack,
+    def: global.player_defense,
+    spd: 10, // Add a fallback speed or define global.player_speed if you have one
+    is_defending: false,
+    chosen_hit_multiplier: 1.0,
+    chosen_hit_verdict: ""
+});
+
+// 2. DYNAMICALLY PARSE ALLIES (Only if they are registered)
+// We wrap this in a safe instance check. If obj_player doesn't exist or party_allies is empty,
+// party_max_members will safely fall back to 1 (Player solo).
+if (instance_exists(obj_player) && variable_instance_exists(obj_player, "party_allies")) {
+    var _ally_count = array_length(obj_player.party_allies);
+    for (var _i = 0; _i < _ally_count; _i++) {
+        var _ally_data = obj_player.party_allies[_i];
+        array_push(party_members, {
+            name: _ally_data.name,
+            hp: _ally_data.hp,
+            max_hp: _ally_data.max_hp,
+            display_hp: _ally_data.hp,
+            atk: _ally_data.atk,
+            def: _ally_data.def,
+            spd: _ally_data.spd,
+            is_defending: false,
+            chosen_hit_multiplier: 1.0,
+            chosen_hit_verdict: ""
+        });
+    }
+}
+
+// Recalculate turn limits based on the actual populated array count
+party_max_members = array_length(party_members);
 
 // --- 2. STATUS EFFECT & CARD SELECTION TRACKERS ---
 // Tracks the buff structure data applied to each character's HUD slot
@@ -46,9 +104,9 @@ popup_list = []; // Guarantees the array exists on frame 1
 
 // --- 6. REAL-TIME HIT BAR ENGINE (DELTARUNE STYLE) ---
 hit_bar_active     = false;
-hit_bar_progress   = 1.0;       // Starts at 1.0 (far right) and drops towards 0.0 (far left)
-hit_bar_speed      = 0.03;      // Alter the difficulty speed window ticker
-hit_bar_target     = 0.15;      // Sweet spot target pixel location
+hit_bar_progress   = 0.0;       // Starts at 1.0 (far right) and drops towards 0.0 (far left)
+hit_bar_speed      = 0.02;      // Alter the difficulty speed window ticker
+hit_bar_target     = 0.25;      // Sweet spot target pixel location
 hit_bar_multiplier = 0;        // Damage scale output
 hit_bar_verdict    = "";        // Display text overhead ("MISS", "GOOD", "PERFECT!")
 

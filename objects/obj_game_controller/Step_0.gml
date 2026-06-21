@@ -4,7 +4,7 @@ if InputPressed(INPUT_VERB.FULLSCREEN) {
         
         window_set_fullscreen(false);
         
-        window_set_size(1248, 768);
+		window_set_size(960	, 540);
         
         alarm[0] = 1; 
     }
