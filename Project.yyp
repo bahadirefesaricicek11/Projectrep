@@ -92,6 +92,8 @@
     {"$GMIncludedFile":"","%Name":"gamecontrollerdb.txt","CopyToMask":-1,"filePath":"datafiles","name":"gamecontrollerdb.txt","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
     {"$GMIncludedFile":"","%Name":"input_license.txt","CopyToMask":-1,"filePath":"datafiles","name":"input_license.txt","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
     {"$GMIncludedFile":"","%Name":"Project_Font_Better.ttf","CopyToMask":-1,"filePath":"datafiles","name":"Project_Font_Better.ttf","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+    {"$GMIncludedFile":"","%Name":"Project_Font_Better2_Simple.ttf","CopyToMask":-1,"filePath":"datafiles","name":"Project_Font_Better2_Simple.ttf","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+    {"$GMIncludedFile":"","%Name":"Project_Font_Better2.ttf","CopyToMask":-1,"filePath":"datafiles","name":"Project_Font_Better2.ttf","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
     {"$GMIncludedFile":"","%Name":"Project_Font_Small.ttf","CopyToMask":-1,"filePath":"datafiles","name":"Project_Font_Small.ttf","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
     {"$GMIncludedFile":"","%Name":"Project_Font.ttf","CopyToMask":-1,"filePath":"datafiles","name":"Project_Font.ttf","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
   ],

@@ -438,7 +438,7 @@ if (global.state == GAME_STATE.BATTLE) {
             var _btn1_x = (_act_start_x + (1 * _button_spacing)) - 6;
             var _btn2_x = (_act_start_x + (2 * _button_spacing)) + 6;
             var _clover_x = ((_btn1_x + _btn2_x) / 2) + _sx;
-            var _clover_y = _act_y - 2 + _sy;   
+            var _clover_y = 25;   
             
             var _img_frame = clamp(_player_member.clover_leaves, 0, 4);
             draw_sprite_ext(spr_clover, _img_frame, _clover_x, _clover_y, 1.0, 1.0, 0, c_white, 1.0); 
