@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":1.7142857,
+  "duration":0.059115645,
   "exportDir":"",
   "name":"snd_text_default",
   "parent":{
@@ -21,6 +21,6 @@
   "resourceType":"GMSound",
   "resourceVersion":"2.0",
   "sampleRate":44100,
-  "soundFile":"snd_text_default.mp3",
+  "soundFile":"snd_text_default.ogg",
   "volume":1.0,
 }

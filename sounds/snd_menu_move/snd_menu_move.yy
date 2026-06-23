@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":0.048911564,
+  "duration":1.118594,
   "exportDir":"",
   "name":"snd_menu_move",
   "parent":{
@@ -21,6 +21,6 @@
   "resourceType":"GMSound",
   "resourceVersion":"2.0",
   "sampleRate":44100,
-  "soundFile":"snd_menu_move.wav",
+  "soundFile":"snd_menu_move.ogg",
   "volume":1.0,
 }
