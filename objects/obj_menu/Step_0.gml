@@ -1,9 +1,8 @@
-
 if (is_ingame && prompt_exit) {
     var input_up_p    = InputPressed(INPUT_VERB.UP);
     var input_down_p  = InputPressed(INPUT_VERB.DOWN);
     var input_enter_p = InputPressed(INPUT_VERB.ACCEPT);
-    var input_back_p  = InputPressed(INPUT_VERB.CANCEL);
+    var input_back_p  = InputPressed(INPUT_VERB.CANCEL) || InputPressed(INPUT_VERB.PAUSE);
     
     var prompt_nav = input_down_p - input_up_p;
     if (prompt_nav != 0) {
@@ -16,7 +15,7 @@ if (is_ingame && prompt_exit) {
     if (input_enter_p) {
         switch (prompt_option) {
             case 0:
-				scr_save_game(); 
+				save_game(); 
 				global.state = GAME_STATE.TITLE_SCREEN;
 				room_goto(rm_menuRoom); 
 				break;
@@ -50,7 +49,7 @@ var input_left_p  = InputPressed(INPUT_VERB.LEFT);
 var input_right_c = InputCheck(INPUT_VERB.RIGHT);
 var input_left_c  = InputCheck(INPUT_VERB.LEFT);
 var input_enter_p = InputPressed(INPUT_VERB.ACCEPT);
-var input_back_p  = InputPressed(INPUT_VERB.CANCEL);
+var input_back_p  = InputPressed(INPUT_VERB.CANCEL) || InputPressed(INPUT_VERB.PAUSE);
 
 if ((input_down_p || input_up_p) && !inputting) {
     audio_play_sound(snd_menu_move, 0, false);
@@ -73,7 +72,7 @@ if (inputting) {
             }
             break;
             
-        case menu_element_type.toggle:
+		case menu_element_type.toggle:
             var hinput = input_right_p - input_left_p;
             if (hinput != 0) {
                 ds_grid[# 3, menu_option[page]] = 1 - ds_grid[# 3, menu_option[page]];
@@ -82,7 +81,13 @@ if (inputting) {
             
             if (input_enter_p) {
                 var current_setting_val = ds_grid[# 3, menu_option[page]];
-                scr_change_window_mode(current_setting_val);
+                var target_script = ds_grid[# 2, menu_option[page]]; // Reads the specific function pointer
+                
+                // Dynamically execute whatever script belongs to this row
+                if (script_exists(target_script) || is_method(target_script)) {
+                    script_execute(target_script, current_setting_val);
+                }
+                
                 inputting = false;
                 io_clear();
                 keyboard_clear(vk_enter);
@@ -123,7 +128,16 @@ else {
             audio_play_sound(snd_menu_move, 0, false);
             page = _parent; 
         } else {
-            if (is_ingame) instance_destroy(); 
+            if (is_ingame) {
+                global.state = GAME_STATE.PLAYING;
+                
+                // Tell the player to ignore the pause button on this frame
+                if (instance_exists(obj_player)) {
+                    obj_player.menu_cooldown = true;
+                }
+                
+                instance_destroy();
+            }
         }
     }
 }

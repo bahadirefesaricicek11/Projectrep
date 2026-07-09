@@ -1,5 +1,3 @@
-display_set_gui_size(384,216);
-
 textfont = font_add("Project_Font_Better.ttf",24,false,false,32,128);
 font_enable_sdf(textfont, true)
 

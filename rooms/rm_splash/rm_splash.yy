@@ -16,8 +16,8 @@
   ],
   "name":"rm_splash",
   "parent":{
-    "name":"Rooms",
-    "path":"folders/Rooms.yy",
+    "name":"Menu System",
+    "path":"folders/Menu System.yy",
   },
   "parentRoom":null,
   "physicsSettings":{

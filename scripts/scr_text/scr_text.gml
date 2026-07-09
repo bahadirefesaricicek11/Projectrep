@@ -88,7 +88,7 @@ function scr_text() {
 
     global.text[$ "Item 1 Chose Yes"] = [
         EXECUTE(function(textbox) {
-            item_use();
+			item_use();
         }),
     ];
     
@@ -128,14 +128,14 @@ function scr_text() {
 	
 	//-----------------NPC RECRUITABLE---------------------
     global.text[$ "NPC RECRUITABLE"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("Hey you wanna recruit me",
             OPTION("Sure", "NPC RECRUITABLE opt1"),
             OPTION("Nah", "NPC RECRUITABLE opt2"))    
     ];
 	
 	global.text[$ "NPC RECRUITABLE opt1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         TEXT("Horray!!"),
         EXECUTE(function(textbox) {
             
@@ -172,16 +172,16 @@ function scr_text() {
 
     //-----------------NPC 1---------------------
     global.text[$ "NPC 1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("Hey This is a really long dialogue to test if the system is right",
             OPTION("Hey", "npc1 opt1"),
             OPTION("...", "npc1 opt2"))    
     ];
     
     global.text[$ "npc1 opt1"] = [
-        SPEAKER(spr_main_portrait, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_main_portrait),
         TEXT("Hey."),
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         TEXT("i want to change colors!"),
         EXECUTE(function(textbox) {
             inst_32E4B1DD.sprite_index = spr_npc_alternate;
@@ -190,7 +190,7 @@ function scr_text() {
     ];
 
     global.text[$ "NPC1_ALTERNATIVE"] = [
-        SPEAKER(spr_portrait_1_alternate, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1_alternate),
         TEXT("Hey! i want to change again"),
         EXECUTE(function(textbox) {
             inst_32E4B1DD.sprite_index = spr_npc;
@@ -201,7 +201,7 @@ function scr_text() {
 
     //-----------------NPC 2---------------------
     global.text[$ "NPC 2"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         EXECUTE(function(textbox) {
             obj_textbox.background = spr_textbox_special;
             obj_textbox.option_background = spr_option_special;
@@ -212,46 +212,46 @@ function scr_text() {
     ];
     
     global.text[$ "npc2 opt1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("You wanna fight?",
             OPTION("sure", "npc2 opt1_1"),
             OPTION("no", "npc2 opt2"))    
     ];
 
     global.text[$ "npc2 opt1_1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         TEXT("i wont."),
         TEXT("here take this."),
         EXECUTE(function(textbox) {
             item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
-            item_add(global.item_list.apple);
+            item_add(global.item_list.bread);
+            item_add(global.item_list.hamburger);
+            item_add(global.item_list.iron_helmet);
+            item_add(global.item_list.iron_chestplate);
+            item_add(global.item_list.iron_bottom);
+            item_add(global.item_list.normal_shield);
+            item_add(global.item_list.iron_sword);
         }),
     ];
 
 
     //-----------------NPC 3---------------------
     global.text[$ "NPC 3"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("Hey.",
             OPTION("Hey", "npc3 opt1"),
             OPTION("...", "npc3 opt2"))    
     ];
     
     global.text[$ "npc3 opt1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("You want stuff?",
             OPTION("sure", "npc3 opt1_1"),
             OPTION("no", "npc3 opt2"))    
     ];
 
     global.text[$ "npc3 opt1_1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         TEXT("here take this."),
         EXECUTE(function(textbox) {
             item_add(global.item_list.iron_helmet);
@@ -264,7 +264,7 @@ function scr_text() {
 	
 	//-----------------NPC 4---------------------
     global.text[$ "NPC 4"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         EXECUTE(function(textbox) {
             obj_textbox.background = spr_textbox_slime;
             obj_textbox.option_background = spr_option_special;
@@ -275,14 +275,14 @@ function scr_text() {
     ];
     
     global.text[$ "npc4 opt1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         CHOICE("You wanna fight?",
             OPTION("sure", "npc4 opt1_1"),
             OPTION("no", "npc4 opt2"))    
     ];
 
     global.text[$ "npc4 opt1_1"] = [
-        SPEAKER(spr_portrait_1, PORTRAIT_SIDE.LEFT),
+        SPEAKER(spr_portrait_1),
         TEXT("i wont."),
         TEXT("dont take anything tho.")
     ];

@@ -1,0 +1,88 @@
+{
+    "menu": {
+        "background": "bg1_tr",
+        "resume": "DEVAM ET",
+        "save": "KAYDET",
+        "options": "AYARLAR",
+        "main_menu": "ANA MENÜ",
+
+        "start": "OYUNA BAŞLA",
+        "load": "KAYDI YÜKLE",
+        "settings": "AYARLAR",
+        "quit": "ÇIKIŞ",
+
+
+        "graphics": "GRAFİKLER",
+        "fullscreen": "EKRAN MODU",
+        "windowed_label": "PENCERELİ",
+        "fullscreen_label": "TAM EKRAN",
+
+        "audio": "SES",
+        "master": "ANA SES",
+        "sounds": "EFEKTLER",
+        "music": "MÜZİK",
+
+        "back": "GERİ",
+
+
+        "title_paused": "DURDURULDU",
+        "title_main": "PROJE",
+
+        "prompt_save_query": "Ana Menüye dönmeden önce kaydetmek ister misin?",
+        "prompt_save_exit": "Kaydet ve Çık",
+        "prompt_no_save_exit": "Kaydetmeden Çık",
+        "prompt_cancel": "Geri",
+
+        "language": "DİL",
+        "language_select": "DİL SEÇİN",
+        "lang_en": "ENGLISH",
+        "lang_tr": "TÜRKÇE",
+
+
+        "name_screen_label": "İSİM: ",
+        "name_screen_go_back_query": "Geri dönmek istediğne emin misin? Şu anki ismin temizlenecek.",
+        "name_screen_go_back": "Geri Dön",
+        "name_screen_cancel": "İptal"
+    },
+
+    "inventory" : {
+        "background": "spr_inventory_tr",
+        "strength_info": "Güç: ",
+        "defense_info": "Savunma: "
+    },
+
+    "items" : {
+        "apple": {
+            "name": "Elma",
+            "desc": "10 Can Doldurur."
+        },
+        "bread": {
+            "name": "Ekmek",
+            "desc": "5 Can Doldurur."
+        },
+        "hamburger": {
+            "name": "Hamburger",
+            "desc": "25 Can Doldurur."
+        },
+        "iron_helmet": {
+            "name": "Demir Kask",
+            "desc": "+5 Savunma."
+        },
+        "iron_chestplate": {
+            "name": "Demir Üst",
+            "desc": "+10 Savunma."
+        },
+        "iron_bottom": {
+            "name": "Demir Alt",
+            "desc": "+5 Savunma."
+        },
+        "normal_shield": {
+            "name": "Normal Kalkan",
+            "desc": "+5 Savunma."
+        },
+        "iron_sword": {
+            "name": "Demir Kılıç",
+            "desc": "+10 Saldırı."
+        }
+    }
+}

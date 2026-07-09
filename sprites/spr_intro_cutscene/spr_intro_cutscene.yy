@@ -26,7 +26,7 @@
   "height":216,
   "HTile":false,
   "layers":[
-    {"$GMImageLayer":"","%Name":"0a454515-7f26-4bae-972c-3ddce4595142","blendMode":0,"displayName":"default","isLocked":false,"name":"0a454515-7f26-4bae-972c-3ddce4595142","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
+    {"$GMImageLayer":"","%Name":"125a3fad-68bd-4b7a-83fa-f7656b54cc06","blendMode":0,"displayName":"default","isLocked":false,"name":"125a3fad-68bd-4b7a-83fa-f7656b54cc06","opacity":100.0,"resourceType":"GMImageLayer","resourceVersion":"2.0","visible":true,},
   ],
   "name":"spr_intro_cutscene",
   "nineSlice":null,

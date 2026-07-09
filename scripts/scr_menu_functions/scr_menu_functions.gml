@@ -2,7 +2,8 @@ enum menu_page {
     main,
     settings,
     audio,
-    graphics
+    graphics,
+	language
 }
 
 enum menu_element_type {
@@ -12,15 +13,3 @@ enum menu_element_type {
     shift,
     toggle
 }
-
-enum GAME_STATE {
-    PLAYING,
-    MENU,
-    BATTLE,
-	CARD_SELECTION,
-    CUTSCENE,
-    TITLE_SCREEN,
-	GAMEOVER
-}
-
-global.state = GAME_STATE.TITLE_SCREEN;

@@ -1,0 +1,89 @@
+{
+    "menu": {
+        "background": "bg1",
+        "resume": "RESUME",
+        "save": "SAVE GAME",
+        "options": "OPTIONS",
+        "main_menu": "MAIN MENU",
+
+        "start": "START GAME",
+        "load": "LOAD GAME",
+        "settings": "SETTINGS",
+        "quit": "QUIT",
+
+
+        "graphics": "GRAPHICS",
+        "fullscreen": "FULLSCREEN",
+        "windowed_label": "WINDOWED",
+        "fullscreen_label": "FULLSCREEN",
+
+        "audio": "AUDIO",
+        "master": "MASTER",
+        "sounds": "SOUNDS",
+        "music": "MUSIC",
+
+        "back": "BACK",
+
+
+        "title_paused": "PAUSED",
+        "title_main": "PROJECT",
+
+        "prompt_save_query": "Save before returning to Main Menu?",
+        "prompt_save_exit": "Save & Exit",
+        "prompt_no_save_exit": "Exit Without Saving",
+        "prompt_cancel": "Cancel",
+
+        "language": "LANGUAGE",
+        "language_select": "LANGUAGE",
+        "lang_en": "ENGLISH",
+        "lang_tr": "TÜRKÇE",
+
+        "name_screen_label": "NAME: ",
+        "name_screen_go_back_query": "Do you wish to go back? Your name will be discarded.",
+        "name_screen_go_back": "Go Back",
+        "name_screen_cancel": "Cancel"
+    },
+
+    "inventory" : {
+        "background": "spr_inventory_eng",
+        "strength_info": "Strength: ",
+        "defense_info": "Defense: "
+    },
+
+    "items" : {
+        "apple": {
+            "name": "Apple",
+            "desc": "Heals 10 HP."
+        },
+        "bread": {
+            "name": "Bread",
+            "desc": "Heals 5 HP."
+        },
+        "hamburger": {
+            "name": "Hamburger",
+            "desc": "Heals 25 HP."
+        },
+        "iron_helmet": {
+            "name": "Iron Helmet",
+            "desc": "+5 Defense."
+        },
+        "iron_chestplate": {
+            "name": "Iron Chestplate",
+            "desc": "+10 Defense."
+        },
+        "iron_bottom": {
+            "name": "Iron Bottom",
+            "desc": "+5 Defense."
+        },
+        "normal_shield": {
+            "name": "Normal Shield",
+            "desc": "+5 Defense."
+        },
+        "iron_sword": {
+            "name": "Iron Sword",
+            "desc": "+5 Attack."
+        }
+    }
+
+    
+}

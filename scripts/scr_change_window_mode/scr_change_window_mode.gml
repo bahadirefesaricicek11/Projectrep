@@ -6,7 +6,7 @@ function scr_change_window_mode(_val) {
     else {
         window_set_fullscreen(false);
         
-        window_set_size(1248, 768);
+        window_set_size(960	, 540);
         
         with (obj_menu) {
             alarm[0] = 1;
@@ -16,7 +16,6 @@ function scr_change_window_mode(_val) {
     var _w = global.view_width;
     var _h = global.view_height;
     surface_resize(application_surface, _w, _h);
-    display_set_gui_size(_w, _h);
     
     save_settings();
 }

@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"scr_room_management",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scr_room_management",
+  "parent":{
+    "name":"Important",
+    "path":"folders/Objects/Important.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

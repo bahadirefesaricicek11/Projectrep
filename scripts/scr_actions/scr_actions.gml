@@ -17,17 +17,13 @@ function TextAction(_text) : DialogueAction() constructor {
 	}
 }
 
-function SpeakerAction(_sprite = undefined, _side = undefined): DialogueAction() constructor {
+function SpeakerAction(_sprite = undefined): DialogueAction() constructor {
 	sprite = _sprite;
-	side = _side;
 
 	act = function(textbox) {
 		
 		if (!is_undefined(sprite))
 			textbox.portrait_sprite = sprite;
-			
-		if (!is_undefined(side))
-			textbox.portrait_side = side;
 			
 		textbox.next();
 	}

@@ -1,1 +1,1 @@
-item = global.item_list.apple
+item = global.item_list.apple;

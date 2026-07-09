@@ -1,5 +1,5 @@
 // Check if the torch should be active based on game time 
-if (x >= camera_get_view_x(view_camera[0]) - radius && x <= camera_get_view_x(view_camera[0]) + camera_get_view_width(view_camera[0]) + radius) {
+if (x >= camera_get_view_x(view_camera[0]) - radius && x <= camera_get_view_x(view_camera[0]) + global.view_width+ radius) {
     // Note: The PDF includes a time check function 'is_active_at_time' 
     
     // Calculate the blended light color based on your intensity slider 

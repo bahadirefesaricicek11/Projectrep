@@ -1,37 +1,47 @@
+// =========================================================================
+// MASTER GAME DATA REGISTRY (THE ONLY PLACE YOU EDIT STATS AND VALUES)
+// =========================================================================
 
+
+// --- 2. ENEMY TYPES REGISTRY ---
 global.enemy_database = {
     slime: {
         name: "Slime",
-        hp: 30,
         max_hp: 30,
+        hp: 30,
+        atk: 12,
+        def: 1,
+        xp_value: 15,
+        gold_value: 10,
         sprite: spr_slime
     },
     strong_slime: {
         name: "Strong Slime",
-        hp: 50,
         max_hp: 50,
+        hp: 50,
+        atk: 18,
+        def: 4,
+        xp_value: 35,
+        gold_value: 25,
         sprite: spr_slime_dad
-    },
+    }
 };
 
+// --- 3. OVERWORLD ENCOUNTER GROUPS ---
 global.encounter_database = {
-    
-    // Encounter ID: "slime_easy"
     slime_easy: {
         weight_total: 100,
         pools: [
-            { enemies: ["slime"],                 weight: 50 }, // 50% chance for 1 Slime
-            { enemies: ["slime", "slime"],         weight: 35 }, // 35% chance for 2 Slimes
-            { enemies: ["slime", "slime", "slime"], weight: 15 }  // 15% chance for 3 Slimes
+            { enemies: ["slime"],                 weight: 50 },
+            { enemies: ["slime", "slime"],         weight: 35 },
+            { enemies: ["slime", "slime", "slime"], weight: 15 }
         ]
     },
-    
-    // Encounter ID: "forest_ambush"
     forest_ambush: {
         weight_total: 100,
         pools: [
-            { enemies: ["slime", "strong_slime"],         weight: 70 }, // 70% chance
-            { enemies: ["strong_slime", "strong_slime", "slime"], weight: 30 }  // 30% chance
+            { enemies: ["slime", "strong_slime"],         weight: 70 },
+            { enemies: ["strong_slime", "strong_slime", "slime"], weight: 30 }
         ]
     }
 };

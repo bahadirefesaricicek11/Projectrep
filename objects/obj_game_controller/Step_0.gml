@@ -12,3 +12,13 @@ if InputPressed(INPUT_VERB.FULLSCREEN) {
         window_set_fullscreen(true);
     }
 }
+
+
+
+
+if (global.state == GAME_STATE.CARD_SELECTION) {
+	
+}
+else if (global.state == GAME_STATE.BATTLE) {
+	play_music(msc_battle_theme);
+}

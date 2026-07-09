@@ -2,13 +2,15 @@ max_input_delay = 0;
 input_delay = max_input_delay;
 sequence_to_resume = noone;
 
-margin = 8;
+
+margin = 4;
 padding = 8;
 width = display_get_gui_width() - margin * 2;
-height = (display_get_gui_height() - margin)/3;
+height = ((display_get_gui_height() - margin)/2.5);
 
 x = (display_get_gui_width() - width) / 2;
 y = display_get_gui_height() - height - margin;
+
 
 text_font = Project_Font;
 text_color = c_white;
@@ -27,15 +29,14 @@ auto_advance_timer = 0;
 
 text_skippable = true;
 
-portrait_x = padding + 20;
-portrait_y = padding;
+portrait_x = padding +3;
+portrait_y = padding +2;
 
 option_x = padding;
 option_y = padding * -2.5;
 option_spacing = 28;
 option_selection_indent = 24;
-option_width = 53;
-option_height = 26;
+option_height = 20;
 option_text_x = 8;
 option_text_y = 0;
 option_text_color = c_white;
@@ -50,7 +51,6 @@ text_length = 0;
 portrait_sprite = -1;
 portrait_width = sprite_get_width(spr_portrait);
 portrait_height = sprite_get_height(spr_portrait);
-portrait_side = PORTRAIT_SIDE.LEFT;
 
 enum PORTRAIT_SIDE {
 	LEFT,
@@ -103,3 +103,5 @@ selectLerp = current_option;
 cursorLevitate = 0;
 cursorTime = 0;
 leviRate = 10;
+
+scr_text();

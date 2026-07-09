@@ -12,12 +12,12 @@ if obj_item_manager.inv_open == true
 	var ud = up_key-down_key;
 		
 	posx += lr;
-	if posx >= inv_length {posx = 0};
-	if posx < 0 {posx = inv_length-1};
+	if posx >= max_inv_length {posx = 0};
+	if posx < 0 {posx = max_inv_length-1};
 	if ud > 0 {posx -= 4};
 	if ud < 0 {posx += 4};
 	
-	if (posx < array_length(inv) && posx >= 0)
+	if (posx < inv_length && posx >= 0)
 	{
 	    selected_item = posx;
     

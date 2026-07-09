@@ -10,7 +10,7 @@
   "compression":0,
   "compressionQuality":4,
   "conversionMode":0,
-  "duration":37.5,
+  "duration":48.0,
   "exportDir":"",
   "name":"msc_menu",
   "parent":{
@@ -22,5 +22,5 @@
   "resourceVersion":"2.0",
   "sampleRate":44100,
   "soundFile":"msc_menu.ogg",
-  "volume":0.25,
+  "volume":1.0,
 }

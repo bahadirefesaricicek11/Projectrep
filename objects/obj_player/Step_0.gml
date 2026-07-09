@@ -1,14 +1,28 @@
-up_key = InputCheck(INPUT_VERB.UP);
-left_key = InputCheck(INPUT_VERB.LEFT);
-down_key = InputCheck(INPUT_VERB.DOWN);
-right_key = InputCheck(INPUT_VERB.RIGHT);
-run_key = InputCheck(INPUT_VERB.CANCEL);
+// --- 1. INPUT FETCHING ---
+up_key        = InputCheck(INPUT_VERB.UP);
+left_key      = InputCheck(INPUT_VERB.LEFT);
+down_key      = InputCheck(INPUT_VERB.DOWN);
+right_key     = InputCheck(INPUT_VERB.RIGHT);
+run_key       = InputCheck(INPUT_VERB.CANCEL);
 inventory_key = InputPressed(INPUT_VERB.INVENTORY);
-menu_key = InputPressed(INPUT_VERB.PAUSE);
+menu_key      = InputPressed(INPUT_VERB.PAUSE);
 
-if (global.state != GAME_STATE.PLAYING) {
+// --- 2. STATE INTERACTION GATE ---
+// Force freeze player if they are in standard menu states, but allow freedom if in gameover room
+if (global.state != GAME_STATE.PLAYING && room != rm_gameOver) {
     image_speed = 0;
     exit;
+}
+
+// --- 3. EXPLICIT INTERFACE LOCKS ---
+// Completely disable menu and inventory options if player has lost
+if (room == rm_gameOver) {
+    obj_player.can_open_menu = false;
+    obj_player.can_open_inventory = false;
+} else {
+    // Restore capabilities during normal overworld exploration
+    obj_player.can_open_menu = true;
+    obj_player.can_open_inventory = true;
 }
 
 if obj_player.can_move == true
@@ -117,16 +131,22 @@ if obj_player.can_move == true
     image_index = 0;
 }
 
-if (menu_key) {
-    if (global.state == GAME_STATE.PLAYING) {
+if (menu_key == true && obj_player.can_open_menu == true) {
+    // If the menu was just closed this frame, consume the cooldown and do nothing
+    if (obj_player.menu_cooldown) {
+        obj_player.menu_cooldown = false;
+    } 
+    // Otherwise, open the menu safely
+    else if (global.state == GAME_STATE.PLAYING) {
         instance_create_layer(x, y, "Instances", obj_menu);
+        show_debug_message("menu created-----");
         global.state = GAME_STATE.MENU;
     }
-    else if (global.state == GAME_STATE.MENU) {
-        if (instance_exists(obj_menu) && obj_menu.is_ingame) {
-            instance_destroy(obj_menu);
-        }
-    }
+}
+
+// Reset the cooldown if the button wasn't pressed, keeping it clean
+if (menu_key == false) {
+    obj_player.menu_cooldown = false;
 }
 
 if instance_exists(obj_textbox) {
@@ -135,7 +155,7 @@ if instance_exists(obj_textbox) {
 
 if (instance_exists(obj_menu) == false)
 {
-	if (inventory_key == true) && (obj_item_manager.inv_open == false) && obj_player.can_move == true{
+	if (inventory_key == true) && (obj_item_manager.inv_open == false) && (obj_player.can_move == true) && (obj_player.can_open_inventory == true){
 	    obj_item_manager.inv_open = true;
 	    obj_player.can_move = false;
 	} 

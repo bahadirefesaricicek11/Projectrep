@@ -16,7 +16,7 @@ else if (room == rm_forest_1)
 	draw_sprite_tiled(bg_forest_1, 3, _camx * 0.35, 0);
 	draw_sprite_tiled(bg_forest_1, 4, _camx * 0.30, 0);
 }
-else if (room == rm_outside_3)
+else if (room == rm_forest_2)
 {
 	draw_sprite_tiled(bg_forest_2, 1, _camx * _p, _camy * _p);
 	draw_sprite_tiled(bg_forest_2, 2, _camx * 0.40, _camy * 0.40);

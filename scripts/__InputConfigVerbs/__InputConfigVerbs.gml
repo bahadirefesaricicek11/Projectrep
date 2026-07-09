@@ -34,7 +34,7 @@ function __InputConfigVerbs()
         InputDefineVerb(INPUT_VERB.RIGHT,      "right",      [vk_right,  "D"],    [ gp_axislh, gp_padr]);
         InputDefineVerb(INPUT_VERB.ACCEPT,     "accept",     [vk_enter,  "Z"],    [gp_face1]);
         InputDefineVerb(INPUT_VERB.CANCEL,     "cancel",     [vk_shift,  "X"],    [gp_face2]);
-        InputDefineVerb(INPUT_VERB.DELETE,     "cancel",     [vk_backspace  ],    [		   ]);
+        InputDefineVerb(INPUT_VERB.DELETE,     "delete",     [vk_backspace  ],    [		   ]);
         InputDefineVerb(INPUT_VERB.INVENTORY,  "inventory",  [  "C" ,  "E"  ],    [gp_face4]);
         InputDefineVerb(INPUT_VERB.ACTION,     "action",     [vk_space,     ],    [gp_face3]);
         InputDefineVerb(INPUT_VERB.PAUSE,      "pause",      [vk_escape,    ],    [gp_start]);

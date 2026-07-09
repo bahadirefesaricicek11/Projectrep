@@ -22,5 +22,5 @@ max_len = 12;
 prompt_exit = false;
 prompt_option = 1;
 
-spacing_x = 32; 
-spacing_y = 24;
+spacing_x = 24; 
+spacing_y = 20;

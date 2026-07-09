@@ -24,7 +24,7 @@
   ],
   "name":"spr_cursor",
   "nineSlice":null,
-  "origin":0,
+  "origin":2,
   "parent":{
     "name":"Misc",
     "path":"folders/Sprites/Misc.yy",
@@ -76,7 +76,7 @@
     ],
     "visibleRange":null,
     "volume":1.0,
-    "xorigin":0,
+    "xorigin":15,
     "yorigin":0,
   },
   "swatchColours":null,

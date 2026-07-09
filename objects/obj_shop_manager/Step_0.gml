@@ -98,7 +98,6 @@ else if (menu_state == "LEAVE_CONFIRM") {
     if (accept_key) {
         if (confirm_pos == 0) {
             obj_player.can_move = true;
-            display_set_gui_size(global.dguiW, global.dguiH);
             room_goto(rm_outside);
             obj_player.x = 280;
             obj_player.y = 175;

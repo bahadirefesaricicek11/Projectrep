@@ -3,32 +3,10 @@
 #macro UI_LINE_HEIGHT 20
 #macro UI_TEXT_SCALE 0.60
 
-enum BATTLE_STATE {
-    PLAYER_INPUT,
-    TURN_SORTING,
-    ACTION_EXECUTION,
-    ACTION_RESOLUTION,
-    TURN_PROCESSING,
-    ENEMY_TURN,
-	VICTORY,
-	GAMEOVER
-}
-
-enum BATTLE_MENU {
-    MAIN,
-    TARGET_SELECT,
-    INTERACT,
-    TAKE_ACTION,
-    ITEM_USE,
-    ITEM_TARGET_SELECT,
-    HIT_BAR
-}
-
 function battle_system_init() {
     global.card_pool = [
         { name: "Warrior's Will", buff_type: "atk",    value: 5,  desc: "+5 ATK for this battle",       icon_sprite: spr_card_icons, icon_frame: 1 },
         { name: "Iron Wall",     buff_type: "def",    value: 3,  desc: "+3 DEF for this battle",       icon_sprite: spr_card_icons, icon_frame: 0 },
-        { name: "Swift Wind",     buff_type: "spd",    value: 4,  desc: "+4 SPD for this battle",       icon_sprite: spr_card_icons, icon_frame: 18 },
         { name: "Titan's Blood",  buff_type: "max_hp", value: 20, desc: "+20 Max HP for this battle",   icon_sprite: spr_card_icons, icon_frame: 3 }
     ];
 
@@ -38,7 +16,6 @@ function battle_system_init() {
     
     global.battle_buff_atk = 0;
     global.battle_buff_def = 0;
-    global.battle_buff_spd = 0;
     global.battle_buff_max_hp = 0;
     
     global.battle_spawn_queue = [];
@@ -49,12 +26,7 @@ function battle_system_init() {
 function battle_trigger_room_transition(_enemy_id_array) {
     global.battle_spawn_queue = _enemy_id_array;
     global.overworld_room = room; 
-    
-    global.saved_gui_w = display_get_gui_width();
-    global.saved_gui_h = display_get_gui_height();
-    
-    // Switch rooms. Let the persistent room transition object handle the display_set_gui_size
-    // when the screen is pitch black to avoid visual flashing.
+	
     room_goto(rm_battle); 
 }
 
@@ -89,7 +61,6 @@ function battle_setup_card_selection() {
 function battle_apply_card_buff(_card_info) {
     if (_card_info.buff_type == "atk")    global.battle_buff_atk += _card_info.value;
     if (_card_info.buff_type == "def")    global.battle_buff_def += _card_info.value;
-    if (_card_info.buff_type == "spd")    global.battle_buff_spd += _card_info.value;
     if (_card_info.buff_type == "max_hp") global.battle_buff_max_hp += _card_info.value;
     
     global.selected_cards = [];
@@ -108,7 +79,6 @@ function battle_apply_card_buff(_card_info) {
 function battle_cleanup_and_return() {
     global.battle_buff_atk = 0;
     global.battle_buff_def = 0;
-    global.battle_buff_spd = 0;
     global.battle_buff_max_hp = 0;
     
     global.selected_cards = [];
@@ -116,10 +86,6 @@ function battle_cleanup_and_return() {
     global.battle_spawn_queue = [];
     
     global.state = GAME_STATE.PLAYING;
-    
-    if (global.saved_gui_w > 0) {
-        display_set_gui_size(global.saved_gui_w, global.saved_gui_h);
-    }
     
     if (room_exists(global.overworld_room)) {
         room_goto(global.overworld_room);
@@ -192,5 +158,28 @@ function battle_spawn_hit_particles(_x, _y, _color) {
         };
         
         array_push(obj_battle_controller.popup_numbers, _particle);
+    }
+}
+
+/// @desc Battle Background Configuration Mapping
+
+function battle_get_background_sprite(_room) {
+    switch (_room) {
+        case rm_forest_1:
+        case rm_forest_2:
+			return spr_bg_icon_tree;
+
+        default:
+            return spr_bg_icon_default;
+    }
+}
+function battle_get_background_color(_room) {
+    switch (_room) {
+        case rm_forest_1:
+        case rm_forest_2:
+			return make_color_rgb(25, 51, 45);
+
+        default:
+            return make_color_rgb(20, 15, 35);
     }
 }

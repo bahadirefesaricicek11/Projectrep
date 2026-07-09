@@ -11,4 +11,5 @@ if (global.state == GAME_STATE.PLAYING && !instance_exists(obj_battle_transition
 
     var _inst = instance_create_layer(0, 0, "Instances", obj_battle_transition);
     _inst.encounter_composition = _encounter_composition;
+	instance_destroy(global.overworld_enemy_to_destroy);
 }
