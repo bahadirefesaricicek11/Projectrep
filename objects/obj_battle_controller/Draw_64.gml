@@ -340,11 +340,11 @@ if (global.state == GAME_STATE.BATTLE) {
                     var _item_y = _dash_y + 16 + (floor(_valid_enemy_index / _cols) * _cell_h);
 
                     if (menu_cursor == _k) {
-                        draw_set_color(c_yellow); draw_text_transformed(_item_x - 10, _item_y - 1, ">", 0.5, 0.5, 0);
+                        draw_set_color(c_yellow); draw_text_transformed(_item_x - 8, _item_y, ">", 0.5, 0.5, 0);
                     }
         
                     var _enemy_name = variable_instance_exists(_item, "name") ? _item.name : "Enemy";
-                    var _text_color = c_white;
+                    var _text_color = (menu_cursor == _k) ? c_yellow : c_white;
                     if (variable_instance_exists(_item, "hp") && _item.hp <= 0) {
                         _enemy_name = "[X] " + _enemy_name; _text_color = c_gray;
                     }
@@ -353,10 +353,15 @@ if (global.state == GAME_STATE.BATTLE) {
         
                     if (variable_instance_exists(_item, "max_hp") && _item.max_hp > 0) {
                         var _hp_percent = clamp(_item.hp / _item.max_hp, 0, 1);
-                        draw_set_color(c_dkgray); draw_rectangle(_item_x + 65, _item_y + 3, _item_x + 89, _item_y + 5, false);
+						draw_set_color((menu_cursor == _k) ? c_ltgray : c_white);
+						draw_rectangle(_item_x + 29, _item_y + 3, (_item_x + 31)+ (24 * _hp_percent ), _item_y + 11, false);
+                        draw_set_color(c_dkgray); 
+						draw_rectangle(_item_x + 30, _item_y + 4, (_item_x + 30)+ (24 * _hp_percent ), _item_y + 10, false);
                         if (_hp_percent > 0) {
                             draw_set_color((menu_cursor == _k) ? c_orange : c_lime);
-                            draw_rectangle(_item_x + 65, _item_y + 3, (_item_x + 65) + (24 * _hp_percent), _item_y + 5, false);
+                            draw_rectangle(_item_x + 30, _item_y + 4, (_item_x + 30) + (24 * _hp_percent), _item_y + 10, false);
+							draw_set_colour(c_black)
+							draw_text_transformed(_item_x + 40, _item_y+1, string(_hp_percent) + "%", 0.5,0.5, 0);
                         }
                     }
                     _valid_enemy_index++;
@@ -411,13 +416,17 @@ if (global.state == GAME_STATE.BATTLE) {
                 break;
         } 
 
+        // --- Generic option-list renderer for Interact / Take Action / Item Use / Item Target Select ---
+        // Restyled to match TARGET_SELECT: same spacing (cell_w/cell_h/offsets), same cursor arrow
+        // style, and the selected line is drawn in yellow (not just marked by the arrow), with
+        // unavailable entries grayed out the same way dead enemies are in Target Select.
         if (menu_stage != BATTLE_MENU.HIT_BAR && menu_stage != BATTLE_MENU.TARGET_SELECT) {
             var _cols = 2, _max_visible = 4; 
             var _total_options = array_length(_options_array);
             var _current_page = floor(menu_cursor / _max_visible);
             var _start_index = _current_page * _max_visible;
             var _end_index = min(_start_index + _max_visible, _total_options);
-            var _cell_w = (_dash_w - 48) / _cols, _cell_h = 24; 
+            var _cell_w = (_dash_w - 32) / _cols, _cell_h = 14; 
             
             draw_set_halign(fa_left); draw_set_color(c_white);
 
@@ -426,34 +435,48 @@ if (global.state == GAME_STATE.BATTLE) {
                 if (menu_stage == BATTLE_MENU.ITEM_USE)           _empty_string = "INVENTORY EMPTY";
                 if (menu_stage == BATTLE_MENU.INTERACT)           _empty_string = "NO INTERACTIONS AVAILABLE";
                 if (menu_stage == BATTLE_MENU.ITEM_TARGET_SELECT) _empty_string = "NO TARGETS AVAILABLE";
-                draw_text_transformed(_dash_x + 20, _dash_y + 15, _empty_string, 0.6, 0.6, 0);
+                draw_set_color(c_white);
+                draw_text_transformed(_dash_x + 20, _dash_y + 15, _empty_string, 0.5, 0.5, 0);
             } else {
                 for (var _i = _start_index; _i < _end_index; _i++) {
                     var _element = _options_array[_i];
                     if (_element == undefined || _element == noone) continue;
 
                     var _relative_index = _i - _start_index;
-                    var _xx = _dash_x + 32 + ((_relative_index % _cols) * (_cell_w + 16));
-                    var _yy = _dash_y + 14 + (floor(_relative_index / _cols) * _cell_h);
+                    var _xx = _dash_x + 20 + ((_relative_index % _cols) * _cell_w);
+                    var _yy = _dash_y + 16 + (floor(_relative_index / _cols) * _cell_h);
                     
-                    if (menu_cursor == _i) draw_text_transformed(_xx - 12, _yy, ">", 0.6, 0.6, 0);
+                    var _is_selected = (menu_cursor == _i);
+                    var _text_color = _is_selected ? c_yellow : c_white;
+                    
+                    if (_is_selected) {
+                        draw_set_color(c_yellow);
+                        draw_text_transformed(_xx - 8, _yy, ">", 0.5, 0.5, 0);
+                    }
                     
                     var _display_text = "";
                     if (_is_inventory) {
                         _display_text = (is_struct(_element) && variable_struct_exists(_element, "name")) ? string(_element.name) : "Unknown Item";
+                        draw_set_color(_text_color);
+                        draw_text_transformed(_xx, _yy, _display_text, 0.5, 0.5, 0);
                         if (is_struct(_element) && variable_struct_exists(_element, "icon") && sprite_exists(_element.icon)) {
-                            draw_sprite_ext(_element.icon, 0, _xx + (string_width(_display_text) * 0.6) + 6, _yy + 4, 0.5, 0.5, 0, c_white, 1);
+                            draw_sprite_ext(_element.icon, 0, _xx + (string_width(_display_text) * 0.5) + 6, _yy + 4, 0.5, 0.5, 0, c_white, 1);
                         }
                     } 
                     else if (menu_stage == BATTLE_MENU.ITEM_TARGET_SELECT) {
                         _display_text = (variable_struct_exists(_element, "name")) ? string(_element.name) : "Ally";
+                        var _is_downed = (variable_struct_exists(_element, "hp") && _element.hp <= 0);
+                        if (_is_downed) { _display_text = "[X] " + _display_text; _text_color = c_gray; }
                         if (variable_struct_exists(_element, "hp") && variable_struct_exists(_element, "max_hp")) {
                             _display_text += " (" + string(_element.hp) + "/" + string(_element.max_hp) + " HP)";
                         }
+                        draw_set_color(_text_color);
+                        draw_text_transformed(_xx, _yy, _display_text, 0.5, 0.5, 0);
                     } else {
                         _display_text = string(_element);
+                        draw_set_color(_text_color);
+                        draw_text_transformed(_xx, _yy, _display_text, 0.5, 0.5, 0);
                     }
-                    draw_text_transformed(_xx, _yy, _display_text, 0.6, 0.6, 0);
                 }
                 
                 if (_total_options > _max_visible) {

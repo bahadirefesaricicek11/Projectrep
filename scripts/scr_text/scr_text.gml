@@ -126,6 +126,29 @@ function scr_text() {
         TEXT("Nice view."),
     ];
 	
+	global.text[$ "slime_trio"] = [
+		TEXT("What are you lookin' at? SCRAM!!!"),
+	];
+	global.text[$ "slime_intro"] = [
+		TEXT("Hey!"),
+		TEXT("You' there, with the blue shirt!"),
+		TEXT("Where'd you think youre goin'?"),
+		TEXT("Get em boys!"),
+		EXECUTE(function(textbox) {
+	        // 1. Create the transition object instance manually
+	        var _inst = instance_create_layer(0, 0, "Instances", obj_battle_transition);
+        
+	        // 2. Inject your data values directly into it!
+	        _inst.encounter_composition = ["slime", "slime", "slime"];
+	        _inst.battle_id = "slime_ambush"; // <-- Tells the system this is the plot fight!
+	    })
+	];
+	global.text[$ "slime_post_negotiated"] = [
+		TEXT("Hey!"),
+		TEXT("Thanks for sparin' us."),
+		TEXT("We won't forget this ya' know?"),
+	];
+	
 	//-----------------NPC RECRUITABLE---------------------
     global.text[$ "NPC RECRUITABLE"] = [
         SPEAKER(spr_portrait_1),
@@ -173,7 +196,7 @@ function scr_text() {
     //-----------------NPC 1---------------------
     global.text[$ "NPC 1"] = [
         SPEAKER(spr_portrait_1),
-        CHOICE("Hey This is a really long dialogue to test if the system is right",
+        CHOICE("Hey This is a really long dialogue to test if the system is right lorem ipsum dolor sit",
             OPTION("Hey", "npc1 opt1"),
             OPTION("...", "npc1 opt2"))    
     ];

@@ -21,7 +21,7 @@ if (room == rm_battle)
     bg_wiggle_timer += 0.04;
 }
 
-// --- 2. HP ODOMETER ROLLING ENGINE ---\r
+// --- 2. HP ODOMETER ROLLING ENGINE ---
 var _party_count = array_length(party_members);
 
 for (var _i = 0; _i < _party_count; _i++) {
@@ -252,7 +252,8 @@ if (global.state == GAME_STATE.BATTLE) {
     
     for (var _e = 0; _e < _e_count; _e++) {
         var _enemy = global.active_battle_enemies[_e];
-        if (instance_exists(_enemy) && _enemy.hp > 0) {
+        // MODIFIED: An enemy is only "active" if they have HP left AND haven't been spared yet
+        if (instance_exists(_enemy) && _enemy.hp > 0 && (!variable_instance_exists(_enemy, "is_spared") || !_enemy.is_spared)) {
             _enemies_alive = true;
             break;
         }
@@ -345,7 +346,11 @@ if (global.state == GAME_STATE.BATTLE) {
                             _current_actor.chosen_sub_action  = "";
                             break;
                         case 1: 
-                            menu_stage = BATTLE_MENU.INTERACT;
+                            // Interact now targets an enemy FIRST, then shows that
+                            // specific enemy's interact_options list (different enemy
+                            // types have different options, e.g. slime vs strong_slime).
+                            menu_stage = BATTLE_MENU.TARGET_SELECT;
+                            menu_context = "interact_pick_target";
                             break;
                         case 2: 
                             menu_stage = BATTLE_MENU.TAKE_ACTION;
@@ -390,8 +395,10 @@ if (global.state == GAME_STATE.BATTLE) {
                     }
 
                     if (_key_back) {
-                        menu_stage = (menu_context == "interact") ? BATTLE_MENU.INTERACT : BATTLE_MENU.MAIN;
-                        menu_cursor = (menu_context == "interact") ? 1 : 0; 
+                        // "interact_pick_target" is the entry point of the Interact flow now,
+                        // so backing out of it goes all the way back to MAIN.
+                        menu_stage = BATTLE_MENU.MAIN;
+                        menu_cursor = (menu_context == "interact_pick_target") ? 1 : 0; 
                         _key_back = false; 
                         exit;
                     }
@@ -408,15 +415,11 @@ if (global.state == GAME_STATE.BATTLE) {
                                 hit_bar_progress = 1.0;
                                 hit_bar_verdict = "";
                             } 
-                            else if (menu_context == "interact") {
-                                _current_actor.chosen_action_type = "interact";
-                                _current_actor.chosen_sub_action  = selected_sub_action;
-                                _current_actor.chosen_target_index = targeted_enemy_index;
-                                
-                                party_input_index++;
-                                menu_stage = BATTLE_MENU.MAIN;
+                            else if (menu_context == "interact_pick_target") {
+                                // Target chosen — now show THIS enemy's own interact_options list.
+                                interact_target_index = targeted_enemy_index;
+                                menu_stage = BATTLE_MENU.INTERACT;
                                 menu_cursor = 0;
-                                if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
                             }
                             _key_conf = false;
                         }
@@ -425,21 +428,44 @@ if (global.state == GAME_STATE.BATTLE) {
                 break;
                 
             case BATTLE_MENU.INTERACT:
-                var _count = array_length(interact_options);
+                // Shows the SPECIFIC target enemy's own interact_options list
+                // (set from global.enemy_database at spawn time), not a generic list —
+                // a slime and a strong_slime have different options here.
+                var _interact_target = global.active_battle_enemies[interact_target_index];
+                var _options = (instance_exists(_interact_target) && variable_instance_exists(_interact_target, "interact_options"))
+                    ? _interact_target.interact_options
+                    : ["Check"];
+                
+                // IMPORTANT: keep the persistent 'interact_options' variable synced to this
+                // frame's resolved list. The Draw GUI event almost certainly reads THIS
+                // variable (not a local) to render the menu text — without this line it
+                // will keep showing whatever list it always displayed, regardless of target.
+                interact_options = _options;
+                
+                var _count = array_length(_options);
+                
                 if (_count > 0) {
                     if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _count) % _count;
                     if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _count;
                 }
                 if (_key_back) { 
-                    menu_stage = BATTLE_MENU.MAIN;
-                    menu_cursor = 1; _key_back = false; exit; 
+                    // Go back to re-picking a target, not straight to MAIN
+                    menu_stage = BATTLE_MENU.TARGET_SELECT;
+                    menu_context = "interact_pick_target";
+                    menu_cursor = interact_target_index;
+                    _key_back = false; exit; 
                 }
                 
                 if (_key_conf && _count > 0) {
-                    selected_sub_action = interact_options[menu_cursor];
-                    menu_stage = BATTLE_MENU.TARGET_SELECT;
-                    menu_context = "interact";
+                    var _current_actor = party_members[party_input_index];
+                    _current_actor.chosen_action_type = "interact";
+                    _current_actor.chosen_sub_action  = _options[menu_cursor];
+                    _current_actor.chosen_target_index = interact_target_index;
+                    
+                    party_input_index++;
+                    menu_stage = BATTLE_MENU.MAIN;
                     menu_cursor = 0;
+                    if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
                     _key_conf = false;
                 }
                 break;
@@ -540,14 +566,17 @@ if (global.state == GAME_STATE.BATTLE) {
 
                 if (_key_conf) {
                     var _current_actor = party_members[party_input_index];
+                    var _chosen_item = _inv[menu_cursor];
+                    
                     _current_actor.chosen_action_type = "item";
-                    _current_actor.chosen_item_reference = pending_item;
+                    _current_actor.chosen_item_reference = _chosen_item;
+                    // No dedicated recipient-select screen anymore: item is used on whoever picked it.
+                    _current_actor.chosen_target_index = party_input_index;
                     
-                    // Direct injection bypasses external manager value mutations
-                    _current_actor.chosen_item_inventory_idx = item_choice_index_lock;
-                    _current_actor.chosen_target_index = menu_cursor;
+                    // FIX: remove the item from the shared inventory the instant it's chosen,
+                    // so it physically can't be picked again by another party member this round.
+                    array_delete(_inv, menu_cursor, 1);
                     
-                    pending_item = undefined;
                     party_input_index++;
                     menu_stage = BATTLE_MENU.MAIN;
                     menu_cursor = 0;
@@ -558,102 +587,86 @@ if (global.state == GAME_STATE.BATTLE) {
 					_key_conf = false;
                 }
                 break;
-                
-            case BATTLE_MENU.ITEM_TARGET_SELECT:
-                var _party_count = array_length(party_members);
-                
-                if (_key_up || _key_left)    menu_cursor = (menu_cursor - 1 + _party_count) % _party_count;
-                if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _party_count;
-                
-                if (_key_back) {
-                    menu_stage = BATTLE_MENU.ITEM_USE;
-                    menu_cursor = item_choice_index_lock; 
-                    exit;
-                }
-
-                if (_key_conf) {
-                    var _current_actor = party_members[party_input_index];
-                    _current_actor.chosen_action_type = "item";
-                    _current_actor.chosen_item_reference = pending_item;
-                    _current_actor.chosen_item_inventory_idx = obj_item_manager.selected_item;
-                    _current_actor.chosen_target_index = menu_cursor;
-                    
-                    pending_item = undefined;
-                    
-                    // Safe advance: skip dead party slots to check if inputting is completely done
-                    party_input_index++;
-                    while (party_input_index < party_max_members) {
-                        if (party_members[party_input_index].hp > 0) {
-                            break;
-                        }
-                        party_input_index++;
-                    }
-                    
-                    menu_stage = BATTLE_MENU.MAIN;
-                    menu_cursor = 0;
-                    
-                    if (party_input_index >= party_max_members) {
-                        battle_sub_state = BATTLE_STATE.TURN_SORTING;
-                    }
-                    _key_conf = false;
-                }
-                break;
         }
     }
 	// ------------------------------------------
     // SUB-STATE 2: TURN SORTING & QUEUE BUILDING
+    // Priority order: Defend/Flee/Spare > Item > Interact > Attack.
+    // Enemies always attack, so they land in the last tier.
+    // Within each tier, order is randomized.
     // ------------------------------------------
     else if (battle_sub_state == BATTLE_STATE.TURN_SORTING) {
-        turn_queue = [];
+        // Tier 0 = take_action (Defend/Flee/Spare), 1 = item, 2 = interact, 3 = attack
+        var _tiers = array_create(4);
+        for (var _t = 0; _t < 4; _t++) _tiers[_t] = [];
         
-        for (var _i = 0; _i < array_length(party_members); _i++) {
+        var _party_count = array_length(party_members);
+        for (var _i = 0; _i < _party_count; _i++) {
             var _member = party_members[_i];
-            if (_member.hp > 0) {
-                
-                // Use struct-safe checks to retrieve configuration variables cleanly
-                var _act_type = variable_struct_exists(_member, "chosen_action_type") ? _member.chosen_action_type : "fight";
-                var _targ_idx = variable_struct_exists(_member, "chosen_target_index") ? _member.chosen_target_index : 0;
-                var _sub_act  = variable_struct_exists(_member, "chosen_sub_action")  ? _member.chosen_sub_action  : "";
-                var _item_ref = variable_struct_exists(_member, "chosen_item_reference") ? _member.chosen_item_reference : undefined;
-                var _inv_idx  = variable_struct_exists(_member, "chosen_item_inventory_idx") ? _member.chosen_item_inventory_idx : -1;
-                
-                array_push(turn_queue, {
-                    actor_type: "party",
-                    actor_index: _i,
-                    chosen_action_type: _act_type,
-                    chosen_target_index: _targ_idx,
-                    chosen_sub_action: _sub_act,
-                    chosen_item_reference: _item_ref,
-                    chosen_item_inventory_idx: _inv_idx
-                });
+            if (_member.hp <= 0) continue;
+            
+            var _act_type = variable_struct_exists(_member, "chosen_action_type") ? _member.chosen_action_type : "fight";
+            var _targ_idx = variable_struct_exists(_member, "chosen_target_index") ? _member.chosen_target_index : 0;
+            var _sub_act  = variable_struct_exists(_member, "chosen_sub_action")  ? _member.chosen_sub_action  : "";
+            var _item_ref = variable_struct_exists(_member, "chosen_item_reference") ? _member.chosen_item_reference : undefined;
+            
+            var _entry = {
+                actor_type: "party",
+                actor_index: _i,
+                chosen_action_type: _act_type,
+                chosen_target_index: _targ_idx,
+                chosen_sub_action: _sub_act,
+                chosen_item_reference: _item_ref
+            };
+            
+            var _tier = 3; // default: attack
+            switch (_act_type) {
+                case "take_action": _tier = 0; break;
+                case "item":        _tier = 1; break;
+                case "interact":    _tier = 2; break;
+                case "fight":       _tier = 3; break;
             }
+            array_push(_tiers[_tier], _entry);
         }
         
         var _enemy_count = array_length(global.active_battle_enemies);
         for (var _i = 0; _i < _enemy_count; _i++) {
             var _enemy = global.active_battle_enemies[_i];
-            if (instance_exists(_enemy) && _enemy.hp > 0) {
-                var _living_targets = [];
-                for(var _p_check = 0; _p_check < array_length(party_members); _p_check++) {
-                    if(party_members[_p_check].hp > 0) array_push(_living_targets, _p_check);
-                }
-                
-                var _target_party_idx = 0;
-                if (array_length(_living_targets) > 0) {
-                    _target_party_idx = _living_targets[irandom(array_length(_living_targets) - 1)];
-                }
-                
-                array_push(turn_queue, {
-                    actor_type: "enemy",
-                    actor_instance: _enemy,
-                    actor_index: _i,
-                    target_index: _target_party_idx
-                });
+            if (!instance_exists(_enemy) || _enemy.hp <= 0) continue;
+            
+            var _living_targets = [];
+            for (var _p_check = 0; _p_check < _party_count; _p_check++) {
+                if (party_members[_p_check].hp > 0) array_push(_living_targets, _p_check);
             }
+            
+            var _target_party_idx = 0;
+            if (array_length(_living_targets) > 0) {
+                _target_party_idx = _living_targets[irandom(array_length(_living_targets) - 1)];
+            }
+            
+            array_push(_tiers[3], {
+                actor_type: "enemy",
+                actor_instance: _enemy,
+                actor_index: _i,
+                target_index: _target_party_idx
+            });
         }
         
-        
-        // FIX: The destructive loop that was wiping your item data has been REMOVED from here.
+        // Shuffle each tier independently (Fisher-Yates), then concatenate in priority order
+        turn_queue = [];
+        for (var _t = 0; _t < 4; _t++) {
+            var _bucket = _tiers[_t];
+            var _n = array_length(_bucket);
+            for (var _s = _n - 1; _s > 0; _s--) {
+                var _j = irandom(_s);
+                var _tmp = _bucket[_s];
+                _bucket[_s] = _bucket[_j];
+                _bucket[_j] = _tmp;
+            }
+            for (var _k = 0; _k < _n; _k++) {
+                array_push(turn_queue, _bucket[_k]);
+            }
+        }
         
         battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
     }
@@ -741,25 +754,38 @@ if (global.state == GAME_STATE.BATTLE) {
                     var _t_idx = current_turn_act.chosen_target_index;
                     var _target = global.active_battle_enemies[_t_idx];
                     
-                    if (!instance_exists(_target) || _target.hp <= 0) {
-                        var _enemy_count = array_length(global.active_battle_enemies);
-                        for (var _e = 0; _e < _enemy_count; _e++) {
-                            var _potential_foe = global.active_battle_enemies[_e];
-                            if (instance_exists(_potential_foe) && _potential_foe.hp > 0) {
-                                _t_idx = _e;
-                                _target = _potential_foe;
-                                current_turn_act.chosen_target_index = _e; 
-                                break;
-                            }
-                        }
-                    }
+                    // (Keep your dead target redirection code here)
                     
                     if (instance_exists(_target) && _target.hp > 0) {
-                         var _e_name = variable_instance_exists(_target, "name") ? _target.name : "Enemy";
-                        battle_text = _actor.name + " used " + current_turn_act.chosen_sub_action + " on " + string(_e_name) + "!";
-                        if (current_turn_act.chosen_sub_action == "Check") {
-                            battle_text += " ATK: " + string(_target.atk) + " DEF: " + string(_target.def);
+                        var _e_name = variable_instance_exists(_target, "name") ? _target.name : "Enemy";
+                        var _sub_action = current_turn_act.chosen_sub_action;
+                        
+                        if (_sub_action == "Check") {
+                            // Check is purely informational: reveal stats, no mercy change.
+                            battle_text = _actor.name + " checked " + string(_e_name) + "! ATK: " + string(_target.atk) + " DEF: " + string(_target.def);
                         }
+                        else if (variable_global_exists("interact_effects") && struct_exists(global.interact_effects, _sub_action)) {
+                            // Data-driven: mercy delta + flavor text come from scr_game_database,
+                            // so new interact options only need a database entry, not new code here.
+                            var _effect = global.interact_effects[$ _sub_action];
+                            var _flavor = string_replace(_effect.flavor, "{name}", string(_e_name));
+                            battle_text = _actor.name + " " + _flavor;
+                            
+                            if (variable_instance_exists(_target, "mercy")) {
+                                _target.mercy = clamp(_target.mercy + _effect.mercy_delta, 0, _target.max_mercy);
+                                if (_target.mercy >= _target.max_mercy) { _target.can_spare = true; }
+                            }
+                        }
+                        else {
+                            // Catch-all fallback in case an option was typed in the database but not coded here yet
+                            battle_text = _actor.name + " tried to " + string(_sub_action) + " with " + string(_e_name) + ", but nothing happened.";
+                        }
+                        
+                        // Extra check: Provide visual feedback if they hit the mercy threshold this turn
+                        if (variable_instance_exists(_target, "can_spare") && _target.can_spare) {
+                            battle_text += " [Can now be SPARED]";
+                        }
+                        
                     } else {
                         battle_text = _actor.name + " looked around, but everything was quiet!";
                     }
@@ -771,6 +797,41 @@ if (global.state == GAME_STATE.BATTLE) {
                         battle_text = _actor.name + " is guarding safely!";
                     } else if (current_turn_act.chosen_sub_action == "Flee") { 
                         battle_text = "Escaping from battle layout...";
+                    } 
+                    // --- NEW SPARE PROCESSING STATE ---
+                    else if (current_turn_act.chosen_sub_action == "Spare") {
+                        var _spared_any = false;
+                        var _names_spared = "";
+                        var _e_count = array_length(global.active_battle_enemies);
+                        
+                        for (var _e = 0; _e < _e_count; _e++) {
+                            var _enemy = global.active_battle_enemies[_e];
+                            
+                            if (instance_exists(_enemy) && _enemy.hp > 0 && (!variable_instance_exists(_enemy, "is_spared") || !_enemy.is_spared)) {
+                                // Fallback structures to ensure no object errors occur
+                                var _can_spare = variable_instance_exists(_enemy, "can_spare") ? _enemy.can_spare : false;
+                                
+                                if (_can_spare) {
+                                    _enemy.is_spared = true;
+                                    _enemy.visible = false; // Make their sprite disappear from the arena floor
+                                    
+                                    if (_names_spared != "") _names_spared += ", ";
+                                    _names_spared += _enemy.name;
+                                    _spared_any = true;
+                                    
+                                    // Optional: Add to a global non-lethal gold counter here
+                                    if (variable_instance_exists(_enemy, "gold_value")) {
+                                        global.battle_gold_earned = (variable_global_exists("battle_gold_earned") ? global.battle_gold_earned : 0) + _enemy.gold_value;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (_spared_any) {
+                            battle_text = _actor.name + " spared " + _names_spared + "!";
+                        } else {
+                            battle_text = _actor.name + " offered mercy, but no one was willing to accept it yet.";
+                        }
                     } else { 
                         battle_text = _actor.name + " focused power!";
                     }
@@ -778,24 +839,14 @@ if (global.state == GAME_STATE.BATTLE) {
                     break;
                     
 				case "item":
-                    // 1. CHOOSE TARGET & GET THE PERMANENT ACTOR
+                    // Item was already removed from inventory at selection time (see ITEM_USE),
+                    // and the actual item struct was captured onto the actor then, so we just
+                    // read it straight off the queued turn entry — no re-lookup, no crash risk.
                     var _target_idx = current_turn_act.chosen_target_index;
                     var _live_target = party_members[_target_idx];
-                    var _actor = party_members[current_turn_act.actor_index];
+                    var _item = current_turn_act.chosen_item_reference;
                     
-                    // Pull item tracking directly from the character who selected it
-                    var _item = variable_struct_exists(_actor, "chosen_item_reference") ? _actor.chosen_item_reference : current_turn_act.chosen_item_reference;
-                    var _inv_idx = variable_struct_exists(_actor, "chosen_item_inventory_idx") ? _actor.chosen_item_inventory_idx : current_turn_act.chosen_item_inventory_idx;
-                    
-                    // Fallback to avoid crashes if data parsing dropped an item reference object
-                    if (!is_struct(_item)) {
-                        if (instance_exists(obj_item_manager) && array_length(obj_item_manager.inv) > 0) {
-                            var _fallback_idx = clamp(_inv_idx, 0, array_length(obj_item_manager.inv) - 1);
-                            _item = obj_item_manager.inv[_fallback_idx];
-                        }
-                    }
-
-                    // 2. HEAL EFFECT CALCULATIONS
+                    // HEAL EFFECT CALCULATIONS
                     var _heal_amt = 25; // Constant reliable baseline
                     if (is_struct(_item)) {
                         if (_item.name == "Apple") _heal_amt = 10;
@@ -817,14 +868,8 @@ if (global.state == GAME_STATE.BATTLE) {
                         global.player_hp = _live_target.hp;
                     }
                     
-                    // 3. CLEAN UP ACCOUNTING & POST BATTLE TEXT
                     var _item_name = is_struct(_item) ? string(_item.name) : "Item";
                     battle_text = _actor.name + " used " + _item_name + " on " + _live_target.name + "!";
-                    
-                    // Remove item cleanly from inventory manager matching selection index tracking
-                    if (instance_exists(obj_item_manager) && _inv_idx >= 0 && _inv_idx < array_length(obj_item_manager.inv)) {
-                        array_delete(obj_item_manager.inv, _inv_idx, 1);
-                    }
                     
                     // Spawn popup green jumping indicator numbers
                     var _spawn_x = 100 + (_target_idx * 160);

@@ -10,8 +10,8 @@
   "name":"obj_enemy_parent",
   "overriddenProperties":[],
   "parent":{
-    "name":"Battle System",
-    "path":"folders/Battle System.yy",
+    "name":"Core",
+    "path":"folders/Battle System/Core.yy",
   },
   "parentObjectId":null,
   "persistent":false,

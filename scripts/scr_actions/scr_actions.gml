@@ -61,10 +61,15 @@ function GotoAction(_topic): DialogueAction() constructor {
 	}
 }
 function ExecuteAction(_action): DialogueAction() constructor {
-	action = _action;
-	
-	act = function(textbox) {
-		action(textbox);
-		obj_textbox.next();
-	}
+    action = _action;
+    
+    act = function(textbox) {
+        action(textbox);
+        
+        if (textbox.text_progress >= textbox.text_length) {
+            textbox.next();
+        } else {
+            textbox.text_progress = textbox.text_length;
+        }
+    }
 }

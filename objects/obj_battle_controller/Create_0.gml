@@ -20,8 +20,8 @@ bg_scroll_sprite = spr_bg_icon_default;
 
 // Pull the overworld room we just came from to determine the correct asset pattern
 if (variable_global_exists("overworld_room_fallback")) {
-    bg_color = battle_get_background_color(global.overworld_room_fallback);
-    bg_scroll_sprite = battle_get_background_sprite(global.overworld_room_fallback);
+    bg_color = battle_get_background_color();
+    bg_scroll_sprite = battle_get_background_sprite();
 } else {
     bg_scroll_sprite = spr_bg_icon_default;
 	bg_color = make_color_rgb(20, 15, 35);
@@ -102,3 +102,4 @@ global.active_battle_enemies = [];
 if (!variable_global_exists("card_pool")) {
     battle_system_init();
 }
+

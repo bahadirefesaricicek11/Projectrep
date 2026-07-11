@@ -12,8 +12,8 @@
   "name":"obj_battle_controller",
   "overriddenProperties":[],
   "parent":{
-    "name":"Battle System",
-    "path":"folders/Battle System.yy",
+    "name":"Core",
+    "path":"folders/Battle System/Core.yy",
   },
   "parentObjectId":null,
   "persistent":false,

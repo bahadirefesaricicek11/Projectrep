@@ -163,8 +163,8 @@ function battle_spawn_hit_particles(_x, _y, _color) {
 
 /// @desc Battle Background Configuration Mapping
 
-function battle_get_background_sprite(_room) {
-    switch (_room) {
+function battle_get_background_sprite() {
+    switch (global.overworld_room) {
         case rm_forest_1:
         case rm_forest_2:
 			return spr_bg_icon_tree;
@@ -173,8 +173,8 @@ function battle_get_background_sprite(_room) {
             return spr_bg_icon_default;
     }
 }
-function battle_get_background_color(_room) {
-    switch (_room) {
+function battle_get_background_color() {
+    switch (global.overworld_room) {
         case rm_forest_1:
         case rm_forest_2:
 			return make_color_rgb(25, 51, 45);
@@ -182,4 +182,61 @@ function battle_get_background_color(_room) {
         default:
             return make_color_rgb(20, 15, 35);
     }
+}
+
+/**
+ * @desc Spawns an enemy instance and populates all runtime variables from the master database
+ * @param {String} _enemy_key The key name in global.enemy_database (e.g., "slime")
+ * @param {Real} _x Target x position in the battle room
+ * @param {Real} _y Target y position in the battle room
+ * @param {Asset.GMObject} _object_index The object asset to instantiate (defaults to obj_battle_enemy_parent)
+ * @return {Id.Instance} The created enemy instance ID
+ */
+function battle_spawn_enemy(_enemy_key, _x, _y, _object_index = obj_battle_enemy_parent) {
+    // 1. Safety check: Verify the database and key exist
+    if (!variable_global_exists("enemy_database") || !variable_struct_exists(global.enemy_database, _enemy_key)) {
+        show_debug_message("ERROR: Enemy key '" + string(_enemy_key) + "' not found in database. Falling back to default slime.");
+        _enemy_key = "slime";
+    }
+    
+    var _data = global.enemy_database[$ _enemy_key];
+    
+    // 2. Create the instance
+    var _inst = instance_create_depth(_x, _y, 0, _object_index);
+    
+    // 3. Bind core stats & identification variables
+    _inst.enemy_id = _enemy_key;
+    _inst.name = variable_struct_exists(_data, "name") ? _data.name : "Unknown Enemy";
+    _inst.max_hp = variable_struct_exists(_data, "max_hp") ? _data.max_hp : 10;
+    _inst.hp = _inst.max_hp;
+    _inst.atk = variable_struct_exists(_data, "atk") ? _data.atk : 1;
+    _inst.def = variable_struct_exists(_data, "def") ? _data.def : 0;
+    _inst.xp_value = variable_struct_exists(_data, "xp_value") ? _data.xp_value : 0;
+    _inst.gold_value = variable_struct_exists(_data, "gold_value") ? _data.gold_value : 0;
+    
+    // Bind visual assets
+    if (variable_struct_exists(_data, "sprite")) {
+        _inst.sprite_index = _data.sprite;
+    }
+    
+    // 4. BIND MERCY ENGINE PROPERTIES
+    _inst.mercy = 0; // Starts at 0
+    _inst.max_mercy = variable_struct_exists(_data, "max_mercy") ? _data.max_mercy : 100;
+    _inst.can_spare = false;
+    _inst.is_spared = false;
+    
+    // Deep copy or assign the custom dynamic interaction array
+    if (variable_struct_exists(_data, "interact_options") && is_array(_data.interact_options)) {
+        // We use array_create/array_copy to give this specific instance its own unique array reference
+        var _len = array_length(_data.interact_options);
+        _inst.interact_options = array_create(_len);
+        array_copy(_inst.interact_options, 0, _data.interact_options, 0, _len);
+    } else {
+        _inst.interact_options = ["Check"]; // Baseline fallback option
+    }
+    
+    // 5. Register into your global tracking array
+    array_push(global.active_battle_enemies, _inst);
+    
+    return _inst;
 }

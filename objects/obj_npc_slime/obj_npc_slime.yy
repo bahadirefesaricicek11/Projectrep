@@ -1,7 +1,9 @@
 {
   "$GMObject":"",
   "%Name":"obj_npc_slime",
-  "eventList":[],
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
   "name":"obj_npc_slime",
   "overriddenProperties":[],
@@ -9,7 +11,10 @@
     "name":"NPC",
     "path":"folders/Objects/NPC.yy",
   },
-  "parentObjectId":null,
+  "parentObjectId":{
+    "name":"obj_npc",
+    "path":"objects/obj_npc/obj_npc.yy",
+  },
   "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,
@@ -27,7 +32,10 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":null,
+  "spriteId":{
+    "name":"slime_trio",
+    "path":"sprites/slime_trio/slime_trio.yy",
+  },
   "spriteMaskId":null,
   "visible":true,
 }

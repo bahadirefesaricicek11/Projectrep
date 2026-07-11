@@ -41,7 +41,7 @@ if (text_progress == text_length) {
         next();
     }
 }
-else if (InputPressed(INPUT_VERB.ACCEPT) || InputPressed(INPUT_VERB.CANCEL)) {
+else if (InputPressed(INPUT_VERB.CANCEL)) {
     if (!is_auto_advance && text_skippable == true) {
         text_progress = text_length;
     }

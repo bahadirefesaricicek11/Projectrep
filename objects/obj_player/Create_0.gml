@@ -1,7 +1,7 @@
 name = global.player_name;
-global.player_hp = 10;
+global.player_hp = 100;
 global.player_hp_max = 100;
-global.player_attack = 45;
+global.player_attack = 5;
 global.player_defense = 0;
 global.player_gold = 0;
 

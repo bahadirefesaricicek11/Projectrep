@@ -104,10 +104,20 @@ if (room == rm_battle) {
         var _base_y = 60;  
         var _spacing = 45; 
 
+        // Absolute verification check before accessing the data structure
+        if (!variable_global_exists("enemy_database") || global.enemy_database == undefined) {
+            show_debug_message("CRITICAL ERROR: global.enemy_database is completely missing at battle initialization! Check execution order.");
+            exit;
+        }
+
         for (var _i = 0; _i < _count; _i++) {
             var _enemy_key = global.battle_spawn_queue[_i];
             
-            if (variable_global_exists("enemy_database") && variable_struct_exists(global.enemy_database, _enemy_key)) {
+            if (is_string(_enemy_key)) {
+                _enemy_key = string_lower(string_trim(_enemy_key));
+            }
+            
+            if (struct_exists(global.enemy_database, _enemy_key)) {
                 var _blueprint = global.enemy_database[$ _enemy_key];
                 
                 var _spawn_x = _base_x + (_i * 10); 
@@ -116,28 +126,42 @@ if (room == rm_battle) {
                 var _new_enemy = instance_create_layer(_spawn_x, _spawn_y, "Instances", _enemy_object_id);
                 
                 if (instance_exists(_new_enemy)) {
-                    var _has_hp     = variable_struct_exists(_blueprint, "hp");
-                    var _has_max_hp = variable_struct_exists(_blueprint, "max_hp");
+                    _new_enemy.name         = struct_exists(_blueprint, "name") ? _blueprint.name : "Enemy";
+                    _new_enemy.hp           = struct_exists(_blueprint, "hp") ? _blueprint.hp : 30;
+                    _new_enemy.max_hp       = struct_exists(_blueprint, "max_hp") ? _blueprint.max_hp : 30;
+                    _new_enemy.atk          = struct_exists(_blueprint, "atk") ? _blueprint.atk : 10;
+                    _new_enemy.def          = struct_exists(_blueprint, "def") ? _blueprint.def : 0;
                     
-                    if (!_has_hp || !_has_max_hp) {
-                        show_debug_message("!!!! DATABASE ERROR: Enemy key '" + string(_enemy_key) + "' is missing 'hp' or 'max_hp' definitions! Using fallbacks.");
-                    }
+                    // --- MERCY PROPERTIES ---
+                    _new_enemy.max_mercy    = struct_exists(_blueprint, "max_mercy") ? _blueprint.max_mercy : 100;
+                    _new_enemy.mercy        = 0;     
+                    _new_enemy.can_spare    = false; 
+                    _new_enemy.is_spared    = false; // Ensure this is explicitly set at spawning
 
-                    _new_enemy.name         = variable_struct_exists(_blueprint, "name") ? _blueprint.name : ("Enemy " + string(_i + 1));
-                    _new_enemy.hp           = _has_hp ? _blueprint.hp : 50;
-                    _new_enemy.max_hp       = _has_max_hp ? _blueprint.max_hp : 50;
-                    _new_enemy.atk          = variable_struct_exists(_blueprint, "atk") ? _blueprint.atk : 10;
-                    _new_enemy.def          = variable_struct_exists(_blueprint, "def") ? _blueprint.def : 0;
-                    _new_enemy.sprite       = variable_struct_exists(_blueprint, "sprite") ? _blueprint.sprite : spr_box; 
+                    // --- DYNAMICALLY BIND INTERACT OPTIONS ---
+                    if (struct_exists(_blueprint, "interact_options") && is_array(_blueprint.interact_options)) {
+                        var _len = array_length(_blueprint.interact_options);
+                        _new_enemy.interact_options = array_create(_len);
+                        array_copy(_new_enemy.interact_options, 0, _blueprint.interact_options, 0, _len);
+                    } else {
+                        _new_enemy.interact_options = ["Check"]; // Baseline fallback option
+                    }
+                    
+                    // --- REVENUE BALANCING TRACKERS ---
+                    _new_enemy.gold_value   = struct_exists(_blueprint, "gold_value") ? _blueprint.gold_value : 0;
+                    _new_enemy.xp_value     = struct_exists(_blueprint, "xp_value") ? _blueprint.xp_value : 0;
+                    
+                    // --- VISUAL RENDERING ASSETS ---
+                    _new_enemy.sprite       = struct_exists(_blueprint, "sprite") ? _blueprint.sprite : spr_box; 
                     _new_enemy.sprite_index = _new_enemy.sprite; 
                     _new_enemy.image_index  = 0;                 
                     _new_enemy.is_dead      = false; 
                     
                     array_push(global.active_battle_enemies, _new_enemy);
-                    show_debug_message("Arena Setup: Spawning " + _new_enemy.name + " at " + string(_spawn_x) + "," + string(_spawn_y));
+                    show_debug_message("Arena Setup Verified: Spawning " + _new_enemy.name + " with database HP: " + string(_new_enemy.hp));
                 }
             } else {
-                show_debug_message("BATTLE SETUP WARNING: Key '" + string(_enemy_key) + "' not found in global.enemy_database!");
+                show_debug_message("BATTLE SETUP ERROR: Key '" + string(_enemy_key) + "' was not found in the external database file.");
             }
         }
     }
