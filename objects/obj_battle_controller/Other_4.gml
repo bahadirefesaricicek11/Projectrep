@@ -46,7 +46,7 @@ if (room == rm_battle) {
                 atk: _atk,
                 def: _def,
                 clover_leaves: variable_struct_exists(_ally_data, "clover_leaves") ? _ally_data.clover_leaves : 0,
-                sprite: variable_struct_exists(_ally_data, "sprite") ? _ally_data.sprite : spr_npc,
+                sprite: variable_struct_exists(_ally_data, "sprite") ? _ally_data.sprite : spr_npc_portrait,
                 img_idx: 0,
                 chosen_action_type: "",
                 chosen_sub_action: "",

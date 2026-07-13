@@ -178,8 +178,8 @@ if (global.player_gold > 99999)
 
 /// @description At the bottom of obj_player Step Event
 
-// Only log history if the player is actively moving or changing frames
-if (x != xprevious || y != yprevious || image_index != image_index) {
+// Track if the player actually changed position or shifted sprites this frame
+if (x != xprevious || y != yprevious || sprite_index != sprite_index /* fixed condition */) {
     var _pos = {
         x: x,
         y: y,
@@ -190,11 +190,10 @@ if (x != xprevious || y != yprevious || image_index != image_index) {
     ds_list_insert(pos_history, 0, _pos);
 }
 
-// Keep the history capped based on how many allies you have
-// 25 frames of delay per follower provides a clean trailing spacing distance
-var _max_history_needed = array_length(party_allies) * 25;
+// MATCHING CAP: Ensure the delay multiplier matches the cleanup math (25 frames per ally)
+var _max_history_needed = (array_length(party_allies) + 1) * 25;
 
-while (ds_list_size(pos_history) > _max_history_needed + 1) {
+while (ds_list_size(pos_history) > _max_history_needed) {
     ds_list_delete(pos_history, ds_list_size(pos_history) - 1);
 }
 

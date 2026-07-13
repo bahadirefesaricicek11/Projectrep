@@ -11,46 +11,6 @@ global.dialogue = 0;
 global.view_width = display_get_gui_width();
 global.view_height = display_get_gui_height();
 
-
-enum GAME_STATE {
-    PLAYING,
-    MENU,
-    BATTLE,
-    CARD_SELECTION,
-    CUTSCENE,
-    TITLE_SCREEN,
-    GAMEOVER
-}
-
-enum BATTLE_STATE {
-    PLAYER_INPUT,
-    TURN_SORTING,
-    ACTION_EXECUTION,
-    ACTION_RESOLUTION,
-    TURN_PROCESSING,
-    ENEMY_TURN,
-    VICTORY,
-    GAMEOVER
-}
-
-enum BATTLE_MENU {
-    MAIN,
-    TARGET_SELECT,
-    INTERACT,
-    TAKE_ACTION,
-	ACTION_SELECT,
-    ITEM_USE,
-    ITEM_TARGET_SELECT,
-    HIT_BAR
-}
-
-enum ENEMY_AI {
-    IDLE,
-    WANDER,
-    CHASE
-}
-
-
 // --- 4. PERSISTENT SYSTEM CORE LIVE METRICS ---
 global.state = GAME_STATE.TITLE_SCREEN;
 global.active_battle_enemies = []; // Stores active combat instance IDs

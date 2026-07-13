@@ -4,12 +4,14 @@
 party_members = [];
 party_max_members = 0;
 
-// Hardcoded layout coordinates matching a native low-resolution 384x216 presentation window
+// HP box column occupies roughly x:5 to x:107 (box is 102px wide) before any scaling.
+// Formation pushed clear of that, with room to spare in a 384-wide room.
 party_battle_positions = [
-    { x: 75,  y: 55  }, // Slot 0: Main Player
-    { x: 75,  y: 105 }, // Slot 1: Follower Ally 1
-    { x: 75,  y: 155 }  // Slot 2: Follower Ally 2
+    { x: 160, y: 60  }, // Slot 0: Main Player
+    { x: 200, y: 110 }, // Slot 1: Follower Ally 1
+    { x: 200, y: 160 }  // Slot 2: Follower Ally 2
 ];
+
 
 /// @desc Clean Scroller Initialization
 bg_scroll_x = 0;

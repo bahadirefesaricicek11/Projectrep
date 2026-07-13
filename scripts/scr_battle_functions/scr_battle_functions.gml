@@ -2,6 +2,60 @@
 #macro UI_COL_WIDTH 160
 #macro UI_LINE_HEIGHT 20
 #macro UI_TEXT_SCALE 0.60
+/// HP box layout constants (relative to box top-left, box is 56x64)
+#macro HPBOX_NAME_X            12
+#macro HPBOX_NAME_Y            6
+
+#macro HPBOX_PORTRAIT_X        7
+#macro HPBOX_PORTRAIT_Y        28
+#macro HPBOX_PORTRAIT_MAX_W    33
+#macro HPBOX_PORTRAIT_MAX_H    36
+
+#macro HPBOX_ROLLER_X    62
+#macro HPBOX_ROLLER_Y    38
+#macro HPBOX_ROLLER_STRIDE 11
+
+#macro HPBOX_BUFF_X            70
+#macro HPBOX_BUFF_Y            55
+#macro HPBOX_BUFF_W            16
+#macro HPBOX_BUFF_H            16
+
+enum GAME_STATE {
+    PLAYING,
+    MENU,
+    BATTLE,
+    CARD_SELECTION,
+    CUTSCENE,
+    TITLE_SCREEN,
+    GAMEOVER
+}
+enum BATTLE_STATE {
+    PLAYER_INPUT,
+    TURN_SORTING,
+    ACTION_EXECUTION,
+    ACTION_RESOLUTION,
+    TURN_PROCESSING,
+    ENEMY_TURN,
+    VICTORY,
+    GAMEOVER,
+    DODGE_WINDOW    // NEW: Block-Tales-style QTE window before an enemy attack lands
+}
+enum BATTLE_MENU {
+    MAIN,
+    TARGET_SELECT,
+    INTERACT,
+    TAKE_ACTION,
+	ACTION_SELECT,
+    ITEM_USE,
+    ITEM_TARGET_SELECT,
+    HIT_BAR
+}
+enum ENEMY_AI {
+    IDLE,
+    WANDER,
+    CHASE
+}
+
 
 function battle_system_init() {
     global.card_pool = [
@@ -161,6 +215,59 @@ function battle_spawn_hit_particles(_x, _y, _color) {
     }
 }
 
+/// scr_generate_party_formation(member_count)
+/// Builds the battle position array for the party based on a simple formation rule:
+/// slot 0 = main player (front), slots 1+ = allies stacked vertically behind.
+function scr_generate_party_formation(_member_count) {
+    var _positions = [];
+
+    // --- Formation config: tweak these to reshape the whole layout at once ---
+    var _front_x = 31;        // main player x
+    var _front_y = 80;        // main player y
+
+    var _ally_x = 75;         // all allies share this x
+    var _ally_start_y = 105;  // first ally's y
+    var _ally_spacing_y = 50; // vertical gap between allies
+
+    for (var _i = 0; _i < _member_count; _i++) {
+        if (_i == 0) {
+            array_push(_positions, { x: _front_x, y: _front_y });
+        } else {
+            var _ally_index = _i - 1;
+            array_push(_positions, {
+                x: _ally_x,
+                y: _ally_start_y + (_ally_index * _ally_spacing_y)
+            });
+        }
+    }
+
+    return _positions;
+}
+
+/// scr_draw_sprite_fit(sprite, frame, box_x, box_y, max_w, max_h, color, alpha)
+/// Draws a sprite scaled down (never up) to fit within max_w x max_h,
+/// anchored to the bottom-left corner of that zone — regardless of the
+/// sprite's own origin point (works for top-left, center, or any origin).
+function scr_draw_sprite_fit(_sprite, _frame, _box_x, _box_y, _max_w, _max_h, _color, _alpha) {
+    if (!sprite_exists(_sprite)) return;
+
+    var _spr_w = sprite_get_width(_sprite);
+    var _spr_h = sprite_get_height(_sprite);
+    if (_spr_w <= 0 || _spr_h <= 0) return;
+
+    var _fit_scale = min(1.0, min(_max_w / _spr_w, _max_h / _spr_h));
+
+    var _target_left = _box_x;
+    var _target_top   = _box_y + _max_h - (_spr_h * _fit_scale);
+
+    // sprite_get_xoffset/yoffset return the origin's distance from the sprite's
+    // own top-left corner, in unscaled sprite pixels — this works no matter
+    // where the origin actually is (top-left, center, bottom-center, etc.)
+    var _origin_x = sprite_get_xoffset(_sprite) * _fit_scale;
+    var _origin_y = sprite_get_yoffset(_sprite) * _fit_scale;
+
+    draw_sprite_ext(_sprite, _frame, _target_left + _origin_x, _target_top + _origin_y, _fit_scale, _fit_scale, 0, _color, _alpha);
+}
 /// @desc Battle Background Configuration Mapping
 
 function battle_get_background_sprite() {

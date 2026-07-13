@@ -145,36 +145,57 @@ if (global.state == GAME_STATE.CARD_SELECTION) {
 // ========================================== 
 if (global.state == GAME_STATE.BATTLE) {
 
-    var _row_start_y = 52, _row_vert_spacing = 50;
-    
-    // --- 2. HUD: VERTICAL HEALTH BOX SYSTEM ---
-    draw_set_font(Small_Font);
-    var _scale = 0.75;
+    var _column_top_y = 0; // boxes now start flush at the top
+    var _box_h = 80; // real height of spr_hp_box
+    var _available_height = 216; // swap for _gui_h if this should track view/room size dynamically
+    var _fits_at_full_size = (_box_h * party_max_members) <= _available_height;
+    var _scale = _fits_at_full_size ? 1 : (_available_height / (_box_h * party_max_members));
+    var _row_vert_spacing = _box_h * _scale;
 
     for (var _i = 0; _i < party_max_members; _i++) {
         var _member = party_members[_i];
         if (!is_struct(_member) && !instance_exists(_member)) continue;
-        
+
         var _current_box_x = 5 + _sx;
-        var _current_box_y = (_i * _row_vert_spacing) + 30 + _sy;
-        
-        if (sprite_exists(spr_hp_box)) {
-            draw_sprite_ext(spr_hp_box, 0, _current_box_x, _current_box_y, _scale, _scale, 0, c_white, 1.0);
-        }
-        
+        var _current_box_y = _column_top_y + (_i * _row_vert_spacing) + _sy;
+
+        // Box background now scales too (Option C) — previously this stayed full-size
+        // regardless of _scale, so it would've drifted out of sync with the HUD elements
+        // drawn inside it once scaling kicked in.
+        draw_sprite_ext(spr_hp_box, 0, _current_box_x, _current_box_y, _scale, _scale, 0, c_white, 1.0);
+
         draw_set_halign(fa_left);
         var _name_color = (_member.hp <= 0) ? c_red : c_white;
-        draw_text_transformed_color(_current_box_x + (8 * _scale) + 1, _current_box_y + (10 * _scale), string_upper(_member.name), 0.5, 0.5, 0, _name_color, _name_color, _name_color, _name_color, 1);
-        
+        draw_text_transformed_color(
+            _current_box_x + HPBOX_NAME_X * _scale + 1,
+            _current_box_y + HPBOX_NAME_Y * _scale,
+            string_upper(_member.name), 0.75, 0.75, 0,
+            _name_color, _name_color, _name_color, _name_color, 1
+        );
+
+        // --- Portrait (uses a dedicated portrait_sprite if the member has one, else falls back to the field sprite) ---
+        var _portrait_sprite = _member.sprite;
+        // Ported from the old FIELD LAYER's _is_active_input check: highlights whichever
+        // party member is currently the one choosing an action, grays out everyone else.
+        var _is_active_input = (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && party_input_index == _i && menu_stage != BATTLE_MENU.HIT_BAR && battle_text == "");
+        var _portrait_color = (_member.hp <= 0) ? c_gray : (_is_active_input ? c_white : c_gray);
+        scr_draw_sprite_fit(
+            _portrait_sprite, 0,
+            _current_box_x + HPBOX_PORTRAIT_X * 1,
+            _current_box_y + HPBOX_PORTRAIT_Y * 1,
+            HPBOX_PORTRAIT_MAX_W * 1, HPBOX_PORTRAIT_MAX_H * 1,
+            _portrait_color, 1.0
+        );
+
         var _hp_val = max(0, _member.display_hp);
         var _whole_hp = floor(_hp_val);
         var _global_fraction = _hp_val - _whole_hp;
         if (_global_fraction < 0.05 || _global_fraction > 0.95) _global_fraction = 0;
-        
+
         var _hund_digit = floor(_whole_hp / 100) % 10;
         var _tens_digit = floor(_whole_hp / 10) % 10;
         var _ones_digit = _whole_hp % 10;
-        
+
         var _hund_frame = _hund_digit * 4, _tens_frame = _tens_digit * 4, _ones_frame = _ones_digit * 4;
         if (_global_fraction > 0) {
             var _sub_offset = floor(_global_fraction * 4);
@@ -185,51 +206,32 @@ if (global.state == GAME_STATE.BATTLE) {
             }
         }
 
+        var _roller_draw_y = _current_box_y + HPBOX_ROLLER_Y * _scale;
         if (sprite_exists(spr_roller)) {
-            var _roller_start_x = _current_box_x + (25 * _scale);
-            var _roller_draw_y  = _current_box_y + (25 * _scale);
-            var _digit_stride   = 8 * _scale;
-            
-            draw_sprite_ext(spr_roller, _hund_frame, _roller_start_x, _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
-            draw_sprite_ext(spr_roller, _tens_frame, _roller_start_x + _digit_stride, _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
-            draw_sprite_ext(spr_roller, _ones_frame, _roller_start_x + (_digit_stride * 2), _roller_draw_y, _scale, _scale, 0, c_white, 1.0);
+            var _roller_start_x = _current_box_x + HPBOX_ROLLER_X * _scale;
+            var _digit_stride   = _fits_at_full_size ? HPBOX_ROLLER_STRIDE : 9.9;
+
+            draw_sprite_ext(spr_roller, _hund_frame, _roller_start_x, _roller_draw_y, _scale, _scale, 0, c_white, 1);
+            draw_sprite_ext(spr_roller, _tens_frame, _roller_start_x + _digit_stride, _roller_draw_y, _scale, _scale, 0, c_white, 1);
+            draw_sprite_ext(spr_roller, _ones_frame, _roller_start_x + (_digit_stride * 2), _roller_draw_y, _scale, _scale, 0, c_white, 1);
         }
-        
+
         if (_i < array_length(global.active_combat_buffs)) {
             var _card_data = global.active_combat_buffs[_i];
             if (_card_data != noone && variable_struct_exists(_card_data, "icon_sprite") && sprite_exists(_card_data.icon_sprite)) {
-                draw_sprite_ext(_card_data.icon_sprite, variable_struct_exists(_card_data, "icon_frame") ? _card_data.icon_frame : 0, _current_box_x + (36 * _scale), _current_box_y + (47 * _scale), _scale, _scale, 0, c_white, 1.0);
+                var _buff_frame = variable_struct_exists(_card_data, "icon_frame") ? _card_data.icon_frame : 0;
+                scr_draw_sprite_fit(
+                    _card_data.icon_sprite, _buff_frame,
+                    _current_box_x + HPBOX_BUFF_X * _scale,
+                    _current_box_y + HPBOX_BUFF_Y * _scale,
+                    HPBOX_BUFF_W * _scale, HPBOX_BUFF_H * _scale,
+                    c_white, 1.0
+                );
             }
         }
     }
-    
-    draw_set_halign(fa_left); draw_set_font(battle_font);
 
-    // --- 3. FIELD LAYER: PLAYER & ALLY SPRITES --- 
-    var _p_count = array_length(party_members);
-    for (var _p = 0; _p < _p_count; _p++) {
-        var _m = party_members[_p];
-        if (!is_struct(_m) && !instance_exists(_m)) continue;
-        if (_m.hp > 0 && sprite_exists(_m.sprite)) {
-            var _base_x = variable_instance_exists(id, "party_battle_positions") && _p < array_length(party_battle_positions) ? party_battle_positions[_p].x : 82;
-            var _base_y = variable_instance_exists(id, "party_battle_positions") && _p < array_length(party_battle_positions) ? party_battle_positions[_p].y : _row_start_y + (_p * _row_vert_spacing) - 12;
-             
-            var _is_active_input = (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && party_input_index == _p && menu_stage != BATTLE_MENU.HIT_BAR && battle_text == "");
-            var _input_bounce_x = _is_active_input ? round(sin(current_time * 0.015) * 2) + 3 : 0;
-            
-            draw_sprite_ext(_m.sprite, floor(_m.img_idx), _base_x + _input_bounce_x + _sx, _base_y + _sy, 1.0, 1.0, 0, _is_active_input ? c_white : c_silver, 1.0);
-            
-            if (_m.name == "Player" && variable_struct_exists(_m, "buffs") && is_array(_m.buffs)) {
-                for (var _b = 0; _b < array_length(_m.buffs); _b++) {
-                    var _buff_item = _m.buffs[_b];
-                    if (is_struct(_buff_item) && variable_struct_exists(_buff_item, "sprite") && sprite_exists(_buff_item.sprite)) {
-                        draw_sprite(_buff_item.sprite, 0, _base_x + _input_bounce_x + _sx - 16 + (_b * 12), _base_y + _sy - 12);
-                    }
-                }
-            }
-        } 
-    } 
-
+	draw_set_halign(fa_left);
     // ==========================================
     // HUD & SPRITE: ENEMY MASTER RENDER LAYOUT
     // ==========================================
@@ -254,7 +256,7 @@ if (global.state == GAME_STATE.BATTLE) {
         var _box_x = _gui_x + _sx + 30, _box_y = (_gui_y - _sprite_top_offset - 5) + _sy;
         var _bar_w = 40, _bar_h = 4;
     
-        draw_set_font(Small_Font); draw_set_halign(fa_center); draw_set_color(c_white);
+        draw_set_halign(fa_center); draw_set_color(c_white);
         draw_text_transformed(_box_x, _box_y - 12, string_upper(_enemy_inst.name), 0.35, 0.35, 0);
     
         draw_set_color(c_dkgray); draw_rectangle(_box_x - (_bar_w / 2), _box_y, _box_x + (_bar_w / 2), _box_y + _bar_h, false);
@@ -268,9 +270,27 @@ if (global.state == GAME_STATE.BATTLE) {
             }
         }
         draw_set_color(c_black); draw_rectangle(_box_x - (_bar_w / 2) - 1, _box_y - 1, _box_x + (_bar_w / 2) + 1, _box_y + _bar_h + 1, true);
+        
+        // --- MERCY / SPARE METER (mirrors the HP bar, drawn just below it) ---
+        if (variable_instance_exists(_enemy_inst, "mercy") && variable_instance_exists(_enemy_inst, "max_mercy") && _enemy_inst.max_mercy > 0) {
+            var _mercy_bar_y = _box_y + _bar_h + 3;
+            var _mercy_percent = clamp(_enemy_inst.mercy / _enemy_inst.max_mercy, 0, 1);
+            
+            draw_set_color(c_dkgray);
+            draw_rectangle(_box_x - (_bar_w / 2), _mercy_bar_y, _box_x + (_bar_w / 2), _mercy_bar_y + _bar_h, false);
+            
+            if (_mercy_percent > 0) {
+                // Turns green once the enemy is actually spareable, otherwise gold while filling up
+                var _can_spare_now = variable_instance_exists(_enemy_inst, "can_spare") && _enemy_inst.can_spare;
+                draw_set_color(_can_spare_now ? c_lime : c_yellow);
+                draw_rectangle(_box_x - (_bar_w / 2), _mercy_bar_y, (_box_x - (_bar_w / 2)) + (_bar_w * _mercy_percent), _mercy_bar_y + _bar_h, false);
+            }
+            
+            draw_set_color(c_black);
+            draw_rectangle(_box_x - (_bar_w / 2) - 1, _mercy_bar_y - 1, _box_x + (_bar_w / 2) + 1, _mercy_bar_y + _bar_h + 1, true);
+        }
     }
 	
-    draw_set_font(battle_font);
 	
     // --- 5. THE LOWER CHRONICLE (TEXT CONTROLLER) --- 
     var _dash_w = _gui_w - 160, _dash_h = 64, _dash_x = 80 + _sx, _dash_y = _gui_h - 128 + _sy;
@@ -314,6 +334,38 @@ if (global.state == GAME_STATE.BATTLE) {
         draw_set_halign(fa_left);
     }
 
+    // --- 6b. DODGE WINDOW (Block-Tales-style QTE before an enemy attack lands) ---
+    if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
+        var _dq_w = 200, _dq_h = 16;
+        var _dq_x = (_gui_w - _dq_w) / 2 + _sx;
+        var _dq_y = (_gui_h / 2) - 10 + _sy;
+        
+        draw_set_color(c_black);
+        draw_rectangle(_dq_x - 2, _dq_y - 2, _dq_x + _dq_w + 2, _dq_y + _dq_h + 2, true);
+        draw_set_color(c_dkgray);
+        draw_rectangle(_dq_x, _dq_y, _dq_x + _dq_w, _dq_y + _dq_h, false);
+        
+        // The "landing" zone: land inside here for a Perfect, just outside for a Good
+        var _dq_zone_x = _dq_x + (_dq_w * dodge_target);
+        draw_set_alpha(0.4);
+        draw_set_color(c_orange);
+        draw_rectangle(_dq_zone_x - 10, _dq_y, _dq_zone_x + 10, _dq_y + _dq_h, false);
+        draw_set_color(c_aqua);
+        draw_rectangle(_dq_zone_x - 4, _dq_y, _dq_zone_x + 4, _dq_y + _dq_h, false);
+        draw_set_alpha(1.0);
+        
+        // Countdown fill, shrinking from full to empty as the attack approaches
+        var _dq_fill_w = _dq_w * clamp(dodge_progress, 0, 1);
+        draw_set_color(c_red);
+        draw_rectangle(_dq_x, _dq_y, _dq_x + _dq_fill_w, _dq_y + _dq_h, false);
+        
+        draw_set_halign(fa_center);
+        draw_set_color(c_yellow);
+        draw_text_transformed(_gui_w / 2 + _sx, _dq_y - 22 + _sy, "PRESS ACCEPT TO DODGE!", 0.55, 0.55, 0);
+        draw_set_halign(fa_left);
+        draw_set_color(c_white);
+    }
+
     // --- 7. CONTEXT SUB-MENU OVERLAY --- 
     if (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && menu_stage != BATTLE_MENU.MAIN && battle_text == "") { 
          
@@ -335,6 +387,15 @@ if (global.state == GAME_STATE.BATTLE) {
                 for (var _k = 0; _k < _raw_enemy_count; _k++) {
                     var _item = global.active_battle_enemies[_k];
                     if (!instance_exists(_item)) continue; 
+                    
+                    var _item_is_spared = variable_instance_exists(_item, "is_spared") && _item.is_spared;
+                    
+                    // Spare's target select only ever shows enemies actually ready to be spared.
+                    if (menu_context == "spare_pick_target") {
+                        var _item_spareable = !_item_is_spared && variable_instance_exists(_item, "hp") && _item.hp > 0
+                            && variable_instance_exists(_item, "can_spare") && _item.can_spare;
+                        if (!_item_spareable) continue;
+                    }
         
                     var _item_x = _dash_x + 20 + ((_valid_enemy_index % _cols) * _cell_w);
                     var _item_y = _dash_y + 16 + (floor(_valid_enemy_index / _cols) * _cell_h);
@@ -347,6 +408,10 @@ if (global.state == GAME_STATE.BATTLE) {
                     var _text_color = (menu_cursor == _k) ? c_yellow : c_white;
                     if (variable_instance_exists(_item, "hp") && _item.hp <= 0) {
                         _enemy_name = "[X] " + _enemy_name; _text_color = c_gray;
+                    } else if (_item_is_spared) {
+                        // Fight/Interact contexts still list every enemy, so mark spared ones
+                        // clearly (they're excluded from being targetable, per the step script).
+                        _enemy_name = "[SPARED] " + _enemy_name; _text_color = c_gray;
                     }
                     
                     draw_set_color(_text_color); draw_text_transformed(_item_x, _item_y, _enemy_name, 0.5, 0.5, 0);
@@ -360,8 +425,8 @@ if (global.state == GAME_STATE.BATTLE) {
                         if (_hp_percent > 0) {
                             draw_set_color((menu_cursor == _k) ? c_orange : c_lime);
                             draw_rectangle(_item_x + 30, _item_y + 4, (_item_x + 30) + (24 * _hp_percent), _item_y + 10, false);
-							draw_set_colour(c_black)
-							draw_text_transformed(_item_x + 40, _item_y+1, string(_hp_percent) + "%", 0.5,0.5, 0);
+							draw_set_colour((menu_cursor == _k) ? c_olive : c_green);
+							draw_text_transformed(_item_x + 35, _item_y+1, string(_hp_percent * 100) + "%", 0.5,0.5, 0);
                         }
                     }
                     _valid_enemy_index++;

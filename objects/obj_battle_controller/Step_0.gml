@@ -60,6 +60,14 @@ for (var _e_idx = 0; _e_idx < _enemy_count; _e_idx++) {
             }
         }
     }
+    
+    // --- SPARE FADE-OUT DECAY ---
+    // Once an enemy is spared, count its fade timer down so the Draw event can
+    // visibly dissolve the sprite over ~half a second instead of it just vanishing.
+    if (instance_exists(_enemy_inst) && variable_instance_exists(_enemy_inst, "is_spared") && _enemy_inst.is_spared) {
+        if (!variable_instance_exists(_enemy_inst, "spare_fade_timer")) _enemy_inst.spare_fade_timer = 30;
+        if (_enemy_inst.spare_fade_timer > 0) _enemy_inst.spare_fade_timer -= 1;
+    }
 }
 
 // --- 3. POPUP NUMBERS MECHANICAL MANAGEMENT ---
@@ -367,27 +375,42 @@ if (global.state == GAME_STATE.BATTLE) {
             case BATTLE_MENU.TARGET_SELECT:
                 var _enemy_count = array_length(global.active_battle_enemies);
                 if (_enemy_count > 0) {
+                    // Precompute validity once per frame. What counts as "valid" depends on context:
+                    // - fight / interact_pick_target: alive and not already spared
+                    // - spare_pick_target: alive, not already spared, AND actually ready to be spared
+                    var _enemy_valid = array_create(_enemy_count, false);
+                    for (var _v = 0; _v < _enemy_count; _v++) {
+                        var _v_enemy = global.active_battle_enemies[_v];
+                        var _v_alive_unspared = instance_exists(_v_enemy) && _v_enemy.hp > 0 && (!variable_instance_exists(_v_enemy, "is_spared") || !_v_enemy.is_spared);
+                        
+                        if (menu_context == "spare_pick_target") {
+                            _enemy_valid[_v] = _v_alive_unspared && variable_instance_exists(_v_enemy, "can_spare") && _v_enemy.can_spare;
+                        } else {
+                            _enemy_valid[_v] = _v_alive_unspared;
+                        }
+                    }
+                    
                     var _cols = 2;
                     if (_key_right) {
-                        if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _enemy_count && global.active_battle_enemies[menu_cursor + 1].hp > 0) menu_cursor += 1;
+                        if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _enemy_count && _enemy_valid[menu_cursor + 1]) menu_cursor += 1;
                         _key_right = false;
                     }
                     if (_key_left) {
-                        if (menu_cursor % _cols > 0 && global.active_battle_enemies[menu_cursor - 1].hp > 0) menu_cursor -= 1;
+                        if (menu_cursor % _cols > 0 && _enemy_valid[menu_cursor - 1]) menu_cursor -= 1;
                         _key_left = false;
                     }
                     if (_key_down) {
-                        if (menu_cursor + _cols < _enemy_count && global.active_battle_enemies[menu_cursor + _cols].hp > 0) menu_cursor += _cols;
+                        if (menu_cursor + _cols < _enemy_count && _enemy_valid[menu_cursor + _cols]) menu_cursor += _cols;
                         _key_down = false;
                     }
                     if (_key_up) {
-                        if (menu_cursor - _cols >= 0 && global.active_battle_enemies[menu_cursor - _cols].hp > 0) menu_cursor -= _cols;
+                        if (menu_cursor - _cols >= 0 && _enemy_valid[menu_cursor - _cols]) menu_cursor -= _cols;
                         _key_up = false;
                     }
 
-                    if (global.active_battle_enemies[menu_cursor].hp <= 0) {
+                    if (!_enemy_valid[menu_cursor]) {
                         for (var _i = 0; _i < _enemy_count; _i++) {
-                            if (global.active_battle_enemies[_i].hp > 0) {
+                            if (_enemy_valid[_i]) {
                                  menu_cursor = _i;
                                  break;
                             }
@@ -395,19 +418,26 @@ if (global.state == GAME_STATE.BATTLE) {
                     }
 
                     if (_key_back) {
-                        // "interact_pick_target" is the entry point of the Interact flow now,
-                        // so backing out of it goes all the way back to MAIN.
-                        menu_stage = BATTLE_MENU.MAIN;
-                        menu_cursor = (menu_context == "interact_pick_target") ? 1 : 0; 
+                        if (menu_context == "interact_pick_target") {
+                            // "interact_pick_target" is the entry point of the Interact flow,
+                            // so backing out of it goes all the way back to MAIN.
+                            menu_stage = BATTLE_MENU.MAIN;
+                            menu_cursor = 1;
+                        } else if (menu_context == "spare_pick_target") {
+                            menu_stage = BATTLE_MENU.TAKE_ACTION;
+                            menu_cursor = variable_instance_exists(id, "spare_menu_cursor_backup") ? spare_menu_cursor_backup : 0;
+                        } else {
+                            menu_stage = BATTLE_MENU.MAIN;
+                            menu_cursor = 0;
+                        }
                         _key_back = false; 
                         exit;
                     }
                     
                     if (_key_conf) {
                         targeted_enemy_index = menu_cursor;
-                        var _target = global.active_battle_enemies[targeted_enemy_index];
                         
-                        if (instance_exists(_target) && _target.hp > 0) {
+                        if (_enemy_valid[targeted_enemy_index]) {
                             var _current_actor = party_members[party_input_index];
                             if (menu_context == "fight") {
                                 _current_actor.chosen_target_index = targeted_enemy_index;
@@ -420,6 +450,18 @@ if (global.state == GAME_STATE.BATTLE) {
                                 interact_target_index = targeted_enemy_index;
                                 menu_stage = BATTLE_MENU.INTERACT;
                                 menu_cursor = 0;
+                            }
+                            else if (menu_context == "spare_pick_target") {
+                                // Spare finalizes immediately here — no extra sub-menu needed,
+                                // unlike Interact which still has to show an options list.
+                                _current_actor.chosen_action_type = "take_action";
+                                _current_actor.chosen_sub_action = "Spare";
+                                _current_actor.chosen_target_index = targeted_enemy_index;
+                                
+                                party_input_index++;
+                                menu_stage = BATTLE_MENU.MAIN;
+                                menu_cursor = 0;
+                                if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
                             }
                             _key_conf = false;
                         }
@@ -444,9 +486,15 @@ if (global.state == GAME_STATE.BATTLE) {
                 
                 var _count = array_length(_options);
                 
+                // Bounded 2-column grid navigation, matching TARGET_SELECT's style
+                // (distinct up/down/left/right, no wraparound) instead of the old
+                // "up/left decrement, down/right increment, wrap around" 1-D list nav.
                 if (_count > 0) {
-                    if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _count) % _count;
-                    if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _count;
+                    var _cols = 2;
+                    if (_key_right) { if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _count) menu_cursor += 1; }
+                    if (_key_left)  { if (menu_cursor % _cols > 0) menu_cursor -= 1; }
+                    if (_key_down)  { if (menu_cursor + _cols < _count) menu_cursor += _cols; }
+                    if (_key_up)    { if (menu_cursor - _cols >= 0) menu_cursor -= _cols; }
                 }
                 if (_key_back) { 
                     // Go back to re-picking a target, not straight to MAIN
@@ -471,10 +519,28 @@ if (global.state == GAME_STATE.BATTLE) {
                 break;
                 
             case BATTLE_MENU.TAKE_ACTION:
+                // Safety net: guarantee "Spare" is always offered here, regardless of what's
+                // in the Create Event's take_action_options array. Sparing a mercy-maxed enemy
+                // is only ever resolved via this menu (see TURN_PROCESSING's "take_action" case,
+                // chosen_sub_action == "Spare"), so if it's missing here it was never reachable.
+                if (!variable_instance_exists(id, "take_action_options") || !is_array(take_action_options)) {
+                    take_action_options = [];
+                }
+                var _has_spare = false;
+                for (var _ta = 0; _ta < array_length(take_action_options); _ta++) {
+                    if (take_action_options[_ta] == "Spare") { _has_spare = true; break; }
+                }
+                if (!_has_spare) array_push(take_action_options, "Spare");
+                
                 var _count = array_length(take_action_options);
+                
+                // Bounded 2-column grid navigation, matching TARGET_SELECT's style.
                 if (_count > 0) {
-                    if (_key_up || _key_left)   menu_cursor = (menu_cursor - 1 + _count) % _count;
-                    if (_key_down || _key_right) menu_cursor = (menu_cursor + 1) % _count;
+                    var _cols = 2;
+                    if (_key_right) { if (menu_cursor % _cols < _cols - 1 && menu_cursor + 1 < _count) menu_cursor += 1; }
+                    if (_key_left)  { if (menu_cursor % _cols > 0) menu_cursor -= 1; }
+                    if (_key_down)  { if (menu_cursor + _cols < _count) menu_cursor += _cols; }
+                    if (_key_up)    { if (menu_cursor - _cols >= 0) menu_cursor -= _cols; }
                 }
                 if (_key_back) { 
                     menu_stage = BATTLE_MENU.MAIN;
@@ -483,18 +549,45 @@ if (global.state == GAME_STATE.BATTLE) {
                 
                 if (_key_conf && _count > 0) {
                     var _chosen_action = take_action_options[menu_cursor];
-                    var _current_actor = party_members[party_input_index];
                     
-                    _current_actor.chosen_action_type = "take_action";
-                    _current_actor.chosen_sub_action  = _chosen_action;
-                    _current_actor.chosen_target_index = -1;
-                    if (_chosen_action == "Defend") _current_actor.is_defending = true; 
-                    
-                    party_input_index++;
-                    menu_stage = BATTLE_MENU.MAIN;
-                    menu_cursor = 0;
-                    if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
-                    _key_conf = false;
+                    if (_chosen_action == "Spare") {
+                        // Spare now targets ONE specific enemy instead of sparing everyone
+                        // eligible at once, so route through TARGET_SELECT first — but only
+                        // if there's actually someone spareable, otherwise stay put.
+                        var _any_spareable = false;
+                        var _e_cnt_check = array_length(global.active_battle_enemies);
+                        for (var _sc = 0; _sc < _e_cnt_check; _sc++) {
+                            var _sc_enemy = global.active_battle_enemies[_sc];
+                            if (instance_exists(_sc_enemy) && _sc_enemy.hp > 0
+                                && (!variable_instance_exists(_sc_enemy, "is_spared") || !_sc_enemy.is_spared)
+                                && variable_instance_exists(_sc_enemy, "can_spare") && _sc_enemy.can_spare) {
+                                _any_spareable = true;
+                                break;
+                            }
+                        }
+                        
+                        if (_any_spareable) {
+                            spare_menu_cursor_backup = menu_cursor;
+                            menu_stage = BATTLE_MENU.TARGET_SELECT;
+                            menu_context = "spare_pick_target";
+                            menu_cursor = 0;
+                        }
+                        // else: no one is ready to be spared yet — ignore the confirm, stay here
+                        _key_conf = false;
+                    } else {
+                        var _current_actor = party_members[party_input_index];
+                        
+                        _current_actor.chosen_action_type = "take_action";
+                        _current_actor.chosen_sub_action  = _chosen_action;
+                        _current_actor.chosen_target_index = -1;
+                        if (_chosen_action == "Defend") _current_actor.is_defending = true; 
+                        
+                        party_input_index++;
+                        menu_stage = BATTLE_MENU.MAIN;
+                        menu_cursor = 0;
+                        if (party_input_index >= party_max_members) battle_sub_state = BATTLE_STATE.TURN_SORTING;
+                        _key_conf = false;
+                    }
                 }
                 break;
                 
@@ -772,8 +865,35 @@ if (global.state == GAME_STATE.BATTLE) {
                             battle_text = _actor.name + " " + _flavor;
                             
                             if (variable_instance_exists(_target, "mercy")) {
+                                var _mercy_before = _target.mercy;
                                 _target.mercy = clamp(_target.mercy + _effect.mercy_delta, 0, _target.max_mercy);
                                 if (_target.mercy >= _target.max_mercy) { _target.can_spare = true; }
+                                
+                                // Popup showing the ACTUAL change (post-clamp, so it never overstates
+                                // the gain if the enemy was already near max_mercy), expressed as a
+                                // % of max_mercy so it reads consistently across enemies with
+                                // different mercy caps. Positive gains show yellow, reductions (e.g.
+                                // "Mock") show gray so they read as distinct from a normal gain.
+                                var _mercy_actual_delta = _target.mercy - _mercy_before;
+                                var _mercy_percent = (_target.max_mercy > 0) ? round((_mercy_actual_delta / _target.max_mercy) * 100) : 0;
+                                
+                                if (_mercy_percent != 0) {
+                                    var _spawn_x = _target.x - camera_get_view_x(view_camera[0]);
+                                    var _spawn_y = (_target.y - camera_get_view_y(view_camera[0])) - 15;
+                                    
+                                    array_push(popup_numbers, {
+                                        type: "jumping_number",
+                                        x: _spawn_x,
+                                        y: _spawn_y,
+                                        hspeed: random_range(-1.5, 1.5),
+                                        vspeed: random_range(-4.0, -2.0),
+                                        gravity: 0.2,
+                                        text: (_mercy_percent >= 0 ? "+" : "") + string(_mercy_percent) + "%",
+                                        life: 45,
+                                        max_life: 45,
+                                        color: (_mercy_percent >= 0) ? c_yellow : c_gray
+                                    });
+                                }
                             }
                         }
                         else {
@@ -798,39 +918,47 @@ if (global.state == GAME_STATE.BATTLE) {
                     } else if (current_turn_act.chosen_sub_action == "Flee") { 
                         battle_text = "Escaping from battle layout...";
                     } 
-                    // --- NEW SPARE PROCESSING STATE ---
+                    // --- SPARE PROCESSING: single target, chosen via TARGET_SELECT ---
                     else if (current_turn_act.chosen_sub_action == "Spare") {
-                        var _spared_any = false;
-                        var _names_spared = "";
-                        var _e_count = array_length(global.active_battle_enemies);
+                        var _spare_t_idx = current_turn_act.chosen_target_index;
+                        var _spare_enemy = (_spare_t_idx >= 0 && _spare_t_idx < array_length(global.active_battle_enemies))
+                            ? global.active_battle_enemies[_spare_t_idx]
+                            : noone;
                         
-                        for (var _e = 0; _e < _e_count; _e++) {
-                            var _enemy = global.active_battle_enemies[_e];
+                        var _spare_valid = instance_exists(_spare_enemy) && _spare_enemy.hp > 0
+                            && (!variable_instance_exists(_spare_enemy, "is_spared") || !_spare_enemy.is_spared)
+                            && variable_instance_exists(_spare_enemy, "can_spare") && _spare_enemy.can_spare;
+                        
+                        if (_spare_valid) {
+                            _spare_enemy.is_spared = true;
+                            _spare_enemy.spare_fade_timer = 30; // ~0.5s dissolve, handled in the Step's fade-out decay + Draw event
+                            _spare_enemy.visible = false; // harmless legacy flag; the Draw GUI event draws manually and ignores this
                             
-                            if (instance_exists(_enemy) && _enemy.hp > 0 && (!variable_instance_exists(_enemy, "is_spared") || !_enemy.is_spared)) {
-                                // Fallback structures to ensure no object errors occur
-                                var _can_spare = variable_instance_exists(_enemy, "can_spare") ? _enemy.can_spare : false;
-                                
-                                if (_can_spare) {
-                                    _enemy.is_spared = true;
-                                    _enemy.visible = false; // Make their sprite disappear from the arena floor
-                                    
-                                    if (_names_spared != "") _names_spared += ", ";
-                                    _names_spared += _enemy.name;
-                                    _spared_any = true;
-                                    
-                                    // Optional: Add to a global non-lethal gold counter here
-                                    if (variable_instance_exists(_enemy, "gold_value")) {
-                                        global.battle_gold_earned = (variable_global_exists("battle_gold_earned") ? global.battle_gold_earned : 0) + _enemy.gold_value;
-                                    }
-                                }
+                            battle_text = _actor.name + " spared " + string(_spare_enemy.name) + "!";
+                            
+                            // Immediate, unmissable feedback that the spare actually landed —
+                            // a big popup right on the enemy, on top of the battle text.
+                            var _spawn_x = _spare_enemy.x - camera_get_view_x(view_camera[0]);
+                            var _spawn_y = (_spare_enemy.y - camera_get_view_y(view_camera[0])) - 15;
+                            array_push(popup_numbers, {
+                                type: "jumping_number",
+                                x: _spawn_x, y: _spawn_y,
+                                hspeed: 0,
+                                vspeed: -2.5,
+                                gravity: 0.1,
+                                text: "SPARED!",
+                                life: 60, max_life: 60,
+                                color: make_colour_rgb(255, 215, 0), // gold, reads as "mercy" rather than damage
+                                scale: 0.8
+                            });
+                            
+                            if (variable_instance_exists(_spare_enemy, "gold_value")) {
+                                global.battle_gold_earned = (variable_global_exists("battle_gold_earned") ? global.battle_gold_earned : 0) + _spare_enemy.gold_value;
                             }
-                        }
-                        
-                        if (_spared_any) {
-                            battle_text = _actor.name + " spared " + _names_spared + "!";
                         } else {
-                            battle_text = _actor.name + " offered mercy, but no one was willing to accept it yet.";
+                            // Could happen if the target died or was already spared by someone
+                            // else earlier in the same turn queue.
+                            battle_text = _actor.name + " tried to show mercy, but the moment had passed.";
                         }
                     } else { 
                         battle_text = _actor.name + " focused power!";
@@ -915,19 +1043,110 @@ if (global.state == GAME_STATE.BATTLE) {
             }
             
             if (_target.hp > 0) {
+                // Block-Tales-style dodge window: don't resolve damage immediately.
+                // Instead give the player a timed window to press Accept and reduce/negate it.
+                // Tuned easier/slower than the first pass, per feedback that it felt too fast/unclear.
+                if (!variable_instance_exists(id, "dodge_speed")) dodge_speed = 0.016; // lower = slower countdown = easier
+                dodge_progress = 1.0;
+                dodge_target = random_range(0.35, 0.55); // where in the countdown the "landing" moment sits
+                dodge_verdict = "";
+                dodge_perfect_threshold = 0.09; // widened from 0.04 — much more forgiving Perfect window
+                dodge_good_threshold = 0.20;    // widened from 0.12 — much more forgiving Good window
+                battle_sub_state = BATTLE_STATE.DODGE_WINDOW;
+            } else {
+                var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
+                battle_text = string(_e_name) + " lunges, but no active targets were left standing!";
+                battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
+            }
+        }
+    }
+    // ------------------------------------------
+    // SUB-STATE: DODGE WINDOW (Block-Tales-style QTE before an enemy attack lands)
+    // Press Accept: close to the landing moment = "PERFECT" (no damage),
+    // a bit off = "GOOD" (half damage), otherwise (or no press at all) = full damage.
+    // ------------------------------------------
+    else if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
+        dodge_progress -= dodge_speed;
+        
+        var _dodge_resolve_now = false;
+        var _dodge_result = "MISS";
+        
+        if (_key_conf) {
+            var _dodge_distance = abs(dodge_progress - dodge_target);
+            if (_dodge_distance <= dodge_perfect_threshold) {
+                _dodge_result = "PERFECT";
+            } else if (_dodge_distance <= dodge_good_threshold) {
+                _dodge_result = "GOOD";
+            } else {
+                _dodge_result = "MISS";
+            }
+            _dodge_resolve_now = true;
+        } else if (dodge_progress <= 0) {
+            // Ran out of time without pressing — attack lands fully.
+            _dodge_result = "MISS";
+            _dodge_resolve_now = true;
+        }
+        
+        if (_dodge_resolve_now) {
+            dodge_verdict = _dodge_result;
+            
+            var _actor = current_turn_act.actor_instance;
+            var _t_idx = current_turn_act.target_index;
+            var _target = party_members[_t_idx];
+            
+            if (instance_exists(_actor) && _target.hp > 0) {
                 var _is_guarding = variable_instance_exists(_target, "is_defending") ? _target.is_defending : false;
                 var _damage = max(1, _actor.atk - _target.def);
                 if (_is_guarding) _damage = ceil(_damage * 0.5);
                 
+                if (_dodge_result == "PERFECT") {
+                    _damage = 0;
+                } else if (_dodge_result == "GOOD") {
+                    _damage = ceil(_damage * 0.5);
+                }
+                
                 _target.hp = max(0, _target.hp - _damage);
                 var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
-                battle_text = string(_e_name) + " lunges at " + string(_target.name) + " doing " + string(_damage) + " damage!";
-                if (_is_guarding) battle_text += " (Guarded!)";
                 
-                screenshake_amount = 3;
-            } else {
-                var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
-                battle_text = string(_e_name) + " lunges, but no active targets were left standing!";
+                if (_dodge_result == "PERFECT") {
+                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + "... PERFECT DODGE! No damage taken!";
+                } else if (_dodge_result == "GOOD") {
+                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + "! Partial dodge, " + string(_damage) + " damage.";
+                } else {
+                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + " doing " + string(_damage) + " damage!";
+                    if (_is_guarding) battle_text += " (Guarded!)";
+                }
+                
+                // Popup at the target's HP box position (party HP boxes live in fixed GUI
+                // space, same convention as the item-heal popups) — either the damage number,
+                // or a DODGED! callout on a perfect dodge.
+                var _spawn_x = 100 + (_t_idx * 160);
+                var _spawn_y = display_get_gui_height() - 140;
+                
+                if (_damage > 0) {
+                    screenshake_amount = 3;
+                    array_push(popup_numbers, {
+                        type: "jumping_number",
+                        x: _spawn_x, y: _spawn_y,
+                        hspeed: random_range(-1.0, 1.0),
+                        vspeed: random_range(-3.5, -2.0),
+                        gravity: 0.2,
+                        text: string(_damage),
+                        life: 45, max_life: 45,
+                        color: c_white
+                    });
+                } else {
+                    array_push(popup_numbers, {
+                        type: "jumping_number",
+                        x: _spawn_x, y: _spawn_y,
+                        hspeed: random_range(-1.0, 1.0),
+                        vspeed: random_range(-3.5, -2.0),
+                        gravity: 0.2,
+                        text: "DODGED!",
+                        life: 45, max_life: 45,
+                        color: c_aqua
+                    });
+                }
             }
             
             battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;

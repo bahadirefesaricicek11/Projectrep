@@ -10,5 +10,5 @@ battle_blueprint = {
     atk: 80,
     def: 4,
     clover_leaves: 3,
-    sprite: spr_npc, // The sprite asset used inside the battle room
+    sprite: spr_npc_portrait, // The sprite asset used inside the battle room
 };

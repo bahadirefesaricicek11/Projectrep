@@ -6,11 +6,11 @@ global.enemy_database = {
         name: "Slime",
         max_hp: 30,
         hp: 30,
-        atk: 12,
+        atk: 2,
         def: 1,
         
         // --- MERCY ENGINE PROPERTIES ---
-        mercy: 0,
+        mercy: 20,
         max_mercy: 100,
         can_spare : false,
         is_spared : false,
