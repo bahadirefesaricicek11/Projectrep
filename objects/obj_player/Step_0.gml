@@ -176,23 +176,21 @@ if (global.player_gold > 99999)
 
 
 
-/// @description At the bottom of obj_player Step Event
+/// @description Bottom of obj_player Step Event
 
-// Track if the player actually changed position or shifted sprites this frame
-if (x != xprevious || y != yprevious || sprite_index != sprite_index /* fixed condition */) {
+// Record history entry when moving
+if (x != xprevious || y != yprevious) {
     var _pos = {
         x: x,
         y: y,
         sprite: sprite_index,
         img_idx: image_index
     };
-    // Insert the new coordinate at the front of the list
     ds_list_insert(pos_history, 0, _pos);
 }
 
-// MATCHING CAP: Ensure the delay multiplier matches the cleanup math (25 frames per ally)
-var _max_history_needed = (array_length(party_allies) + 1) * 25;
-
+// Keep the size capped safely to support both followers without truncation leaks
+var _max_history_needed = (array_length(party_allies) + 2) * 25;
 while (ds_list_size(pos_history) > _max_history_needed) {
     ds_list_delete(pos_history, ds_list_size(pos_history) - 1);
 }

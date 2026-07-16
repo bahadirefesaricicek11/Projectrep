@@ -27,3 +27,29 @@ global.is_loading_save = false;
 global.load_x = 0;
 global.load_y = 0;
 global.load_face = 0;
+
+global.item_found = undefined;
+global.item_found_name = "";
+
+// 0 = Normal / Monochrome, 1 = Colored (Xbox Style), 2 = PlayStation Style
+global.prompt_gamepad_style = 0; 
+
+// 0 = WASD, 1 = Arrow Keys
+global.prompt_kbd_movement = 0; 
+
+// 0 = ZXC Layout, 1 = Enter/Shift/E Layout
+global.prompt_kbd_action = 0;
+
+// In obj_game_controller / Boot Object Create Event:
+global.connected_gamepad_count = 0;
+global.active_gamepad = -1;
+
+// Perform an initial scan on startup
+for (var i = 0; i < 12; i++) {
+    if (gamepad_is_connected(i)) {
+        global.connected_gamepad_count++;
+        if (global.active_gamepad == -1) {
+            global.active_gamepad = i;
+        }
+    }
+}

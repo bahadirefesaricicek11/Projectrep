@@ -7,6 +7,7 @@ function scr_start_game(){
 	obj_player.x = 255;
 	obj_player.y = 180;
 	
+	
 	// 1. Wipe the master room database and loading queues
     global.room_states = {};
     global.load_followers = []; 
@@ -22,6 +23,13 @@ function scr_start_game(){
             }
         }
     }
+	if(instance_exists(obj_item_manager))
+	{
+		with(obj_item_manager)
+		{
+			inv = [];
+		}
+	}
     
     // 3. Destroys any active follower instances floating around the current room
     if (instance_exists(obj_follower)) 

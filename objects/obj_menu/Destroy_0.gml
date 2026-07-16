@@ -6,6 +6,14 @@ if (is_ingame) {
         obj_player.can_move = true;
     }
 }
+// obj_menu - Destroy Event
+
+// Only return to PLAYING if this was actually paused from gameplay!
+if (is_pause_menu) {
+    global.state = GAME_STATE.PLAYING;
+} else {
+    global.state = GAME_STATE.TITLE_SCREEN;
+}
 
 if (variable_instance_exists(id, "menu_pages")) {
     for (var i = 0; i < array_length(menu_pages); i++) {

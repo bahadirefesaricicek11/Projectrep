@@ -1045,13 +1045,15 @@ if (global.state == GAME_STATE.BATTLE) {
             if (_target.hp > 0) {
                 // Block-Tales-style dodge window: don't resolve damage immediately.
                 // Instead give the player a timed window to press Accept and reduce/negate it.
-                // Tuned easier/slower than the first pass, per feedback that it felt too fast/unclear.
-                if (!variable_instance_exists(id, "dodge_speed")) dodge_speed = 0.016; // lower = slower countdown = easier
+                // Eased again (2nd pass) — still felt too fast/hard, so this cuts speed way down
+                // and widens both hit windows substantially. Visual is now a shrinking ring
+                // (see Draw GUI) instead of a horizontal bar, matching Block Tales more closely.
+                dodge_speed = 0.010; // ~100 frames / ~1.7s at 60fps to fully close, was 0.016 (~62 frames)
                 dodge_progress = 1.0;
-                dodge_target = random_range(0.35, 0.55); // where in the countdown the "landing" moment sits
+                dodge_target = random_range(0.3, 0.6); // where in the countdown the ring "lands"
                 dodge_verdict = "";
-                dodge_perfect_threshold = 0.09; // widened from 0.04 — much more forgiving Perfect window
-                dodge_good_threshold = 0.20;    // widened from 0.12 — much more forgiving Good window
+                dodge_perfect_threshold = 0.12; // was 0.09 — much more forgiving Perfect window
+                dodge_good_threshold = 0.30;    // was 0.20 — much more forgiving Good window
                 battle_sub_state = BATTLE_STATE.DODGE_WINDOW;
             } else {
                 var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";

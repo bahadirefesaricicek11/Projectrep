@@ -13,9 +13,22 @@
 
 
         "graphics": "GRAFİKLER",
+
         "fullscreen": "EKRAN MODU",
         "windowed_label": "PENCERELİ",
         "fullscreen_label": "TAM EKRAN",
+        
+        "button_hints": "BUTON İPUÇLARI",
+        "on": "AÇIK",
+        "off": "KAPALI",
+
+        "btn_settings": "BUTON AYARLARI",
+
+        "gamepad_style": "KONTR. TARZI",
+        "kbd_movement": "KLAV. HAREKET",
+        "kbd_actions": "KLAV. ÖZEL",
+
+
 
         "audio": "SES",
         "master": "ANA SES",

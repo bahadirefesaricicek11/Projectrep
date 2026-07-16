@@ -6,11 +6,11 @@ global.enemy_database = {
         name: "Slime",
         max_hp: 30,
         hp: 30,
-        atk: 2,
+        atk: 12,
         def: 1,
         
         // --- MERCY ENGINE PROPERTIES ---
-        mercy: 20,
+        mercy: 0,
         max_mercy: 100,
         can_spare : false,
         is_spared : false,
@@ -70,7 +70,27 @@ global.interact_effects = {
     }
 };
 
-// --- 3. OVERWORLD ENCOUNTER GROUPS ---
+
+
+/// @desc Case-insensitive lookup into global.ally_database. Returns the matching
+/// entry regardless of how its key was capitalized when it was added (e.g. "Bob",
+/// "bob", and "BOB" all resolve to the same entry) — or undefined if nothing matches.
+/// Use this everywhere instead of struct_exists/struct_get directly, so a database
+/// entry typed in display case (the natural way to write it) never silently fails.
+function ally_database_lookup(_name) {
+    if (!variable_global_exists("ally_database") || !is_struct(global.ally_database)) return undefined;
+    if (is_undefined(_name)) return undefined;
+    
+    var _target = string_lower(string_trim(string(_name)));
+    var _keys = variable_struct_get_names(global.ally_database);
+    
+    for (var _i = 0; _i < array_length(_keys); _i++) {
+        if (string_lower(_keys[_i]) == _target) {
+            return variable_struct_get(global.ally_database, _keys[_i]);
+        }
+    }
+    return undefined;
+}
 global.encounter_database = {
     slime_easy: {
         weight_total: 100,

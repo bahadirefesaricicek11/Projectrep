@@ -1,16 +1,9 @@
 if InputPressed(INPUT_VERB.FULLSCREEN) {
+    // If it's currently fullscreen (true / 1), pass 0 to turn it off.
+    // If it's currently windowed (false / 0), pass 1 to turn it on.
+    var _target_mode = window_get_fullscreen() ? 0 : 1;
     
-    if (window_get_fullscreen() == true) { 
-        
-        window_set_fullscreen(false);
-        
-		window_set_size(960	, 540);
-        
-        alarm[0] = 1; 
-    }
-    else {
-        window_set_fullscreen(true);
-    }
+    scr_change_window_mode(_target_mode);
 }
 
 

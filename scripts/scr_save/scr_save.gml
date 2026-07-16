@@ -148,6 +148,8 @@ function load_settings()
         global.setting_language = ini_read_real("SETTINGS", "LANGUAGE", 0);
         ini_close();
         
+        window_enable_borderless_fullscreen(true);
+        
         window_set_fullscreen(global.fullscreen == 1);
     }
     

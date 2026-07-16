@@ -3,7 +3,8 @@ enum menu_page {
     settings,
     audio,
     graphics,
-	language
+	language,
+	controls
 }
 
 enum menu_element_type {

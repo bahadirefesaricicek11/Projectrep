@@ -1,12 +1,14 @@
-sprite_index = item.icon
+sprite_index = item.icon;
+name_key = item.name_key;
 
-var _accept = InputPressed(INPUT_VERB.ACCEPT);
-
-dstnc = distance_to_object(obj_player);
-
-if dstnc < 15 && obj_item_manager.inv_full == false && obj_player.can_move && _accept
+dstnc = distance_to_object(obj_player)
+if dstnc < 2 && obj_player.can_move && (InputPressed(INPUT_VERB.ACCEPT)) 
 {
-	item_add(item);
+	var _target_item = instance_nearest(obj_player.x, obj_player.y, obj_item_ingame);
+	global.item_found = _target_item.item;
+	global.item_found_name = __(_target_item.name_key);
+	startDialogue("item_found");
+	image_index = 2;
 	instance_destroy();
 }
 

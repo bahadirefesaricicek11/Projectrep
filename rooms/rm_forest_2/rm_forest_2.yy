@@ -38,8 +38,8 @@
   ],
   "name":"rm_forest_2",
   "parent":{
-    "name":"Rooms",
-    "path":"folders/Rooms.yy",
+    "name":"forest",
+    "path":"folders/Rooms/forest.yy",
   },
   "parentRoom":null,
   "physicsSettings":{

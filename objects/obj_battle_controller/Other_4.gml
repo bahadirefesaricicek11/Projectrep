@@ -28,10 +28,49 @@ if (room == rm_battle) {
     if (instance_exists(obj_player) && variable_instance_exists(obj_player, "party_allies")) {
         var _ally_count = array_length(obj_player.party_allies);
         for (var _i = 0; _i < _ally_count; _i++) {
-            var _ally_data = obj_player.party_allies[_i];
+            var _ally_entry = obj_player.party_allies[_i];
+            var _ally_data = undefined;
+            
+            // PREFERRED PATH: party_allies stores an ally name/key string (e.g. "Whitey",
+            // matching exactly what obj_player's follower-spawning code expects), resolved
+            // here against global.ally_database — mirrors exactly how enemies are spawned
+            // from global.enemy_database via global.battle_spawn_queue.
+            var _lookup_name = undefined;
+            if (is_string(_ally_entry)) {
+                _lookup_name = _ally_entry;
+            } else if (is_struct(_ally_entry) && variable_struct_exists(_ally_entry, "name")) {
+                // Even if a raw struct was pushed (e.g. an old battle_blueprint copy),
+                // still prefer resolving it against the database by name first — that
+                // way the database stays the actual single source of truth, and a stale
+                // struct can never silently override numbers that were rebalanced there.
+                _lookup_name = _ally_entry.name;
+            }
+            
+            // ally_database_lookup() matches case-insensitively, so a database entry
+            // written as "Bob", "bob", or "BOB" all resolve the same way regardless
+            // of how party_allies or the struct's name field happened to be cased.
+            _ally_data = ally_database_lookup(_lookup_name);
+            
+            // LEGACY FALLBACK: a struct was pushed and its name isn't (or doesn't have a
+            // name) in the database — use the raw struct as-is rather than dropping the
+            // ally entirely. Still supported so nothing breaks while you migrate fully.
+            if (is_undefined(_ally_data) && is_struct(_ally_entry)) {
+                _ally_data = _ally_entry;
+                show_debug_message("BATTLE SETUP WARNING: Ally '" + string(_lookup_name) + "' not found in global.ally_database — using the raw struct that was pushed instead.");
+            }
+            else if (is_undefined(_ally_data)) {
+                show_debug_message("BATTLE SETUP ERROR: Ally entry at index " + string(_i) + " was neither a known ally name nor a struct.");
+            }
+            
+            // Skip anything that couldn't be resolved, rather than silently building
+            // a generic-defaults party member — that silent fallback is exactly what
+            // was masking real ally stats before.
+            if (is_undefined(_ally_data)) continue;
             
             // --- PROTECTED COMBAT STAT ASSIGNMENTS ---
-            // Fall back to safe baseline numbers if variables are completely missing (e.g. freshly loaded saves)
+            // Fall back to safe baseline numbers only if the resolved database/struct
+            // entry is itself missing a field (shouldn't happen for database entries,
+            // since every ally_database entry defines all of these).
             var _name   = variable_struct_exists(_ally_data, "name")   ? _ally_data.name   : "Ally";
             var _hp     = variable_struct_exists(_ally_data, "hp")     ? _ally_data.hp     : 100;
             var _max_hp = variable_struct_exists(_ally_data, "max_hp") ? _ally_data.max_hp : 100;
@@ -46,7 +85,7 @@ if (room == rm_battle) {
                 atk: _atk,
                 def: _def,
                 clover_leaves: variable_struct_exists(_ally_data, "clover_leaves") ? _ally_data.clover_leaves : 0,
-                sprite: variable_struct_exists(_ally_data, "sprite") ? _ally_data.sprite : spr_npc_portrait,
+                sprite: variable_struct_exists(_ally_data, "sprite") ? _ally_data.sprite : spr_npc,
                 img_idx: 0,
                 chosen_action_type: "",
                 chosen_sub_action: "",

@@ -1,5 +1,19 @@
 draw_set_font(Project_Font);
 
+// --- INLINE TRUNCATION HELPER FUNCTION ---
+// Measures pixel-width of the localized label and appends "..." if it is too wide
+var _truncate_label = function(_str, _max_width) {
+    if (string_width(_str) <= _max_width) {
+        return _str;
+    }
+    var _ellipsis = "...";
+    var _trunc_str = _str;
+    while (string_length(_trunc_str) > 0 && string_width(_trunc_str + _ellipsis) > _max_width) {
+        _trunc_str = string_delete(_trunc_str, string_length(_trunc_str), 1);
+    }
+    return _trunc_str + _ellipsis;
+};
+
 var gwidth = view_width;
 var gheight = view_height + (is_ingame ? 50 : 0);
 var ds_grid = menu_pages[page];
@@ -22,34 +36,82 @@ if (is_ingame) {
     draw_text_ext_transformed_colour(gwidth / 2, 15, _title, 0, 300, 1, 1, 0, c_purple, c_fuchsia, c_yellow, c_orange, 1);
     draw_set_valign(fa_middle);
     draw_set_font(Project_Font);
-// ... (keep top in_game drawing logic exactly the same)
 } else {
     image_speed = 0.3;
-	
-	var _localized_sprite_string = __("menu.background");
+    
+    var _localized_sprite_string = __("menu.background");
 
-	// 2. Convert that string value directly into a real asset integer pointer index
-	var background_sprite = asset_get_index(_localized_sprite_string);
+    // 2. Convert that string value directly into a real asset integer pointer index
+    var background_sprite = asset_get_index(_localized_sprite_string);
 
-	// 3. Safety validation check layer
-	if (background_sprite == -1 || !sprite_exists(background_sprite)) {
-	    // Fallback default index asset pointer if the lookup returns an invalid key index (-1)
-	    background_sprite = bg1; 
-	} 
-	
-    draw_sprite_ext(background_sprite, -1, 0, 0, 1, 1, 0, c_white, 1);
+    // 3. Safety validation check layer
+    if (background_sprite == -1 || !sprite_exists(background_sprite)) {
+        // Fallback default index asset pointer if the lookup returns an invalid key index (-1)
+        background_sprite = bg1; 
+    } 
+    
+    // ==========================================
+    // SEAMLESS FIXED ALTERNATING BOXES
+    // ==========================================
+    if (!variable_instance_exists(id, "bg_scroll_x")) {
+        bg_scroll_x = 0;
+        bg_scroll_y = 0;
+    }
+
+    // Move by 1 whole pixel per frame
+    bg_scroll_x += 1;
+    bg_scroll_y += 1; 
+
+    var cell_w = 16; 
+    var cell_h = 16; 
+
+    // Reset exactly at 2 full cells so colors match perfectly when wrapping
+    if (bg_scroll_x >= (cell_w * 2)) bg_scroll_x = 0;
+    if (bg_scroll_y >= (cell_h * 2)) bg_scroll_y = 0;
+
+    var color1 = make_color_rgb(222, 222, 222);  // Light Gray
+    var color2 = make_color_rgb(145, 166, 205);   // Yellow
+
+    var cell_x = 0;
+    // Start drawing off-screen by 2 cells to give padding for the movement
+    for (var xx = -cell_w * 2; xx < gwidth + cell_w * 2; xx += cell_w) {
+        var cell_y = 0;
+        for (var yy = -cell_h * 2; yy < gheight + cell_h * 2; yy += cell_h) {
+            
+            // Pure checkerboard math based strictly on loop grid position
+            var current_color = ((cell_x + cell_y) % 2 == 0) ? color1 : color2;
+            
+            var draw_x = xx + bg_scroll_x;
+            var draw_y = yy + bg_scroll_y;
+            
+            draw_set_color(current_color);
+            draw_set_alpha(0.5);
+            
+            // Draw perfectly flush boxes
+            draw_rectangle(draw_x, draw_y, draw_x + cell_w - 1, draw_y + cell_h - 1, false);
+            
+            cell_y++;
+        }
+        cell_x++;
+    }
+    
+    // Reset draw settings
+    draw_set_color(c_white);
+    draw_set_alpha(1.0);
+    // ==========================================
     
     // FIX: Remove "if (page == 0 || page == 1)" so the banner draws on ALL title screens!
     _title = __("menu.title_main"); 
     draw_set_font(title_font);
     draw_set_halign(fa_right);
     draw_set_valign(fa_top);
-	if (page == 0 || page == 1)
-	{
-		draw_text_ext_transformed_colour(gwidth - 28, 92, _title, 0, 300, 1.5, 1.5, 0, c_olive, c_olive, c_gray, c_gray, 1);
-		draw_text_ext_transformed_colour(gwidth - 27, 91, _title, 0, 300, 1.5, 1.5, 0, c_yellow, c_yellow, c_white, c_white, 1);
-	}
-	draw_set_valign(fa_middle);
+    if (page == 0 || page == 1)
+    {
+        draw_sprite_stretched(spr_box, 0, gwidth/2, 40, 180, 135);
+        draw_text_ext_transformed_colour(gwidth - 45, 92, _title, 0, 300, 1.5, 1.5, 0, c_olive, c_olive, c_gray, c_gray, 1);
+        draw_text_ext_transformed_colour(gwidth - 46, 91, _title, 0, 300, 1.5, 1.5, 0, c_yellow, c_yellow, c_white, c_white, 1);
+    }
+    draw_set_valign(fa_middle);
     draw_set_font(Project_Font);
 }
 
@@ -115,13 +177,19 @@ if (is_ingame) {
 var selected = menu_option[page];
 draw_set_halign(fa_left);
 
+// Calculate maximum space allowed for the menu label without crossing the divider line
+var max_label_w = (divider_x - menu_left) - 15;
+
 for (var i = 0; i < ds_height; i++) {
     var y_pos = start_y + (i * y_buffer);
     var element_type = ds_grid[# 1, i];
     var is_selected = (i == selected);
     
     var raw_menu_key = ds_grid[# 0, i]; 
-    var localized_menu_label = __(raw_menu_key); 
+    var raw_localized_label = __(raw_menu_key); 
+    
+    // Apply truncation to keep layout perfectly locked in boundary
+    var localized_menu_label = _truncate_label(raw_localized_label, max_label_w);
     
     var text_x = menu_left + (is_selected ? xo : 0);
     var col = is_selected ? c_yellow : c_white;
@@ -147,7 +215,7 @@ for (var i = 0; i < ds_height; i++) {
         case menu_element_type.shift:
             var val = ds_grid[# 3, i];
             var options = ds_grid[# 4, i];
-            var arrows = [val > 0 ? "<< " : "", val < array_length(options)-1 ? " >>" : ""];
+            var arrows = [val > 0 ? "<" : "", val < array_length(options)-1 ? ">" : ""];
             
             var _shifted_display = arrows[0] + __(options[val]) + arrows[1];
             
@@ -186,7 +254,7 @@ for (var i = 0; i < ds_height; i++) {
             if (inputting && i == menu_option[page]) active_col = c_yellow; 
 
             var display_string = __(options[current_val]); 
-            if (is_selected && inputting) display_string = "< " + display_string + " >";
+            if (is_selected && inputting) display_string = "<" + display_string + ">";
             
             draw_text_color(rtx-1, y_pos+1, display_string, shadow_col, shadow_col, shadow_col, shadow_col, 1);
             draw_text_color(rtx, y_pos, display_string, active_col, active_col, active_col, active_col, 1);

@@ -5,7 +5,7 @@ sequence_to_resume = noone;
 
 margin = 4;
 padding = 8;
-width = display_get_gui_width() - margin * 2;
+width = display_get_gui_width() - (margin + 44);
 height = ((display_get_gui_height() - margin)/2.5);
 
 x = (display_get_gui_width() - width) / 2;
@@ -32,9 +32,9 @@ text_skippable = true;
 portrait_x = padding +3;
 portrait_y = padding +2;
 
-option_x = padding;
-option_y = padding * -2.5;
-option_spacing = 28;
+option_x = 0;
+option_y = padding * -1.5;
+option_spacing = 22;
 option_selection_indent = 24;
 option_height = 20;
 option_text_x = 8;

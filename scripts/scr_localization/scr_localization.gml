@@ -36,7 +36,7 @@ function __(key_path, args = []) {
         if (variable_struct_exists(_current_node, _k)) {
             _current_node = _current_node[$ _k];
         } else {
-            return "Missing: [" + key_path + "]";
+            return "[" + key_path + "]";
         }
     }
     

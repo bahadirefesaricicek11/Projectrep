@@ -43,6 +43,39 @@ if (obj_item_manager.inv_open == true)
     draw_text_transformed(103, 42, __("inventory.strength_info") + string(global.player_attack), 0.15, 0.15, 0);
     draw_text_transformed(103, 50, __("inventory.defense_info") + string(global.player_defense), 0.15, 0.15, 0);
     
+    // --- PARTY MEMBERS BELOW STATS ---
+    // Reads from obj_player.party_allies (the actual shared party-tracking array —
+    // the same one Room Start rebuilds followers from and the battle setup builds the
+    // fighting party from), resolved through ally_database_lookup() so it matches
+    // regardless of how each ally's name was capitalized ("Bob"/"bob"/"BOB" all work).
+    // Replaces the old global.encounter_allies / global.ally_db pair, which were a
+    // separate, disconnected system from the one everything else now uses.
+    if (instance_exists(obj_player) && variable_instance_exists(obj_player, "party_allies") && is_array(obj_player.party_allies))
+    {
+        var _party_draw_y = 148; // Starts 12 pixels below Defense stat
+        var _line_height = 8;   // Matches the vertical spacing of your stats
+        var _ally_display_count = 0;
+        
+        var _ally_count = array_length(obj_player.party_allies);
+        for (var p = 0; p < _ally_count; p++)
+        {
+            var _ally_entry = obj_player.party_allies[p];
+            
+            // party_allies normally holds plain name strings, but tolerate a raw
+            // struct too (same leniency the battle setup already has)
+            var _lookup_name = is_string(_ally_entry) ? _ally_entry
+                : (is_struct(_ally_entry) && variable_struct_exists(_ally_entry, "name") ? _ally_entry.name : undefined);
+            
+            var _db_data = ally_database_lookup(_lookup_name);
+            var _ally_name = !is_undefined(_db_data) ? _db_data.name : (is_undefined(_lookup_name) ? "Ally" : string(_lookup_name));
+            
+            // Draw companion text matching your stat layout font-scale
+            draw_text_transformed(103, _party_draw_y + (_ally_display_count * _line_height), "- " + string(_ally_name), 0.15, 0.15, 0);
+            _ally_display_count++;
+        }
+    }
+    // -------------------------------------------
+    
     var statscale = 0.19; 
     
     var health_x = 10;

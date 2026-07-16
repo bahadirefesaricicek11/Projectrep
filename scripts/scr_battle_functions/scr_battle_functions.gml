@@ -20,15 +20,7 @@
 #macro HPBOX_BUFF_W            16
 #macro HPBOX_BUFF_H            16
 
-enum GAME_STATE {
-    PLAYING,
-    MENU,
-    BATTLE,
-    CARD_SELECTION,
-    CUTSCENE,
-    TITLE_SCREEN,
-    GAMEOVER
-}
+
 enum BATTLE_STATE {
     PLAYER_INPUT,
     TURN_SORTING,
@@ -308,42 +300,44 @@ function battle_spawn_enemy(_enemy_key, _x, _y, _object_index = obj_battle_enemy
     
     var _data = global.enemy_database[$ _enemy_key];
     
-    // 2. Create the instance
-    var _inst = instance_create_depth(_x, _y, 0, _object_index);
-    
-    // 3. Bind core stats & identification variables
-    _inst.enemy_id = _enemy_key;
-    _inst.name = variable_struct_exists(_data, "name") ? _data.name : "Unknown Enemy";
-    _inst.max_hp = variable_struct_exists(_data, "max_hp") ? _data.max_hp : 10;
-    _inst.hp = _inst.max_hp;
-    _inst.atk = variable_struct_exists(_data, "atk") ? _data.atk : 1;
-    _inst.def = variable_struct_exists(_data, "def") ? _data.def : 0;
-    _inst.xp_value = variable_struct_exists(_data, "xp_value") ? _data.xp_value : 0;
-    _inst.gold_value = variable_struct_exists(_data, "gold_value") ? _data.gold_value : 0;
-    
-    // Bind visual assets
-    if (variable_struct_exists(_data, "sprite")) {
-        _inst.sprite_index = _data.sprite;
-    }
-    
-    // 4. BIND MERCY ENGINE PROPERTIES
-    _inst.mercy = 0; // Starts at 0
-    _inst.max_mercy = variable_struct_exists(_data, "max_mercy") ? _data.max_mercy : 100;
-    _inst.can_spare = false;
-    _inst.is_spared = false;
-    
-    // Deep copy or assign the custom dynamic interaction array
+    // 2. Prepare deep copies of dynamic reference types (Arrays/Structs) safely BEFORE injection
+    var _final_interact = ["Check"];
     if (variable_struct_exists(_data, "interact_options") && is_array(_data.interact_options)) {
-        // We use array_create/array_copy to give this specific instance its own unique array reference
         var _len = array_length(_data.interact_options);
-        _inst.interact_options = array_create(_len);
-        array_copy(_inst.interact_options, 0, _data.interact_options, 0, _len);
-    } else {
-        _inst.interact_options = ["Check"]; // Baseline fallback option
+        _final_interact = array_create(_len);
+        array_copy(_final_interact, 0, _data.interact_options, 0, _len);
     }
+
+    // 3. Construct injection payload. 
+    // These variables are guaranteed to exist BEFORE the instance's Create Event executes.
+    var _init_vars = {
+        enemy_id : _enemy_key,
+        name : variable_struct_exists(_data, "name") ? _data.name : "Unknown Enemy",
+        max_hp : variable_struct_exists(_data, "max_hp") ? _data.max_hp : 10,
+        hp : variable_struct_exists(_data, "max_hp") ? _data.max_hp : 10,
+        atk : variable_struct_exists(_data, "atk") ? _data.atk : 1,
+        def : variable_struct_exists(_data, "def") ? _data.def : 0,
+        xp_value : variable_struct_exists(_data, "xp_value") ? _data.xp_value : 0,
+        gold_value : variable_struct_exists(_data, "gold_value") ? _data.gold_value : 0,
+        sprite_index : variable_struct_exists(_data, "sprite") ? _data.sprite : asset_get_index("spr_default_enemy_fallback"),
+        
+        // Mercy engine properties
+        mercy : 0,
+        max_mercy : variable_struct_exists(_data, "max_mercy") ? _data.max_mercy : 100,
+        can_spare : false,
+        is_spared : false,
+        interact_options : _final_interact
+    };
     
-    // 5. Register into your global tracking array
-    array_push(global.active_battle_enemies, _inst);
+    // 4. Create the instance with safe pre-packaged data injection
+    var _inst = instance_create_depth(_x, _y, 0, _object_index, _init_vars);
+    
+    // 5. Register into your global tracking array safely
+    if (variable_global_exists("active_battle_enemies") && is_array(global.active_battle_enemies)) {
+        array_push(global.active_battle_enemies, _inst);
+    } else {
+        show_debug_message("Warning: global.active_battle_enemies array not initialized. Instance spawned unregistered.");
+    }
     
     return _inst;
 }

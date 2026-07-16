@@ -229,6 +229,7 @@ if (global.state == GAME_STATE.BATTLE) {
                 );
             }
         }
+
     }
 
 	draw_set_halign(fa_left);
@@ -335,33 +336,60 @@ if (global.state == GAME_STATE.BATTLE) {
     }
 
     // --- 6b. DODGE WINDOW (Block-Tales-style QTE before an enemy attack lands) ---
+    // Ring style: a bright ring shrinks toward the center over time. A fixed target
+    // band (orange = Good, lime = Perfect) sits at a constant radius. Press Accept
+    // when the shrinking ring lines up with the band. Same underlying math as before
+    // (dodge_progress/dodge_target/thresholds) — just drawn as radii instead of a bar.
     if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
-        var _dq_w = 200, _dq_h = 16;
-        var _dq_x = (_gui_w - _dq_w) / 2 + _sx;
-        var _dq_y = (_gui_h / 2) - 10 + _sy;
+        var _dq_center_x = _gui_w / 2 + _sx;
+        var _dq_center_y = (_gui_h / 2) - 10 + _sy;
+        var _dq_base_radius = 70;
         
-        draw_set_color(c_black);
-        draw_rectangle(_dq_x - 2, _dq_y - 2, _dq_x + _dq_w + 2, _dq_y + _dq_h + 2, true);
-        draw_set_color(c_dkgray);
-        draw_rectangle(_dq_x, _dq_y, _dq_x + _dq_w, _dq_y + _dq_h, false);
+        var _dq_perfect = variable_instance_exists(id, "dodge_perfect_threshold") ? dodge_perfect_threshold : 0.12;
+        var _dq_good    = variable_instance_exists(id, "dodge_good_threshold")    ? dodge_good_threshold    : 0.30;
         
-        // The "landing" zone: land inside here for a Perfect, just outside for a Good
-        var _dq_zone_x = _dq_x + (_dq_w * dodge_target);
-        draw_set_alpha(0.4);
-        draw_set_color(c_orange);
-        draw_rectangle(_dq_zone_x - 10, _dq_y, _dq_zone_x + 10, _dq_y + _dq_h, false);
-        draw_set_color(c_aqua);
-        draw_rectangle(_dq_zone_x - 4, _dq_y, _dq_zone_x + 4, _dq_y + _dq_h, false);
+        var _dq_target_radius  = _dq_base_radius * dodge_target;
+        var _dq_good_px        = _dq_good * _dq_base_radius;
+        var _dq_perfect_px     = _dq_perfect * _dq_base_radius;
+        
+        // Faint full-size guide circle so the player can see the overall "closing" range
+        draw_set_alpha(0.15);
+        draw_set_color(c_white);
+        draw_circle(_dq_center_x, _dq_center_y, _dq_base_radius, true);
         draw_set_alpha(1.0);
         
-        // Countdown fill, shrinking from full to empty as the attack approaches
-        var _dq_fill_w = _dq_w * clamp(dodge_progress, 0, 1);
-        draw_set_color(c_red);
-        draw_rectangle(_dq_x, _dq_y, _dq_x + _dq_fill_w, _dq_y + _dq_h, false);
+        // Good zone: a thick orange ring band around the target radius
+        draw_set_alpha(0.45);
+        draw_set_color(c_orange);
+        var _dq_r = max(0, _dq_target_radius - _dq_good_px);
+        while (_dq_r <= _dq_target_radius + _dq_good_px) {
+            draw_circle(_dq_center_x, _dq_center_y, _dq_r, true);
+            _dq_r += 1;
+        }
+        
+        // Perfect zone: a narrower lime band on top of the Good band
+        draw_set_alpha(0.6);
+        draw_set_color(c_lime);
+        _dq_r = max(0, _dq_target_radius - _dq_perfect_px);
+        while (_dq_r <= _dq_target_radius + _dq_perfect_px) {
+            draw_circle(_dq_center_x, _dq_center_y, _dq_r, true);
+            _dq_r += 1;
+        }
+        draw_set_alpha(1.0);
+        
+        // The moving ring: shrinks from the full radius down to 0 as dodge_progress
+        // counts down from 1 to 0. Time your press for when THIS lines up with the bands.
+        var _dq_current_radius = _dq_base_radius * clamp(dodge_progress, 0, 1);
+        draw_set_color(c_white);
+        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius - 1, true);
+        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius, true);
+        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius + 1, true);
         
         draw_set_halign(fa_center);
         draw_set_color(c_yellow);
-        draw_text_transformed(_gui_w / 2 + _sx, _dq_y - 22 + _sy, "PRESS ACCEPT TO DODGE!", 0.55, 0.55, 0);
+        draw_text_transformed(_dq_center_x, _dq_center_y - _dq_base_radius - 26, "PRESS ACCEPT!", 0.6, 0.6, 0);
+        draw_set_color(c_white);
+        draw_text_transformed(_dq_center_x, _dq_center_y + _dq_base_radius + 14, "Tap when the ring closes on the band!", 0.4, 0.4, 0);
         draw_set_halign(fa_left);
         draw_set_color(c_white);
     }
@@ -418,17 +446,44 @@ if (global.state == GAME_STATE.BATTLE) {
         
                     if (variable_instance_exists(_item, "max_hp") && _item.max_hp > 0) {
                         var _hp_percent = clamp(_item.hp / _item.max_hp, 0, 1);
+                        // FIX: outline + empty track now always draw at FULL width. Previously
+                        // these scaled by _hp_percent too, so a low HP value collapsed the
+                        // whole box down to a sliver instead of showing a mostly-empty bar.
 						draw_set_color((menu_cursor == _k) ? c_ltgray : c_white);
-						draw_rectangle(_item_x + 29, _item_y + 3, (_item_x + 31)+ (24 * _hp_percent ), _item_y + 11, false);
+						draw_rectangle(_item_x + 29, _item_y + 3, _item_x + 31 + 24, _item_y + 11, false);
                         draw_set_color(c_dkgray); 
-						draw_rectangle(_item_x + 30, _item_y + 4, (_item_x + 30)+ (24 * _hp_percent ), _item_y + 10, false);
+						draw_rectangle(_item_x + 30, _item_y + 4, _item_x + 30 + 24, _item_y + 10, false);
                         if (_hp_percent > 0) {
-                            draw_set_color((menu_cursor == _k) ? c_orange : c_lime);
+                            // HP box is now always red (was orange/lime depending on cursor)
+                            draw_set_color((menu_cursor == _k) ? c_red : make_colour_rgb(170, 0, 0));
                             draw_rectangle(_item_x + 30, _item_y + 4, (_item_x + 30) + (24 * _hp_percent), _item_y + 10, false);
-							draw_set_colour((menu_cursor == _k) ? c_olive : c_green);
-							draw_text_transformed(_item_x + 35, _item_y+1, string(_hp_percent * 100) + "%", 0.5,0.5, 0);
                         }
+						draw_set_colour(c_white);
+						draw_text_transformed(_item_x + 35, _item_y+1, string(round(_hp_percent * 100)) + "%", 0.5,0.5, 0);
                     }
+                    
+                    // --- SPARE/MERCY PERCENTAGE BOX, drawn just to the right of the HP box ---
+                    if (variable_instance_exists(_item, "max_mercy") && _item.max_mercy > 0) {
+                        var _mercy_percent = clamp(_item.mercy / _item.max_mercy, 0, 1);
+                        var _mercy_x = _item_x + 70; // sits just right of the HP box + its % text
+                        var _mercy_w = 20;
+                        
+                        // FIX: same bug as the HP box above — outline + empty track now always
+                        // draw at full fixed width, regardless of the current mercy percent.
+                        draw_set_color((menu_cursor == _k) ? c_ltgray : c_white);
+                        draw_rectangle(_mercy_x - 1, _item_y + 3, _mercy_x + 1 + _mercy_w, _item_y + 11, false);
+                        draw_set_color(c_dkgray);
+                        draw_rectangle(_mercy_x, _item_y + 4, _mercy_x + _mercy_w, _item_y + 10, false);
+                        
+                        if (_mercy_percent > 0) {
+                            draw_set_color(c_yellow);
+                            draw_rectangle(_mercy_x, _item_y + 4, _mercy_x + (_mercy_w * _mercy_percent), _item_y + 10, false);
+                        }
+                        
+                        draw_set_color(c_black);
+                        draw_text_transformed(_mercy_x + 4, _item_y + 1, string(round(_mercy_percent * 100)) + "%", 0.45, 0.45, 0);
+                    }
+                    
                     _valid_enemy_index++;
                 }
                 draw_set_color(c_white);
@@ -565,8 +620,9 @@ if (global.state == GAME_STATE.BATTLE) {
                 var _draw_y = variable_struct_exists(_p, "y") ? _p.y : (variable_struct_exists(_p, "yy") ? _p.yy : 0);
                 var _col  = variable_struct_exists(_p, "color") ? _p.color : c_white;
                 var _life = variable_struct_exists(_p, "life") ? _p.life : 30;
+                var _scale = variable_struct_exists(_p, "scale") ? _p.scale : 0.5;
             
-                draw_text_transformed_color(_draw_x, _draw_y, string(_p.text), 0.5, 0.5, 0, _col, _col, _col, _col, clamp(_life / 15, 0, 1));
+                draw_text_transformed_color(_draw_x, _draw_y, string(_p.text), _scale, _scale, 0, _col, _col, _col, _col, clamp(_life / 15, 0, 1));
             }
         }
         draw_set_valign(fa_top); draw_set_halign(fa_left);

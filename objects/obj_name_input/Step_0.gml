@@ -42,7 +42,7 @@ if (!prompt_exit) {
         } else if (char == "DONE") { 
             if (string_length(final_name) > 0) { 
                 global.player_name = final_name; 
-                room_goto(rm_introCutscene); 
+                room_goto(rm_controls_spash); 
                 scr_text(); 
             }; 
         } else if (string_length(final_name) < max_len) { 

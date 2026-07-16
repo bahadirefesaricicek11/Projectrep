@@ -13,9 +13,20 @@
 
 
         "graphics": "GRAPHICS",
+
         "fullscreen": "FULLSCREEN",
         "windowed_label": "WINDOWED",
         "fullscreen_label": "FULLSCREEN",
+
+        "button_hints": "BUTTON HINTS",
+        "on": "ON",
+        "off": "OFF",
+
+        "btn_settings": "BUTTON SETTINGS",
+
+        "gamepad_style": "GP .STYLE",
+        "kbd_movement": "KB. MOVEMENT",
+        "kbd_actions": "KB. ACTIONS",
 
         "audio": "AUDIO",
         "master": "MASTER",
