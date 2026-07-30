@@ -24,3 +24,5 @@ prompt_option = 1;
 
 spacing_x = 24; 
 spacing_y = 20;
+
+instance_create_depth(0, 0, 100, obj_scrolling_background);

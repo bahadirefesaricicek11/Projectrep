@@ -118,11 +118,11 @@ if (obj_item_manager.inv_open == true)
     draw_sprite(spr_shield_slot, 0, 268, 152);
     draw_sprite(spr_weapon_slot, 0, 268, 171);
     
-    if (equipped[0] != undefined) draw_sprite(equipped[0].icon, 0, 268, 32);
-    if (equipped[1] != undefined) draw_sprite(equipped[1].icon, 0, 268, 51);
-    if (equipped[2] != undefined) draw_sprite(equipped[2].icon, 0, 268, 70);
-    if (equipped[3] != undefined) draw_sprite(equipped[3].icon, 0, 268, 152);
-    if (equipped[4] != undefined) draw_sprite(equipped[4].icon, 0, 268, 171);
+    if (equipped[0] != undefined) draw_sprite(equipped[0].icon, 0, 269, 33);
+    if (equipped[1] != undefined) draw_sprite(equipped[1].icon, 0, 269, 52);
+    if (equipped[2] != undefined) draw_sprite(equipped[2].icon, 0, 269, 71);
+    if (equipped[3] != undefined) draw_sprite(equipped[3].icon, 0, 269, 153);
+    if (equipped[4] != undefined) draw_sprite(equipped[4].icon, 0, 269, 172);
     
     // --- FIXED HOVER INSPECTION RENDERING LAYER ---
     for (var i = 0; i < max_inv_length; i++)
@@ -163,3 +163,5 @@ if (obj_item_manager.inv_open == true)
         }
     }
 }
+draw_set_font(Project_Font);
+draw_set_colour(c_white);

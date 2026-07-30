@@ -1,7 +1,6 @@
 /// @desc Global Item Registry & Data Models
-
-// The constructor remains identical
-function create_item(_name_key, _desc_key, _price, _ico, _effect, _healAmt, _rarity, _itemType, _canDrop) constructor
+// The constructor remains identical, plus one new optional trailing parameter
+function create_item(_name_key, _desc_key, _price, _ico, _effect, _healAmt, _rarity, _itemType, _canDrop, _hit_effect = noone) constructor
 {
     name_key = _name_key;       // Store the raw key instead of evaluated text
     description_key = _desc_key; // Store the raw key instead of evaluated text
@@ -12,6 +11,10 @@ function create_item(_name_key, _desc_key, _price, _ico, _effect, _healAmt, _rar
     rarity = _rarity;
     itemType = _itemType;
     canDrop = _canDrop;
+    // NEW: sprite played on the target when THIS weapon lands a hit in battle.
+    // noone (the default) means "no special effect" — just the existing hit-flash.
+    // Only weapons need this set; everything else can ignore it entirely.
+    hit_effect = _hit_effect;
 }
     
 global.item_list = {
@@ -53,6 +56,7 @@ global.item_list = {
     iron_sword : new create_item(
         "items.iron_sword.name", "items.iron_sword.desc", 100, spr_iron_sword,
         function(_target) { return item_effect_equip(4, "iron_sword", "player_attack", 10); },
-        0, "rare", "Weapon", true
+        0, "rare", "Weapon", true,
+        spr_slash_effect // TODO: confirm this is the actual sprite asset name — placeholder until you tell me the real one
     )
 };

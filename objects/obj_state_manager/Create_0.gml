@@ -6,6 +6,8 @@ global.saveables = [
     obj_gold_stack,
     obj_npc,
     obj_enemy_parent,
-    obj_item_ingame
+    obj_item_ingame,
+	obj_solid,
+	obj_textbox_trigger
 ];
 

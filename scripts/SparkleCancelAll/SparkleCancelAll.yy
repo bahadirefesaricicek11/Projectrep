@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"SparkleCancelAll",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"SparkleCancelAll",
+  "parent":{
+    "name":"SparkleStore",
+    "path":"folders/SparkleStore.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

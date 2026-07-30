@@ -1,6 +1,5 @@
 {
     "menu": {
-        "background": "bg1_tr",
         "resume": "DEVAM ET",
         "save": "KAYDET",
         "options": "AYARLAR",
@@ -10,7 +9,6 @@
         "load": "KAYDI YÜKLE",
         "settings": "AYARLAR",
         "quit": "ÇIKIŞ",
-
 
         "graphics": "GRAFİKLER",
 
@@ -22,14 +20,6 @@
         "on": "AÇIK",
         "off": "KAPALI",
 
-        "btn_settings": "BUTON AYARLARI",
-
-        "gamepad_style": "KONTR. TARZI",
-        "kbd_movement": "KLAV. HAREKET",
-        "kbd_actions": "KLAV. ÖZEL",
-
-
-
         "audio": "SES",
         "master": "ANA SES",
         "sounds": "EFEKTLER",
@@ -37,9 +27,9 @@
 
         "back": "GERİ",
 
-
         "title_paused": "DURDURULDU",
-        "title_main": "PROJE",
+
+        "tutorial": "HERHANGİ BİR TUŞA BAS",
 
         "prompt_save_query": "Ana Menüye dönmeden önce kaydetmek ister misin?",
         "prompt_save_exit": "Kaydet ve Çık",

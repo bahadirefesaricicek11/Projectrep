@@ -2,12 +2,8 @@
 // 1. IN-GAME EXIT PROMPT (Special Overlay)
 // =================================================================
 if (is_ingame && prompt_exit) {
-    // Scroll background
-    bg_scroll_x += 1;
-    bg_scroll_y += 1; 
-    
-    if (bg_scroll_x >= 56) bg_scroll_x = 0;
-    if (bg_scroll_y >= 72) bg_scroll_y = 0;
+
+// =======================================
     
     var input_up_p    = InputPressed(INPUT_VERB.UP);
     var input_down_p  = InputPressed(INPUT_VERB.DOWN);
@@ -43,7 +39,7 @@ if (is_ingame && prompt_exit) {
     exit; // Prevent main menu processing while exit prompt is up
 }
 
-// =================================================================
+//==========================
 // 2. CORE MENU NAVIGATION SETUP
 // =================================================================
 var ds_grid = menu_pages[page];
@@ -54,6 +50,8 @@ if (menu_option[page] != previous_menu_option) {
 }
 previous_menu_option = menu_option[page];
 xo = lerp(xo, -15, lerpAmt);
+
+
 
 // Gather Inputs
 var input_up_p    = InputPressed(INPUT_VERB.UP);
@@ -181,6 +179,7 @@ else {
                     obj_player.menu_cooldown = true;
                 }
                 
+				instance_destroy(obj_scrolling_background);
                 instance_destroy();
             } 
             else {

@@ -31,8 +31,8 @@ function InputMousePressed(_binding = mb_left)
             var _x = device_mouse_x_to_gui(0);
             var _y = device_mouse_y_to_gui(0);
             
-            if ((_x < INPUT_TOUCH_EDGE_DEADZONE) || (_x > (global.view_width  - INPUT_TOUCH_EDGE_DEADZONE))
-            ||  (_y < INPUT_TOUCH_EDGE_DEADZONE) || (_y > (global.view_height - INPUT_TOUCH_EDGE_DEADZONE)))
+            if ((_x < INPUT_TOUCH_EDGE_DEADZONE) || (_x > (display_get_gui_width()  - INPUT_TOUCH_EDGE_DEADZONE))
+            ||  (_y < INPUT_TOUCH_EDGE_DEADZONE) || (_y > (display_get_gui_height() - INPUT_TOUCH_EDGE_DEADZONE)))
             {
                 var _left = false;
             }

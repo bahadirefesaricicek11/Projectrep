@@ -1,7 +1,6 @@
 // Feather disable all
 
 /// @param GUID
-/// @param legacy
 
 function __InputGamepadGUIDParse(_guid)
 {
@@ -26,23 +25,19 @@ function __InputGamepadGUIDParse(_guid)
     // N5: Product ID
     // N7: Revision
     // N8: Driver hint (SDL)
-    //
-    //If instead of the expected VID + PID + REV pattern, GUID is used to encode device
-    //description, N3 onwards contains encoded description instead of indicated values.
-    //On Android platform, GUID description encoding begins at N1 and will not mismatch
     
     //Check for empty N4, indicating this is not a description encoded GUID
     if (string_copy(_guid, 13, 4) == "0000")
     {
-        //Confirm N6 is also empty
+        // MODIFIED: We bypass the strict N6 empty check. 
+        // Some Bluetooth stacks write custom data into chars 21-24,
+        // but we can still safely extract the VID and PID anyway.
         if (string_copy(_guid, 21, 4) != "0000")
         {
-            __InputTrace("Warning! GUID \"", _guid, "\" does not fit expected pattern. VID+PID cannot be extracted");
-            return _result;
+            __InputTrace("Notice: GUID \"", _guid, "\" has data in N6, but continuing to extract VID/PID.");
         }
         
-        //Check to see if N1 for this GUID is what we expect (OS bus for USB or Bluetooth)
-        //In some cases, what we expect for this value is going to be different, so this isn't necessarily something that invalidates VID+PID checking
+        //Check to see if N1 for this GUID is what we expect
         if ((string_copy(_guid, 1, 4) != "0300") 
         &&  (string_copy(_guid, 1, 4) != "0500"))
         {

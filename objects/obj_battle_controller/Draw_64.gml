@@ -186,6 +186,22 @@ if (global.state == GAME_STATE.BATTLE) {
             HPBOX_PORTRAIT_MAX_W * 1, HPBOX_PORTRAIT_MAX_H * 1,
             _portrait_color, 1.0
         );
+        
+        // NEW: hit flash — same additive-blend trick as enemies (see the enemy render
+        // loop for the full explanation). Calling scr_draw_sprite_fit a second time
+        // with the same params is cheap and keeps the exact same fit/position math.
+        var _member_flash = variable_struct_exists(_member, "hit_flash_timer") ? _member.hit_flash_timer : 0;
+        if (_member_flash > 0) {
+            gpu_set_blendmode(bm_add);
+            scr_draw_sprite_fit(
+                _portrait_sprite, 0,
+                _current_box_x + HPBOX_PORTRAIT_X * 1,
+                _current_box_y + HPBOX_PORTRAIT_Y * 1,
+                HPBOX_PORTRAIT_MAX_W * 1, HPBOX_PORTRAIT_MAX_H * 1,
+                c_white, _member_flash / HIT_FLASH_DURATION
+            );
+            gpu_set_blendmode(bm_normal);
+        }
 
         var _hp_val = max(0, _member.display_hp);
         var _whole_hp = floor(_hp_val);
@@ -240,18 +256,48 @@ if (global.state == GAME_STATE.BATTLE) {
     for (var _j = 0; _j < _e_count; _j++) {
         var _enemy_inst = global.active_battle_enemies[_j];
         if (!instance_exists(_enemy_inst) || _enemy_inst.hp <= 0) continue;
+        
+        // Spared enemies fade down to a permanent half-transparent state instead of
+        // hiding entirely — they stay visible on the field, just clearly "out of it."
+        var _is_spared_now = variable_instance_exists(_enemy_inst, "is_spared") && _enemy_inst.is_spared;
+        var _spare_alpha = 1.0;
+        if (_is_spared_now) {
+            if (!variable_instance_exists(_enemy_inst, "spare_fade_alpha")) _enemy_inst.spare_fade_alpha = 1.0;
+            // Eases down to 0.5 and stops — never fully disappears.
+            _enemy_inst.spare_fade_alpha = max(0.5, _enemy_inst.spare_fade_alpha - 0.03);
+            _spare_alpha = _enemy_inst.spare_fade_alpha;
+        }
     
         var _gui_x = _enemy_inst.x - camera_get_view_x(view_camera[0]);
         var _gui_y = _enemy_inst.y - camera_get_view_y(view_camera[0]);
         var _enemy_sprite = variable_instance_exists(_enemy_inst, "sprite_index") ? _enemy_inst.sprite_index : noone;
         
         var _blend_color = (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_cursor == _j && current_time % 200 < 100) ? c_yellow : c_white;
+        var _enemy_image_index = variable_instance_exists(_enemy_inst, "image_index") ? _enemy_inst.image_index : 0;
         
         if (sprite_exists(_enemy_sprite)) {
-            draw_sprite_ext(_enemy_sprite, variable_instance_exists(_enemy_inst, "image_index") ? _enemy_inst.image_index : 0, _gui_x + _sx + 30, _gui_y + _sy, 1.0, 1.0, 0, _blend_color, 1.0);
+            draw_sprite_ext(_enemy_sprite, _enemy_image_index, _gui_x + _sx + 30, _gui_y + _sy, 1.0, 1.0, 0, _blend_color, _spare_alpha);
+            
+            // NEW: hit flash — additive-blended copy of the same sprite drawn on top,
+            // fading out over HIT_FLASH_DURATION frames. Additive blending BRIGHTENS
+            // toward white rather than tinting/darkening (which is what a normal
+            // multiply-blend color would do), so this reads as a real "flash" without
+            // needing a shader.
+            var _enemy_flash = variable_instance_exists(_enemy_inst, "hit_flash_timer") ? _enemy_inst.hit_flash_timer : 0;
+            if (_enemy_flash > 0) {
+                gpu_set_blendmode(bm_add);
+                draw_sprite_ext(_enemy_sprite, _enemy_image_index, _gui_x + _sx + 30, _gui_y + _sy, 1.0, 1.0, 0, c_white, (_enemy_flash / HIT_FLASH_DURATION) * _spare_alpha);
+                gpu_set_blendmode(bm_normal);
+            }
         } else {
-            draw_set_color(c_purple); draw_rectangle(_gui_x - 16 + _sx, _gui_y - 16 + _sy, _gui_x + 16 + _sx, _gui_y + 16 + _sy, false);
+            draw_set_color(c_purple); draw_set_alpha(_spare_alpha);
+            draw_rectangle(_gui_x - 16 + _sx, _gui_y - 16 + _sy, _gui_x + 16 + _sx, _gui_y + 16 + _sy, false);
+            draw_set_alpha(1.0);
         }
+        
+        // Spared enemies skip the name/HP/mercy HUD entirely — those numbers no
+        // longer mean anything once they're out of the fight.
+        if (_is_spared_now) continue;
 
         var _sprite_top_offset = sprite_exists(_enemy_sprite) ? sprite_get_height(_enemy_sprite) - sprite_get_yoffset(_enemy_sprite) : 16;
         var _box_x = _gui_x + _sx + 30, _box_y = (_gui_y - _sprite_top_offset - 5) + _sy;
@@ -311,35 +357,80 @@ if (global.state == GAME_STATE.BATTLE) {
         var _btn_sprites = [spr_fight_btn, spr_int_btn, spr_action_btn, spr_use_btn];
         draw_set_halign(fa_center);  
         
+        // Persistent per-button lift value, eased toward its target each frame
+        // instead of snapping instantly — was reported as part of navigation
+        // feeling "clanky."
+        if (!variable_instance_exists(id, "carousel_lift") || !is_array(carousel_lift) || array_length(carousel_lift) != 4) {
+            carousel_lift = [0, 0, 0, 0];
+        }
+        
         for (var _i = 0; _i < 4; _i++) { 
             var _ax = 112 + (_i * 53) + (_i <= 1 ? -6 : 6) + _sx;
             var _ay = (_gui_h - 32) + _sy; 
              
+            // FIX: TARGET_SELECT is now the entry point for THREE different flows
+            // (Fight, Interact's target-pick, Spare's target-pick), not just Fight —
+            // checking only menu_stage always highlighted "Fight" regardless of which
+            // one actually put you there, which is exactly why Interact's button
+            // looked like it was showing Fight instead. menu_context disambiguates.
             var _is_selected = (menu_stage == BATTLE_MENU.MAIN && menu_cursor == _i) ||
-                               (menu_stage == BATTLE_MENU.TARGET_SELECT && _i == 0) ||
+                               (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_context == "fight" && _i == 0) ||
+                               (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_context == "interact_pick_target" && _i == 1) ||
+                               (menu_stage == BATTLE_MENU.TARGET_SELECT && menu_context == "spare_pick_target" && _i == 2) ||
                                (menu_stage == BATTLE_MENU.INTERACT && _i == 1) ||
                                (menu_stage == BATTLE_MENU.TAKE_ACTION && _i == 2) ||
                                (menu_stage == BATTLE_MENU.ITEM_USE && _i == 3);
             
+            carousel_lift[_i] = lerp(carousel_lift[_i], _is_selected ? -4 : 0, 0.35);
+            
             var _current_sprite = _btn_sprites[_i]; 
             if (sprite_exists(_current_sprite)) { 
                 var _alpha = (menu_stage == BATTLE_MENU.MAIN || _is_selected) ? 1.0 : 0.40;
-                draw_sprite_ext(_current_sprite, _is_selected ? 1 : 0, _ax, _ay + (_is_selected ? -2 : 0), 1.2, 1.2, 0, c_white, _alpha);
+                draw_sprite_ext(_current_sprite, _is_selected ? 1 : 0, _ax, _ay + carousel_lift[_i], 1.2, 1.2, 0, c_white, _alpha);
             } 
         } 
 
         var _player_member = (array_length(party_members) > 0) ? party_members[0] : noone; 
         if (_player_member != noone && variable_struct_exists(_player_member, "clover_leaves") && sprite_exists(spr_clover)) { 
-            draw_sprite_ext(spr_clover, clamp(_player_member.clover_leaves, 0, 4), (((112 + 53) - 6) + ((112 + 106) + 6)) / 2 + _sx, 25, 1.0, 1.0, 0, c_white, 1.0); 
+            var _clover_cx = (((112 + 53) - 6) + ((112 + 106) + 6)) / 2 + _sx;
+            var _clover_cy = 25 + _sy;
+            var _clover_count = clamp(_player_member.clover_leaves, 0, 4);
+            var _clover_is_max = (_clover_count >= 4);
+            
+            // Solid glow bloom when fully charged — a few opaque layered circles
+            // rather than a wash of transparent bands, so it reads as a genuine glow
+            // and not a "cheap" transparency effect.
+            if (_clover_is_max) {
+                var _glow_pulse = 1 + (sin(current_time * 0.008) * 0.15);
+                draw_set_alpha(0.30);
+                draw_set_color(make_colour_rgb(255, 230, 120));
+                draw_circle(_clover_cx, _clover_cy, 20 * _glow_pulse, false);
+                draw_set_alpha(0.5);
+                draw_circle(_clover_cx, _clover_cy, 13 * _glow_pulse, false);
+                draw_set_alpha(1.0);
+            }
+            
+            var _clover_scale = _clover_is_max ? (1.2 + sin(current_time * 0.01) * 0.06) : 1.0;
+            draw_sprite_ext(spr_clover, _clover_count, _clover_cx, _clover_cy, _clover_scale, _clover_scale, 0, c_white, 1.0); 
+            
+            if (_clover_is_max) {
+                draw_set_halign(fa_center);
+                draw_set_color(make_colour_rgb(255, 215, 0));
+                draw_text_transformed(_clover_cx, _clover_cy + 17, "READY!", 0.4, 0.4, 0);
+                draw_set_halign(fa_left);
+                draw_set_color(c_white);
+            }
         }
         draw_set_halign(fa_left);
     }
 
     // --- 6b. DODGE WINDOW (Block-Tales-style QTE before an enemy attack lands) ---
-    // Ring style: a bright ring shrinks toward the center over time. A fixed target
-    // band (orange = Good, lime = Perfect) sits at a constant radius. Press Accept
-    // when the shrinking ring lines up with the band. Same underlying math as before
-    // (dodge_progress/dodge_target/thresholds) — just drawn as radii instead of a bar.
+    // Every ring here uses draw_ring_solid (scr_battle_functions) — real filled
+    // triangle-strip geometry between an inner and outer radius. This replaces BOTH
+    // earlier attempts: stacked draw_circle outlines (gaps at these sizes) and
+    // fill-then-punch layering (which, with 3+ overlapping rings, was actually
+    // erasing part of the Good zone whenever the Perfect zone punched through it).
+    // Each ring here is self-contained and can't bleed into or erase any other.
     if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
         var _dq_center_x = _gui_w / 2 + _sx;
         var _dq_center_y = (_gui_h / 2) - 10 + _sy;
@@ -352,42 +443,58 @@ if (global.state == GAME_STATE.BATTLE) {
         var _dq_good_px        = _dq_good * _dq_base_radius;
         var _dq_perfect_px     = _dq_perfect * _dq_base_radius;
         
-        // Faint full-size guide circle so the player can see the overall "closing" range
-        draw_set_alpha(0.15);
-        draw_set_color(c_white);
-        draw_circle(_dq_center_x, _dq_center_y, _dq_base_radius, true);
-        draw_set_alpha(1.0);
+        // Solid dark backdrop disc — grounds the whole meter as a contained HUD
+        // element instead of shapes floating directly over the arena background.
+        draw_set_color(c_black);
+        draw_circle(_dq_center_x, _dq_center_y, _dq_base_radius + 14, false);
         
-        // Good zone: a thick orange ring band around the target radius
-        draw_set_alpha(0.45);
-        draw_set_color(c_orange);
-        var _dq_r = max(0, _dq_target_radius - _dq_good_px);
-        while (_dq_r <= _dq_target_radius + _dq_good_px) {
-            draw_circle(_dq_center_x, _dq_center_y, _dq_r, true);
-            _dq_r += 1;
-        }
+        // Gentle pulse on the target zone only — draws the eye without making the
+        // panel itself feel unstable.
+        var _dq_pulse = 1 + (sin(current_time * 0.006) * 0.06);
         
-        // Perfect zone: a narrower lime band on top of the Good band
-        draw_set_alpha(0.6);
-        draw_set_color(c_lime);
-        _dq_r = max(0, _dq_target_radius - _dq_perfect_px);
-        while (_dq_r <= _dq_target_radius + _dq_perfect_px) {
-            draw_circle(_dq_center_x, _dq_center_y, _dq_r, true);
-            _dq_r += 1;
-        }
-        draw_set_alpha(1.0);
+        // Track ring: solid gray outline of the whole play area
+        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_base_radius - 2, _dq_base_radius + 2, c_ltgray);
+        
+        // Good zone: solid opaque orange ring
+        var _dq_good_min = max(0, _dq_target_radius - (_dq_good_px * _dq_pulse));
+        var _dq_good_max = _dq_target_radius + (_dq_good_px * _dq_pulse);
+        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_good_min, _dq_good_max, c_orange);
+        
+        // Perfect zone: solid opaque lime ring, nested inside the Good zone — since
+        // this is its OWN ring geometry (not a punch into the Good zone's fill), the
+        // Good zone's outer and inner portions on either side of it stay fully intact.
+        var _dq_perfect_min = max(0, _dq_target_radius - (_dq_perfect_px * _dq_pulse));
+        var _dq_perfect_max = _dq_target_radius + (_dq_perfect_px * _dq_pulse);
+        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_perfect_min, _dq_perfect_max, c_lime);
         
         // The moving ring: shrinks from the full radius down to 0 as dodge_progress
-        // counts down from 1 to 0. Time your press for when THIS lines up with the bands.
+        // counts down from 1 to 0. A black drop-shadow ring drawn first gives it
+        // contrast against the zones/backdrop. Color shifts white -> lime as it nears
+        // the target.
         var _dq_current_radius = _dq_base_radius * clamp(dodge_progress, 0, 1);
-        draw_set_color(c_white);
-        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius - 1, true);
-        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius, true);
-        draw_circle(_dq_center_x, _dq_center_y, _dq_current_radius + 1, true);
+        var _dq_distance_norm = clamp(abs(dodge_progress - dodge_target) / _dq_good, 0, 1);
+        var _dq_ring_color = merge_color(c_lime, c_white, _dq_distance_norm);
         
+        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_current_radius - 4, _dq_current_radius + 4, c_black);
+        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_current_radius - 2, _dq_current_radius + 2, _dq_ring_color);
+        
+        // "NOW!" callout: fires whenever the moving ring is actually inside the Good
+        // zone, so success is communicated by more than just color (helps colorblind
+        // players too, and just reads clearer at a glance during a fast QTE).
+        var _dq_in_good_zone = (abs(dodge_progress - dodge_target) <= _dq_good);
+        if (_dq_in_good_zone) {
+            var _dq_now_pulse = 1 + (sin(current_time * 0.03) * 0.15);
+            draw_set_halign(fa_center);
+            draw_set_color(c_yellow);
+            draw_text_transformed(_dq_center_x, _dq_center_y - 6, "NOW!", 0.7 * _dq_now_pulse, 0.7 * _dq_now_pulse, 0);
+            draw_set_halign(fa_left);
+        }
+        
+        // Subtle pulsing scale on the prompt text so the screen doesn't feel static
+        var _dq_prompt_scale = 0.6 + (sin(current_time * 0.01) * 0.04);
         draw_set_halign(fa_center);
         draw_set_color(c_yellow);
-        draw_text_transformed(_dq_center_x, _dq_center_y - _dq_base_radius - 26, "PRESS ACCEPT!", 0.6, 0.6, 0);
+        draw_text_transformed(_dq_center_x, _dq_center_y - _dq_base_radius - 26, "PRESS ACCEPT!", _dq_prompt_scale, _dq_prompt_scale, 0);
         draw_set_color(c_white);
         draw_text_transformed(_dq_center_x, _dq_center_y + _dq_base_radius + 14, "Tap when the ring closes on the band!", 0.4, 0.4, 0);
         draw_set_halign(fa_left);
@@ -427,13 +534,10 @@ if (global.state == GAME_STATE.BATTLE) {
         
                     var _item_x = _dash_x + 20 + ((_valid_enemy_index % _cols) * _cell_w);
                     var _item_y = _dash_y + 16 + (floor(_valid_enemy_index / _cols) * _cell_h);
-
-                    if (menu_cursor == _k) {
-                        draw_set_color(c_yellow); draw_text_transformed(_item_x - 8, _item_y, ">", 0.5, 0.5, 0);
-                    }
+                    var _ts_is_selected = (menu_cursor == _k);
         
                     var _enemy_name = variable_instance_exists(_item, "name") ? _item.name : "Enemy";
-                    var _text_color = (menu_cursor == _k) ? c_yellow : c_white;
+                    var _text_color = _ts_is_selected ? c_yellow : c_white;
                     if (variable_instance_exists(_item, "hp") && _item.hp <= 0) {
                         _enemy_name = "[X] " + _enemy_name; _text_color = c_gray;
                     } else if (_item_is_spared) {
@@ -472,7 +576,7 @@ if (global.state == GAME_STATE.BATTLE) {
                         // draw at full fixed width, regardless of the current mercy percent.
                         draw_set_color((menu_cursor == _k) ? c_ltgray : c_white);
                         draw_rectangle(_mercy_x - 1, _item_y + 3, _mercy_x + 1 + _mercy_w, _item_y + 11, false);
-                        draw_set_color(c_dkgray);
+                        draw_set_color((menu_cursor == _k) ? c_gray : c_dkgray);
                         draw_rectangle(_mercy_x, _item_y + 4, _mercy_x + _mercy_w, _item_y + 10, false);
                         
                         if (_mercy_percent > 0) {
@@ -480,8 +584,12 @@ if (global.state == GAME_STATE.BATTLE) {
                             draw_rectangle(_mercy_x, _item_y + 4, _mercy_x + (_mercy_w * _mercy_percent), _item_y + 10, false);
                         }
                         
-                        draw_set_color(c_black);
-                        draw_text_transformed(_mercy_x + 4, _item_y + 1, string(round(_mercy_percent * 100)) + "%", 0.45, 0.45, 0);
+                        // FIX: now uses the exact same Y and scale as the HP% text (was
+                        // _item_y + 1 already, but a different font scale — 0.45 vs 0.5 —
+                        // shifted its visual baseline enough to look misaligned) and is
+                        // now white instead of black, matching the HP% text's color.
+                        draw_set_color(c_white);
+                        draw_text_transformed(_mercy_x + 4, _item_y + 1, string(round(_mercy_percent * 100)) + "%", 0.5, 0.5, 0);
                     }
                     
                     _valid_enemy_index++;
@@ -569,14 +677,20 @@ if (global.state == GAME_STATE.BATTLE) {
                     var _is_selected = (menu_cursor == _i);
                     var _text_color = _is_selected ? c_yellow : c_white;
                     
-                    if (_is_selected) {
-                        draw_set_color(c_yellow);
-                        draw_text_transformed(_xx - 8, _yy, ">", 0.5, 0.5, 0);
-                    }
-                    
                     var _display_text = "";
                     if (_is_inventory) {
-                        _display_text = (is_struct(_element) && variable_struct_exists(_element, "name")) ? string(_element.name) : "Unknown Item";
+                        // FIX: items store a localization key (name_key), not a plain
+                        // .name field — the hover-inspection code below already knows
+                        // this (__(_inspect_item.name_key)), but this list was checking
+                        // .name instead, which items don't have, so it always fell
+                        // through to "Unknown Item" even though the icon rendered fine.
+                        if (is_struct(_element) && variable_struct_exists(_element, "name_key")) {
+                            _display_text = __(_element.name_key);
+                        } else if (is_struct(_element) && variable_struct_exists(_element, "name")) {
+                            _display_text = string(_element.name);
+                        } else {
+                            _display_text = "Unknown Item";
+                        }
                         draw_set_color(_text_color);
                         draw_text_transformed(_xx, _yy, _display_text, 0.5, 0.5, 0);
                         if (is_struct(_element) && variable_struct_exists(_element, "icon") && sprite_exists(_element.icon)) {
@@ -611,6 +725,7 @@ if (global.state == GAME_STATE.BATTLE) {
     // --- 8. TRANSIENT COMBAT TEXT OVERLAYS ---
     if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
         draw_set_halign(fa_center); draw_set_valign(fa_middle);
+        draw_set_font(Bitmap_Font); // dedicated font for damage numbers/SPARED!/DODGED!/etc.
         var _pop_count = array_length(popup_numbers);
         
         for (var _i = 0; _i < _pop_count; _i++) {
@@ -619,12 +734,45 @@ if (global.state == GAME_STATE.BATTLE) {
                 var _draw_x = variable_struct_exists(_p, "x") ? _p.x : (variable_struct_exists(_p, "xx") ? _p.xx : 0);
                 var _draw_y = variable_struct_exists(_p, "y") ? _p.y : (variable_struct_exists(_p, "yy") ? _p.yy : 0);
                 var _col  = variable_struct_exists(_p, "color") ? _p.color : c_white;
+                // NEW: optional second color for a top-to-bottom gradient (e.g. gold-to-
+                // orange for mercy gains, orange-to-red for crits) instead of a flat single
+                // color. Falls back to _col on both ends if color2 isn't set, so every
+                // existing flat-color popup (plain damage numbers, DODGED!, etc.) still
+                // renders exactly as before.
+                var _col2 = variable_struct_exists(_p, "color2") ? _p.color2 : _col;
                 var _life = variable_struct_exists(_p, "life") ? _p.life : 30;
                 var _scale = variable_struct_exists(_p, "scale") ? _p.scale : 0.5;
             
-                draw_text_transformed_color(_draw_x, _draw_y, string(_p.text), _scale, _scale, 0, _col, _col, _col, _col, clamp(_life / 15, 0, 1));
+                draw_text_transformed_color(_draw_x, _draw_y, string(_p.text), _scale, _scale, 0, _col, _col, _col2, _col2, clamp(_life / 15, 0, 1));
+            }
+            // NEW: renders battle_spawn_hit_particles' output — these were being created
+            // and given physics (see the Step event) but nothing was ever drawing them,
+            // since this loop only handled text-bearing popups before.
+            else if (is_struct(_p) && variable_struct_exists(_p, "type") && _p.type == "particle") {
+                var _p_col = variable_struct_exists(_p, "color") ? _p.color : c_white;
+                var _p_life = variable_struct_exists(_p, "life") ? _p.life : 20;
+                var _p_max_life = variable_struct_exists(_p, "max_life") ? _p.max_life : 35;
+                var _p_size = variable_struct_exists(_p, "size") ? _p.size : 2;
+                
+                draw_set_color(_p_col);
+                draw_set_alpha(clamp(_p_life / _p_max_life, 0, 1));
+                draw_circle(_p.x, _p.y, _p_size, false);
+                draw_set_alpha(1.0);
+            }
+            // NEW: weapon-specific hit effects (e.g. sword slash) — plays through the
+            // sprite's own frames at the target's position via the Step event's frame
+            // advancement above. Full opacity throughout (a slash shouldn't fade out
+            // mid-swing); it simply expires once the animation finishes.
+            else if (is_struct(_p) && variable_struct_exists(_p, "type") && _p.type == "sprite_effect") {
+                if (variable_struct_exists(_p, "sprite") && sprite_exists(_p.sprite)) {
+                    var _fx_frame = variable_struct_exists(_p, "frame") ? _p.frame : 0;
+                    var _fx_scale = variable_struct_exists(_p, "fx_scale") ? _p.fx_scale : 1.0;
+                    draw_sprite_ext(_p.sprite, floor(_fx_frame), _p.x, _p.y, _fx_scale, _fx_scale, 0, c_white, 1.0);
+                }
             }
         }
         draw_set_valign(fa_top); draw_set_halign(fa_left);
+        draw_set_font(battle_font);
+        draw_set_color(c_white);
     }
 }

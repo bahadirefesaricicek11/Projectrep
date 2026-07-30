@@ -1,5 +1,4 @@
-oimage_speed = 0;
-alpha_counter = 1;
-plyr_face = 0;
+mirror_surface = -1;
+
 
 depth = -bbox_bottom;

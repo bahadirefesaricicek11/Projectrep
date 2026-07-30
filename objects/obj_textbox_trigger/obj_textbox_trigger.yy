@@ -35,5 +35,5 @@
     "path":"sprites/spr_textbox_opener/spr_textbox_opener.yy",
   },
   "spriteMaskId":null,
-  "visible":false,
+  "visible":true,
 }

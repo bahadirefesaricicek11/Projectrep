@@ -1,7 +1,5 @@
 /// @description Update Card Transitions and Timers
-
 timer++;
-
 // --- PHASE 1: SLIDE CARDS TO TARGET CENTER ---
 if (!target_room_reached) {
     var _slide_in_speed = 0.05; 
@@ -15,6 +13,14 @@ if (!target_room_reached) {
         for (var _i = 0; _i < card_count; _i++) card_y[_i] = 0;
         
         target_room_reached = true;
+        
+        // NEW: propagate this transition's battle_id (set by whatever created this
+        // instance — e.g. a dialogue EXECUTE block) into global.battle_id, so
+        // scr_check_slime_results() and friends can identify this specific fight
+        // once it ends. Also defensively resets global.battle_result, in case a
+        // previous battle left a stale value sitting there.
+        global.battle_id = variable_instance_exists(id, "battle_id") ? battle_id : "none";
+        global.battle_result = "none";
         
         // Trigger the room transition function
         battle_trigger_room_transition(encounter_composition);

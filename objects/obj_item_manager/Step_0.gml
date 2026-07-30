@@ -12,18 +12,18 @@ if obj_item_manager.inv_open == true
 	var ud = up_key-down_key;
 		
 	posx += lr;
-	if posx >= max_inv_length {posx = 0};
-	if posx < 0 {posx = max_inv_length-1};
-	if ud > 0 {posx -= 4};
-	if ud < 0 {posx += 4};
+	if (ud > 0) posx -= 4;
+	if (ud < 0) posx += 4;
+
+	// Wraps correctly regardless of how far out of range posx went (handles negatives properly, unlike a plain if-check)
+	posx = ((posx mod max_inv_length) + max_inv_length) mod max_inv_length;
 	
-	if (posx < inv_length && posx >= 0)
+	if (posx < array_length(inv) && posx >= 0)
 	{
 	    selected_item = posx;
-    
 	    if select_key
 	    {
-			startDialogue("Item");
+	        startDialogue("Item");
 	    }
 	}
 }

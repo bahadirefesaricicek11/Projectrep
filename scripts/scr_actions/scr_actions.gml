@@ -10,11 +10,28 @@ function DialogueAction() constructor {
 }
 
 function TextAction(_text) : DialogueAction() constructor {
-	text = "* "+ _text;
+    raw_text = "* " + _text;
 
-	act = function(textbox) {
-		textbox.setText(text);
-	}
+    act = function(textbox) {
+        // Pass raw text so setText handles parsing and resetting cleanly
+        textbox.setText(raw_text); 
+    }
+}
+
+function ChoiceAction(_text) : DialogueAction() constructor {
+    raw_text = "* " + _text;
+
+    options = [];
+    for (var i = 1; i < argument_count; i++)
+        array_push(options, argument[i]);
+
+    act = function(textbox) {
+        textbox.setText(raw_text);
+        
+        textbox.options = options;
+        textbox.option_count = array_length(options);
+        textbox.current_option = 0;
+    }
 }
 
 function SpeakerAction(_sprite = undefined): DialogueAction() constructor {
@@ -29,20 +46,6 @@ function SpeakerAction(_sprite = undefined): DialogueAction() constructor {
 	}
 }
 
-function ChoiceAction(_text) : DialogueAction() constructor {
-	text ="* " + _text;
-
-	options = [];
-	for (var i = 1; i < argument_count; i++)
-		array_push(options, argument[i]);
-
-	act = function(textbox) {
-		textbox.setText(text);
-		textbox.options = options;
-		textbox.option_count = array_length(options);
-		textbox.current_option = 0;
-	}
-}
 
 function OptionAction(_text, _topic): DialogueAction() constructor {
 	text = _text;

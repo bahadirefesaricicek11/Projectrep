@@ -4,7 +4,7 @@
 #macro UI_TEXT_SCALE 0.60
 /// HP box layout constants (relative to box top-left, box is 56x64)
 #macro HPBOX_NAME_X            12
-#macro HPBOX_NAME_Y            6
+#macro HPBOX_NAME_Y            4
 
 #macro HPBOX_PORTRAIT_X        7
 #macro HPBOX_PORTRAIT_Y        28
@@ -19,6 +19,37 @@
 #macro HPBOX_BUFF_Y            55
 #macro HPBOX_BUFF_W            16
 #macro HPBOX_BUFF_H            16
+
+// --- FLEE CONFIG ---
+// Chance (0-1) a normal Flee attempt actually succeeds. Doesn't apply at all to
+// unfleeable encounters (see MAX_ENCOUNTER_GROUP_SIZE and global.battle_id below).
+#macro FLEE_SUCCESS_CHANCE 0.65
+// Encounters with this many enemies or more (i.e. a "full group") can't be fled from
+// at all, regardless of FLEE_SUCCESS_CHANCE — tune this if your encounter pools in
+// global.encounter_database ever spawn larger groups than 3.
+#macro MAX_ENCOUNTER_GROUP_SIZE 3
+
+// --- BATTLE TEXT TYPEWRITER CONFIG ---
+// Characters revealed per frame. Was hardcoded to 0.5 (30 chars/sec at 60fps) —
+// lowered for a more readable pace. Tune to taste.
+#macro BATTLE_TEXT_TYPE_SPEED 0.25
+
+// --- CLOVER CRIT METER CONFIG ---
+// Player-only crit meter (allies don't have one). Rises 1 leaf per completed round,
+// capped at 4. Each leaf adds this much crit chance, so a full meter (4 leaves) is a
+// guaranteed crit. Consumed back to 0 the moment a crit actually triggers.
+#macro CLOVER_CRIT_CHANCE_PER_LEAF 0.25
+#macro CLOVER_CRIT_DAMAGE_MULT 1.5
+
+// --- HIT FLASH CONFIG ---
+// Frames a sprite flashes white (additive blend, no shader needed) after taking damage.
+#macro HIT_FLASH_DURATION 8
+
+// --- MENU NAVIGATION FEEL CONFIG ---
+// Frames of cooldown after any accepted directional menu input, before another
+// directional input is accepted. Smooths out menu navigation regardless of whether
+// InputPressed fires once per press or continuously while held.
+#macro MENU_NAV_COOLDOWN_FRAMES 8
 
 
 enum BATTLE_STATE {
@@ -67,6 +98,20 @@ function battle_system_init() {
     global.battle_spawn_queue = [];
     global.saved_gui_w = 0;
     global.saved_gui_h = 0;
+    
+    // NEW: identifies which scripted encounter (if any) is currently running, and what
+    // its outcome was. "none" means "no scripted encounter is pending a result check" —
+    // scr_check_slime_results() (and any future scr_check_*_results()) uses this to know
+    // whether it's the one that should react, and clears it back to "none" once handled
+    // so it only ever fires once per encounter.
+    global.battle_id = "none";
+    global.battle_result = "none"; // "killed" / "negotiated" / "fled"
+    
+    // Slime ambush encounter tracking. slime_ambush_completed is checked by
+    // obj_npc_slime's own Create Event to refuse to (re)spawn once the squad has
+    // actually been killed — see scr_check_slime_results.
+    global.slime_ambush_completed = false;
+    global.secret_boss_unlocked = false;
 }
 
 function battle_trigger_room_transition(_enemy_id_array) {
@@ -190,6 +235,7 @@ function battle_spawn_hit_particles(_x, _y, _color) {
     for (var _i = 0; _i < _count; _i++) {
         var _dir = random(360);
         var _spd = random_range(1.5, 4);
+        var _p_life = irandom_range(20, 35);
         
         var _particle = {
             type: "particle", // <-- CRITICAL: MUST MATCH STEP/DRAW EVENTS EXACTLY
@@ -198,7 +244,8 @@ function battle_spawn_hit_particles(_x, _y, _color) {
             hspeed: lengthdir_x(_spd, _dir),
             vspeed: lengthdir_y(_spd, _dir),
             gravity: 0.12,
-            life: irandom_range(20, 35),
+            life: _p_life,
+            max_life: _p_life, // NEW: Draw GUI uses this to fade accurately (life/max_life)
             color: _p_color,
             size: irandom_range(2, 4)
         };
@@ -234,6 +281,24 @@ function scr_generate_party_formation(_member_count) {
     }
 
     return _positions;
+}
+
+/// @desc Draws a solid, gapless ring (annulus) as real filled geometry via triangle
+/// strip — reliable at any radius/thickness, unlike stacking draw_circle outlines,
+/// which can show visible gaps or inconsistent thickness at larger sizes.
+function draw_ring_solid(_x, _y, _inner_radius, _outer_radius, _color, _alpha = 1.0) {
+    var _segments = 48; // smoothness; cheap enough for a HUD-sized element
+    draw_primitive_begin(pr_trianglestrip);
+    for (var _i = 0; _i <= _segments; _i++) {
+        var _angle = (_i / _segments) * 360;
+        var _ox = _x + lengthdir_x(_outer_radius, _angle);
+        var _oy = _y + lengthdir_y(_outer_radius, _angle);
+        var _ix = _x + lengthdir_x(_inner_radius, _angle);
+        var _iy = _y + lengthdir_y(_inner_radius, _angle);
+        draw_vertex_color(_ox, _oy, _color, _alpha);
+        draw_vertex_color(_ix, _iy, _color, _alpha);
+    }
+    draw_primitive_end();
 }
 
 /// scr_draw_sprite_fit(sprite, frame, box_x, box_y, max_w, max_h, color, alpha)
@@ -340,4 +405,70 @@ function battle_spawn_enemy(_enemy_key, _x, _y, _object_index = obj_battle_enemy
     }
     
     return _inst;
+}
+
+/**
+ * @desc Starts the scripted slime ambush encounter. Sets global.battle_id so
+ * scr_check_slime_results() (called from obj_player's Room Start once the player is
+ * back in the overworld) knows this specific scripted battle is the one to react to,
+ * as opposed to any other battle — scripted or random — that might happen later.
+ */
+function scr_start_slime_battle() {
+    global.battle_id = "slime_ambush";
+    global.battle_result = "none"; // defensive reset, in case a previous battle left a stale value
+    battle_trigger_room_transition(["slime", "slime", "slime"]);
+}
+
+/**
+ * @desc Reacts to how the slime ambush battle actually ended. Safe to call every time
+ * the player enters any room (it no-ops unless global.battle_id == "slime_ambush"),
+ * and clears the flag once handled so it can never fire twice for the same battle.
+ */
+function scr_check_slime_results() {
+    if (global.battle_id != "slime_ambush") return;
+    
+    switch (global.battle_result) {
+        case "killed":
+            // Conditions met: They chose violence
+            global.secret_boss_unlocked = true;
+            
+            // The squad is gone for good — obj_npc_slime's own Create Event checks
+            // this same flag to refuse to (re)spawn on any FUTURE room load. But this
+            // function runs from Room Start, which always fires AFTER every instance's
+            // Create Event has already run — so on THIS first return trip, the NPC
+            // would already exist (having just failed to see the flag in time) unless
+            // we also destroy it directly, right here, right now.
+            global.slime_ambush_completed = true;
+            with (obj_npc_slime) {
+                instance_destroy();
+            }
+            break;
+            
+        case "negotiated":
+            // Settled peacefully: "Everything normal" — the NPC stays, so
+            // global.slime_ambush_completed is deliberately NOT set here.
+            global.secret_boss_unlocked = false;
+            
+            // FIX: was a hardcoded instance ID (inst_3E43B7A1), which isn't stable
+            // across room edits or reloads. `with (obj_npc_slime)` finds whichever
+            // instance(s) actually exist in the CURRENT room instead — the same
+            // pattern already used elsewhere in this project (e.g. `with (obj_follower)`).
+            // Runs AFTER obj_npc_slime's own Create Event (which sets its default
+            // text_id), since Room Start always fires after every instance's Create
+            // Event has already completed — so this correctly overrides it.
+            with (obj_npc_slime) {
+                text_id = "slime_post_negotiated";
+            }
+            break;
+            
+        case "fled":
+            // Ran away: Slimes are still there waiting — same as negotiated,
+            // global.slime_ambush_completed stays unset so the NPC keeps existing
+            // and the fight can be retried.
+            global.secret_boss_unlocked = false;
+            break;
+    }
+    
+    // Clear flag to avoid continuous triggers
+    global.battle_id = "none";
 }

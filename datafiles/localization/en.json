@@ -1,6 +1,5 @@
 {
     "menu": {
-        "background": "bg1",
         "resume": "RESUME",
         "save": "SAVE GAME",
         "options": "OPTIONS",
@@ -10,7 +9,6 @@
         "load": "LOAD GAME",
         "settings": "SETTINGS",
         "quit": "QUIT",
-
 
         "graphics": "GRAPHICS",
 
@@ -22,12 +20,6 @@
         "on": "ON",
         "off": "OFF",
 
-        "btn_settings": "BUTTON SETTINGS",
-
-        "gamepad_style": "GP .STYLE",
-        "kbd_movement": "KB. MOVEMENT",
-        "kbd_actions": "KB. ACTIONS",
-
         "audio": "AUDIO",
         "master": "MASTER",
         "sounds": "SOUNDS",
@@ -35,9 +27,9 @@
 
         "back": "BACK",
 
-
         "title_paused": "PAUSED",
-        "title_main": "PROJECT",
+
+        "tutorial": "PRESS ANY KEY",
 
         "prompt_save_query": "Save before returning to Main Menu?",
         "prompt_save_exit": "Save & Exit",

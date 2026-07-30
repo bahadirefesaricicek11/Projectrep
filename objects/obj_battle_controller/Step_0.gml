@@ -40,6 +40,11 @@ for (var _i = 0; _i < _party_count; _i++) {
             _member.display_hp += _step;
         }
     }
+    
+    // --- HIT FLASH DECAY (party) ---
+    if (variable_struct_exists(_member, "hit_flash_timer") && _member.hit_flash_timer > 0) {
+        _member.hit_flash_timer -= 1;
+    }
 }
 
 // --- 2b. ENEMY HP ODOMETER ROLLING ENGINE ---
@@ -67,6 +72,11 @@ for (var _e_idx = 0; _e_idx < _enemy_count; _e_idx++) {
     if (instance_exists(_enemy_inst) && variable_instance_exists(_enemy_inst, "is_spared") && _enemy_inst.is_spared) {
         if (!variable_instance_exists(_enemy_inst, "spare_fade_timer")) _enemy_inst.spare_fade_timer = 30;
         if (_enemy_inst.spare_fade_timer > 0) _enemy_inst.spare_fade_timer -= 1;
+    }
+    
+    // --- HIT FLASH DECAY (enemy) ---
+    if (instance_exists(_enemy_inst) && variable_instance_exists(_enemy_inst, "hit_flash_timer") && _enemy_inst.hit_flash_timer > 0) {
+        _enemy_inst.hit_flash_timer -= 1;
     }
 }
 
@@ -102,6 +112,24 @@ if (variable_instance_exists(id, "popup_numbers") && is_array(popup_numbers)) {
                     _p.vspeed = -(_p.vspeed * 0.35);
                     _p.hspeed *= 0.75;
                 }
+            } else if (_type == "particle") {
+                // NEW: physics for battle_spawn_hit_particles' output — these were being
+                // created but never actually moved or rendered anywhere (the draw side
+                // only handled text-bearing popups). Simple outward burst with gravity,
+                // no bounce — just flies out and fades via the life countdown above.
+                _p.x += _p.hspeed;
+                _p.y += _p.vspeed;
+                _p.vspeed += _p.gravity;
+            } else if (_type == "sprite_effect") {
+                // NEW: weapon-specific hit effects (e.g. a sword slash sprite) — plays
+                // through its own animation frames once at the target's position, then
+                // expires. Doesn't move; life countdown above handles cleanup.
+                if (variable_struct_exists(_p, "sprite") && sprite_exists(_p.sprite)) {
+                    var _frame_count = sprite_get_number(_p.sprite);
+                    var _frame_speed = variable_struct_exists(_p, "frame_speed") ? _p.frame_speed : 0.5;
+                    _p.frame = (variable_struct_exists(_p, "frame") ? _p.frame : 0) + _frame_speed;
+                    if (_p.frame >= _frame_count) _p.life = 0; // finished its animation — expire immediately
+                }
             } else {
                 _p.y -= 0.35;
             }
@@ -114,6 +142,9 @@ var _key_left  = false, _key_right = false, _key_up = false, _key_down = false, 
 
 if (variable_instance_exists(id, "battle_sub_state") && (battle_sub_state == BATTLE_STATE.VICTORY || battle_sub_state == BATTLE_STATE.GAMEOVER)) {
     _key_conf = InputPressed(INPUT_VERB.ACCEPT);
+    // NEW: advancing past battle text (VICTORY's "press to continue") now uses
+    // CANCEL, matching the dialogue system's convention — see the note further down.
+    _key_back = InputPressed(INPUT_VERB.CANCEL);
 } else {
     _key_left  = InputPressed(INPUT_VERB.LEFT);
     _key_right = InputPressed(INPUT_VERB.RIGHT);
@@ -121,6 +152,23 @@ if (variable_instance_exists(id, "battle_sub_state") && (battle_sub_state == BAT
     _key_down  = InputPressed(INPUT_VERB.DOWN);
     _key_conf  = InputPressed(INPUT_VERB.ACCEPT); 
     _key_back  = InputPressed(INPUT_VERB.CANCEL);
+}
+
+// --- MENU NAVIGATION DEBOUNCE ---
+// Reported as menu navigation feeling "very very clanky" — this adds a short
+// cooldown after any accepted directional move before another is accepted, which
+// smooths things out regardless of whether InputPressed fires once per physical
+// press or continuously while held (either way, this caps how fast selection can
+// change). Doesn't touch confirm/cancel, only directional movement.
+if (!variable_instance_exists(id, "nav_input_cooldown")) nav_input_cooldown = 0;
+if (nav_input_cooldown > 0) {
+    nav_input_cooldown -= 1;
+    _key_left = false;
+    _key_right = false;
+    _key_up = false;
+    _key_down = false;
+} else if (_key_left || _key_right || _key_up || _key_down) {
+    nav_input_cooldown = MENU_NAV_COOLDOWN_FRAMES;
 }
 
 // ==========================================
@@ -269,9 +317,10 @@ if (global.state == GAME_STATE.BATTLE) {
     
     if (!_enemies_alive && battle_sub_state != BATTLE_STATE.VICTORY && battle_sub_state != BATTLE_STATE.GAMEOVER) {
         battle_sub_state = BATTLE_STATE.VICTORY;
+        battle_end_reason = "win"; // as opposed to "fled" — see the Flee handling in TURN_PROCESSING
         text_char_count = 0; 
         battle_text = "Victory! You won the battle!"; 
-        _key_conf = false;
+        _key_back = false; // was _key_conf — CANCEL is now the "advance past text" button
         for (var _e = 0; _e < _e_count; _e++) {
             var _enemy = global.active_battle_enemies[_e];
             if (instance_exists(_enemy)) {
@@ -282,7 +331,17 @@ if (global.state == GAME_STATE.BATTLE) {
     
     // --- TEXT PACING ACCELERATOR ---
     if (battle_text != "" && text_char_count < string_length(battle_text)) {
-        text_char_count += 0.5;
+        if (_key_back) {
+            // Cancel (matching the dialogue system's skip button, not Accept) instantly
+            // completes the typewriter instead of doing nothing until it finishes on
+            // its own. Consumed here so this same press doesn't ALSO immediately skip
+            // the post-text wait / advance past the message this same frame — the
+            // first press reveals, the next press advances.
+            text_char_count = string_length(battle_text);
+            _key_back = false;
+        } else {
+            text_char_count += BATTLE_TEXT_TYPE_SPEED; // was hardcoded 0.5 (too fast) — see the macro's comment
+        }
     }
 
     // ------------------------------------------
@@ -771,6 +830,15 @@ if (global.state == GAME_STATE.BATTLE) {
             for (var _i = 0; _i < array_length(party_members); _i++) {
                 party_members[_i].is_defending = false;
             }
+            
+            // NEW: the clover is the player's crit meter — allies don't have one.
+            // Rises by 1 per completed round (this point = every enemy AND ally in
+            // the turn queue has now acted), capped at 4. Previously nothing anywhere
+            // incremented this — it was visual scaffolding only.
+            if (array_length(party_members) > 0 && variable_struct_exists(party_members[0], "clover_leaves")) {
+                party_members[0].clover_leaves = clamp(party_members[0].clover_leaves + 1, 0, 4);
+            }
+            
             party_input_index = 0;
             battle_sub_state = BATTLE_STATE.PLAYER_INPUT;
             menu_stage = BATTLE_MENU.MAIN;
@@ -815,8 +883,24 @@ if (global.state == GAME_STATE.BATTLE) {
                         if (is_undefined(_mult) || !is_real(_mult)) _mult = 1.0;
                         var _damage = max(1, _actor.atk - _target.def);
                         _damage = ceil(_damage * _mult);
+                        
+                        // NEW: the clover crit meter — player only (index 0 in
+                        // party_members; allies never have a crit chance). Each leaf is
+                        // +25% crit chance, so a full 4-leaf meter is a guaranteed crit.
+                        // Consumed (reset to 0) the moment it actually triggers, same as
+                        // a limit break — it has to be earned again from there.
+                        var _is_crit = false;
+                        if (current_turn_act.actor_index == 0 && variable_instance_exists(_actor, "clover_leaves")) {
+                            var _crit_chance = clamp(_actor.clover_leaves, 0, 4) * CLOVER_CRIT_CHANCE_PER_LEAF;
+                            if (_crit_chance > 0 && random(1) < _crit_chance) {
+                                _is_crit = true;
+                                _actor.clover_leaves = 0;
+                                _damage = ceil(_damage * CLOVER_CRIT_DAMAGE_MULT);
+                            }
+                        }
         
                         _target.hp = max(0, _target.hp - _damage);
+                        _target.hit_flash_timer = HIT_FLASH_DURATION; // NEW: brief white flash on hit
                         var _spawn_x = _target.x - camera_get_view_x(view_camera[0]);
                         var _spawn_y = (_target.y - camera_get_view_y(view_camera[0])) - 15;
                         if (!variable_instance_exists(_target, "display_hp")) {
@@ -830,13 +914,54 @@ if (global.state == GAME_STATE.BATTLE) {
                             hspeed: random_range(-1.5, 1.5),
                             vspeed: random_range(-4.0, -2.0),
                             gravity: 0.2,
-                            text: string(_damage),
+                            text: _is_crit ? (string(_damage) + " CRIT!") : string(_damage),
                             life: 45,
                             max_life: 45,
-                            color: (_mult >= 1.5) ? c_yellow : c_white
+                            // Crits get an orange-to-red gradient (intensity), instead of a
+                            // flat color — normal hits stay flat white/yellow.
+                            color: _is_crit ? make_colour_rgb(255, 165, 0) : ((_mult >= 1.5) ? c_yellow : c_white),
+                            color2: _is_crit ? c_red : ((_mult >= 1.5) ? c_yellow : c_white),
+                            scale: _is_crit ? 0.7 : 0.5
                         });
-                        battle_text = string(_actor.name) + " attacks " + string(_target.name) + "! " + string(_verd);
-                        screenshake_amount = (_mult >= 1.5) ? 5 : 2;
+                        // Flavor text variety instead of one fixed template every time —
+                        // picks randomly, name/verdict/crit still substituted in normally.
+                        var _atk_flavor_templates = [
+                            "@actor@ attacks @target@! @verd@",
+                            "@actor@ strikes @target@! @verd@",
+                            "@actor@ lands a hit on @target@! @verd@",
+                            "@actor@ swings at @target@! @verd@"
+                        ];
+                        var _atk_flavor = _atk_flavor_templates[irandom(array_length(_atk_flavor_templates) - 1)];
+                        _atk_flavor = string_replace(_atk_flavor, "@actor@", string(_actor.name));
+                        _atk_flavor = string_replace(_atk_flavor, "@target@", string(_target.name));
+                        _atk_flavor = string_replace(_atk_flavor, "@verd@", string(_verd));
+                        battle_text = _atk_flavor + (_is_crit ? " CRITICAL HIT!" : "");
+                        screenshake_amount = _is_crit ? 7 : ((_mult >= 1.5) ? 5 : 2);
+                        if (_is_crit) battle_spawn_hit_particles(_spawn_x, _spawn_y, make_colour_rgb(255, 165, 0));
+                        
+                        // NEW: weapon-specific hit effect (e.g. sword slash). Only the
+                        // player has equipment (allies use flat ally_database stats), so
+                        // this only fires for current_turn_act.actor_index == 0. Reads
+                        // the currently equipped weapon (slot 4) from obj_item_manager
+                        // and plays whatever hit_effect sprite it defines, if any.
+                        if (current_turn_act.actor_index == 0 && instance_exists(obj_item_manager)
+                            && variable_instance_exists(obj_item_manager, "equipped")
+                            && is_array(obj_item_manager.equipped) && array_length(obj_item_manager.equipped) > 4) {
+                            var _equipped_weapon = obj_item_manager.equipped[4];
+                            if (!is_undefined(_equipped_weapon) && is_struct(_equipped_weapon)
+                                && variable_struct_exists(_equipped_weapon, "hit_effect")
+                                && _equipped_weapon.hit_effect != noone && sprite_exists(_equipped_weapon.hit_effect)) {
+                                array_push(popup_numbers, {
+                                    type: "sprite_effect",
+                                    sprite: _equipped_weapon.hit_effect,
+                                    x: _spawn_x, y: _spawn_y,
+                                    frame: 0,
+                                    frame_speed: 0.5,
+                                    life: 30, // safety cap — the animation itself expires this early via frame >= frame_count
+                                    fx_scale: 1.0
+                                });
+                            }
+                        }
                     } else {
                         battle_text = _actor.name + " swung, but no enemies were left!";
                     }
@@ -880,6 +1005,7 @@ if (global.state == GAME_STATE.BATTLE) {
                                 if (_mercy_percent != 0) {
                                     var _spawn_x = _target.x - camera_get_view_x(view_camera[0]);
                                     var _spawn_y = (_target.y - camera_get_view_y(view_camera[0])) - 15;
+                                    var _mercy_is_gain = (_mercy_percent >= 0);
                                     
                                     array_push(popup_numbers, {
                                         type: "jumping_number",
@@ -888,10 +1014,14 @@ if (global.state == GAME_STATE.BATTLE) {
                                         hspeed: random_range(-1.5, 1.5),
                                         vspeed: random_range(-4.0, -2.0),
                                         gravity: 0.2,
-                                        text: (_mercy_percent >= 0 ? "+" : "") + string(_mercy_percent) + "%",
+                                        text: (_mercy_is_gain ? "+" : "") + string(_mercy_percent) + "%",
                                         life: 45,
                                         max_life: 45,
-                                        color: (_mercy_percent >= 0) ? c_yellow : c_gray
+                                        // Gradient instead of flat color: gains use a goldish
+                                        // yellow-to-orange blend (color = top, color2 = bottom)
+                                        // rather than a single flat yellow. Reductions stay flat gray.
+                                        color: _mercy_is_gain ? c_yellow : c_gray,
+                                        color2: _mercy_is_gain ? make_colour_rgb(255, 165, 0) : c_gray
                                     });
                                 }
                             }
@@ -916,7 +1046,27 @@ if (global.state == GAME_STATE.BATTLE) {
                     if (current_turn_act.chosen_sub_action == "Defend") { 
                         battle_text = _actor.name + " is guarding safely!";
                     } else if (current_turn_act.chosen_sub_action == "Flee") { 
-                        battle_text = "Escaping from battle layout...";
+                        // Certain encounters can't be fled from at all: scripted/special
+                        // battles (global.battle_id != "none", e.g. the slime ambush) and
+                        // full-group encounters (MAX_ENCOUNTER_GROUP_SIZE enemies or more).
+                        var _is_unfleeable = (variable_global_exists("battle_id") && global.battle_id != "none")
+                            || (array_length(global.active_battle_enemies) >= MAX_ENCOUNTER_GROUP_SIZE);
+                        
+                        if (_is_unfleeable) {
+                            battle_text = "There's no escaping this fight!";
+                        } else if (random(1) < FLEE_SUCCESS_CHANCE) {
+                            // FIX: this used to only show flavor text and always succeed —
+                            // the fight would just continue afterward, with no actual escape
+                            // happening. Now it genuinely ends the battle: ACTION_RESOLUTION
+                            // sees is_fleeing_result and routes into VICTORY's same "wait for
+                            // confirm, then leave" exit flow instead of returning to
+                            // TURN_PROCESSING, and reports "fled" as the outcome (see
+                            // scr_check_slime_results for how that's used).
+                            battle_text = "You escaped the battle!";
+                            is_fleeing_result = true;
+                        } else {
+                            battle_text = _actor.name + " tried to flee, but couldn't get away!";
+                        }
                     } 
                     // --- SPARE PROCESSING: single target, chosen via TARGET_SELECT ---
                     else if (current_turn_act.chosen_sub_action == "Spare") {
@@ -948,7 +1098,8 @@ if (global.state == GAME_STATE.BATTLE) {
                                 gravity: 0.1,
                                 text: "SPARED!",
                                 life: 60, max_life: 60,
-                                color: make_colour_rgb(255, 215, 0), // gold, reads as "mercy" rather than damage
+                                color: make_colour_rgb(255, 215, 0), // gold top, reads as "mercy" rather than damage
+                                color2: make_colour_rgb(255, 165, 0), // orange bottom — same goldish gradient as mercy gains
                                 scale: 0.8
                             });
                             
@@ -1045,15 +1196,21 @@ if (global.state == GAME_STATE.BATTLE) {
             if (_target.hp > 0) {
                 // Block-Tales-style dodge window: don't resolve damage immediately.
                 // Instead give the player a timed window to press Accept and reduce/negate it.
-                // Eased again (2nd pass) — still felt too fast/hard, so this cuts speed way down
-                // and widens both hit windows substantially. Visual is now a shrinking ring
-                // (see Draw GUI) instead of a horizontal bar, matching Block Tales more closely.
-                dodge_speed = 0.010; // ~100 frames / ~1.7s at 60fps to fully close, was 0.016 (~62 frames)
+                // Eased again (3rd pass) — still reported as too fast, so this cuts speed
+                // roughly in half again and widens both hit windows further. Visual is a
+                // shrinking ring (see Draw GUI), matching Block Tales more closely.
+                dodge_speed = 0.005; // ~200 frames / ~3.3s at 60fps to fully close, was 0.010 (~1.7s)
                 dodge_progress = 1.0;
                 dodge_target = random_range(0.3, 0.6); // where in the countdown the ring "lands"
                 dodge_verdict = "";
-                dodge_perfect_threshold = 0.12; // was 0.09 — much more forgiving Perfect window
-                dodge_good_threshold = 0.30;    // was 0.20 — much more forgiving Good window
+                dodge_perfect_threshold = 0.16; // was 0.12 — wider Perfect window again
+                dodge_good_threshold = 0.38;    // was 0.30 — wider Good window again
+                // FIX: without this, whatever battle_text was showing right before this
+                // attack (e.g. a leftover "X attacks Y!" message) kept rendering in the
+                // dashboard box behind/underneath the dodge ring, since the dashboard
+                // only hides when battle_text == "".
+                battle_text = "";
+                text_char_count = 0;
                 battle_sub_state = BATTLE_STATE.DODGE_WINDOW;
             } else {
                 var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
@@ -1108,14 +1265,21 @@ if (global.state == GAME_STATE.BATTLE) {
                 }
                 
                 _target.hp = max(0, _target.hp - _damage);
+                if (_damage > 0) _target.hit_flash_timer = HIT_FLASH_DURATION; // NEW: brief white flash on hit (skipped on a Perfect dodge — no damage taken)
                 var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
                 
+                // Flavor text variety for the enemy's attack verb — "lunges at" every
+                // single time got repetitive fast. Perfect/Good/Miss each still get
+                // their own distinct outcome wording after the verb.
+                var _enemy_atk_verbs = ["lunges at", "strikes at", "attacks", "swings at"];
+                var _enemy_atk_verb = _enemy_atk_verbs[irandom(array_length(_enemy_atk_verbs) - 1)];
+                
                 if (_dodge_result == "PERFECT") {
-                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + "... PERFECT DODGE! No damage taken!";
+                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + "... PERFECT DODGE! No damage taken!";
                 } else if (_dodge_result == "GOOD") {
-                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + "! Partial dodge, " + string(_damage) + " damage.";
+                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + "! Partial dodge, " + string(_damage) + " damage.";
                 } else {
-                    battle_text = string(_e_name) + " lunges at " + string(_target.name) + " doing " + string(_damage) + " damage!";
+                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + " doing " + string(_damage) + " damage!";
                     if (_is_guarding) battle_text += " (Guarded!)";
                 }
                 
@@ -1148,6 +1312,11 @@ if (global.state == GAME_STATE.BATTLE) {
                         life: 45, max_life: 45,
                         color: c_aqua
                     });
+                    
+                    // Celebratory particle burst on a Perfect dodge — battle_spawn_hit_particles
+                    // now actually renders (see the popup Step/Draw fixes), so this is the
+                    // first thing that actually uses it.
+                    battle_spawn_hit_particles(_spawn_x, _spawn_y, c_aqua);
                 }
             }
             
@@ -1160,9 +1329,20 @@ if (global.state == GAME_STATE.BATTLE) {
     else if (battle_sub_state == BATTLE_STATE.ACTION_RESOLUTION) {
         if (action_timer > 0) {
             action_timer--;
-            if (_key_conf) action_timer = 0;
+            // FIX: was _key_conf (ACCEPT) — your dialogue system uses CANCEL to skip
+            // text, so this matched it for consistency instead of forcing a different
+            // button here.
+            if (_key_back) action_timer = 0;
         } else {
-            battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
+            if (variable_instance_exists(id, "is_fleeing_result") && is_fleeing_result) {
+                // Reuses VICTORY's existing "wait for text + confirm, sync HP, reset
+                // follower, then leave" flow rather than duplicating all of that here.
+                is_fleeing_result = false;
+                battle_end_reason = "fled";
+                battle_sub_state = BATTLE_STATE.VICTORY;
+            } else {
+                battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
+            }
         }
     }
     // ------------------------------------------
@@ -1172,7 +1352,9 @@ if (global.state == GAME_STATE.BATTLE) {
         if (!variable_instance_exists(id, "victory_timer")) victory_timer = 0;
         victory_timer++;
         
-        if (text_char_count >= string_length(battle_text) && _key_conf) {
+        // FIX: was _key_conf (ACCEPT) — matches your dialogue system's CANCEL-to-advance
+        // convention now instead of using a different button just for battle text.
+        if (text_char_count >= string_length(battle_text) && _key_back) {
             global.player_hp = party_members[0].hp;
             if (instance_exists(obj_player)) {
                 if (ds_exists(obj_player.pos_history, ds_type_list)) {
@@ -1191,19 +1373,44 @@ if (global.state == GAME_STATE.BATTLE) {
             party_input_index = 0;
             battle_text = "";
             text_char_count = 0;
-            global.state = GAME_STATE.PLAYING;
             
-            var _e_count = array_length(global.active_battle_enemies);
-            for (var _e = 0; _e < _e_count; _e++) {
-                var _enemy = global.active_battle_enemies[_e];
-                if (instance_exists(_enemy)) instance_destroy(_enemy);
-            }
-            
-            if (variable_global_exists("overworld_room_fallback") && room_exists(global.overworld_room_fallback)) {
-                room_goto(global.overworld_room_fallback);
+            // Publish how this battle actually ended, for scripted-encounter result
+            // checks like scr_check_slime_results() (called from obj_player's Room
+            // Start once we're back in the overworld). Must happen BEFORE
+            // battle_cleanup_and_return(), since that clears global.active_battle_enemies.
+            var _end_reason = variable_instance_exists(id, "battle_end_reason") ? battle_end_reason : "win";
+            if (_end_reason == "fled") {
+                global.battle_result = "fled";
             } else {
-                room_goto_previous();
+                // "Killed" if ANY enemy actually died (mixed outcomes still count as
+                // killed); "negotiated" only if every single enemy was spared instead.
+                var _any_killed = false;
+                var _result_e_count = array_length(global.active_battle_enemies);
+                for (var _rei = 0; _rei < _result_e_count; _rei++) {
+                    var _result_enemy = global.active_battle_enemies[_rei];
+                    if (instance_exists(_result_enemy) && _result_enemy.hp <= 0
+                        && (!variable_instance_exists(_result_enemy, "is_spared") || !_result_enemy.is_spared)) {
+                        _any_killed = true;
+                        break;
+                    }
+                }
+                global.battle_result = _any_killed ? "killed" : "negotiated";
             }
+            
+            // FIX: this used to check global.overworld_room_fallback, a variable that
+            // was never actually set anywhere in the project, so it always silently
+            // fell through to room_goto_previous() — which navigates by the STATIC
+            // room order in the IDE's asset list, not "the room you actually fought
+            // in." That could land you somewhere that immediately fires a brand new
+            // encounter, which looks exactly like "the battle just restarts."
+            // battle_cleanup_and_return() (scr_battle_functions) is the function
+            // already built correctly for this: it returns to global.overworld_room,
+            // which battle_trigger_room_transition() captured correctly the moment
+            // this battle actually began. It also resets global.state, the card/buff
+            // globals, and the enemy tracking array in one place, so there's only
+            // ever one "how does a battle end" implementation instead of two
+            // disagreeing ones.
+            battle_cleanup_and_return();
             exit;
         }
     }

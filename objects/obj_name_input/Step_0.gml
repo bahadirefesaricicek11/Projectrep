@@ -4,7 +4,6 @@ accept = InputPressed(INPUT_VERB.ACCEPT);
 _delete = InputPressed(INPUT_VERB.DELETE);
 back = InputPressed(INPUT_VERB.CANCEL); 
 
-
 if (!prompt_exit) {
     if (move_h != 0 || move_v != 0) { 
         cursor_x += move_h; 

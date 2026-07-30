@@ -14,10 +14,10 @@ function scr_text() {
     //-----------------INTRO---------------------
 	global.text[$ "intro_cutscene"] = [
 		EXECUTE(function(textbox) {
-			obj_textbox.has_background = false;
-			obj_textbox.text_speed = 0.3;
-		}),
-		TEXT("Your name is " + _name + "."),
+            obj_textbox.has_background = false;
+            obj_textbox.text_speed = 0.3;
+        }),
+        TEXT("Your name is [color=yellow]%name%[/color]."),
 		EXECUTE(function(textbox) {
 			obj_introcutscene.change = true;
 		}),
@@ -45,12 +45,10 @@ function scr_text() {
 		EXECUTE(function(textbox) {
 			obj_introcutscene.change = true;
 		}),
-		EXECUTE(function(textbox) {
-			audio_play_sound(msc_ambient, 10, true); 
-		}),
 		TEXT("You woke up in the middle of nowhere."),
 		EXECUTE(function(textbox) {
 			obj_textbox.text_speed = 0.5;
+			audio_play_sound(msc_ambient, 10, true); 
 			scr_start_game();
 		}),
 	];
@@ -76,7 +74,8 @@ function scr_text() {
     global.text[$ "Item"] = [
         CHOICE("What do you want to do with this item?",
             OPTION("Use", "Item 1"),
-            OPTION("Drop", "Item 2"))
+            OPTION("Drop", "Item 2"),
+            OPTION("Cancel", ""))
     ];
     
     global.text[$ "Item 1"] = [
@@ -106,7 +105,7 @@ function scr_text() {
     
     //-----------------MISC DIALOGUES------------
     global.text[$ "gold"] = [
-        TEXT("You found " + string(global.gold_amount) + " gold !"),
+        TEXT("You found [rainbow][wave]%gold%[/wave][/rainbow] gold!"),
         EXECUTE(function(textbox) {
             gold_add(global.gold_amount);
         }),
@@ -130,6 +129,14 @@ function scr_text() {
     global.text[$ "Window 1"] = [
         TEXT("Nice view."),
     ];
+    global.text[$ "Stone_Path_Forest_1"] = [
+        TEXT("It's Stoning the path."),
+    ];
+	
+	
+   global.text[$ "texttest"] = [ 
+    TEXT("Normal [shake]shake[/shake] [wave]wave[/wave] [rainbow]rainbow[/rainbow] [font=Bitmap_Font]bitmap[/font] [color=red]red[/color] [color=blue]blue[/color] [color=yellow]yellow[/color] [color=green]green[/color] [color=#FF00FF]hex[/color] [color=gold]gold[/color] [color=ice]ice[/color] [shake][color=gold][font=Bitmap_Font]ultimate test[/font][/color][/shake] [wave][rainbow]wavy rainbow[/rainbow][/wave]") 
+];
 	
 	global.text[$ "slime_trio"] = [
 		TEXT("What are you lookin' at? SCRAM!!!"),
@@ -157,7 +164,7 @@ function scr_text() {
 	//-----------------NPC RECRUITABLE---------------------
     global.text[$ "NPC RECRUITABLE"] = [
         SPEAKER(spr_portrait_1),
-        CHOICE("Hey you wanna recruit me",
+        CHOICE("Hey, you wanna.[pause=10].[pause=10].[pause=10] [font=Bitmap_Font][color=gold][wave]recruit[/wave][/color][/font] me??",
             OPTION("Sure", "NPC RECRUITABLE opt1"),
             OPTION("Nah", "NPC RECRUITABLE opt2"))    
     ];
@@ -187,10 +194,10 @@ function scr_text() {
         SPEAKER(spr_main_portrait),
         TEXT("Hey."),
         SPEAKER(spr_portrait_1),
-        TEXT("i want to change colors!"),
+        TEXT("i want to [rainbow][wave]change colors![/wave][/rainbow]"), // Wave effect added here!
         EXECUTE(function(textbox) {
-            inst_32E4B1DD.sprite_index = spr_npc_alternate;
-            inst_32E4B1DD.text_id = "NPC1_ALTERNATIVE";
+            inst_1EDA8D0E.sprite_index = spr_npc_alternate;
+            inst_1EDA8D0E.text_id = "NPC1_ALTERNATIVE";
         })
     ];
 
@@ -198,8 +205,8 @@ function scr_text() {
         SPEAKER(spr_portrait_1_alternate),
         TEXT("Hey! i want to change again"),
         EXECUTE(function(textbox) {
-            inst_32E4B1DD.sprite_index = spr_npc;
-            inst_32E4B1DD.text_id = "NPC 1";
+            inst_1EDA8D0E.sprite_index = spr_npc;
+            inst_1EDA8D0E.text_id = "NPC 1";
         })
     ];
 
@@ -211,14 +218,14 @@ function scr_text() {
             obj_textbox.background = spr_textbox_special;
             obj_textbox.option_background = spr_option_special;
         }),
-        CHOICE("Hey. i have special textbox",
+        CHOICE("[font=Bitmap_Font][rainbow][wave]Free items[/wave][/rainbow][/font]",
             OPTION("Hey", "npc2 opt1"),
             OPTION("...", "npc2 opt2")),
     ];
     
     global.text[$ "npc2 opt1"] = [
         SPEAKER(spr_portrait_1),
-        CHOICE("You wanna fight?",
+        CHOICE("You wanna [color=red]fight[/color]?",
             OPTION("sure", "npc2 opt1_1"),
             OPTION("no", "npc2 opt2"))    
     ];
@@ -226,7 +233,7 @@ function scr_text() {
     global.text[$ "npc2 opt1_1"] = [
         SPEAKER(spr_portrait_1),
         TEXT("i wont."),
-        TEXT("here take this."),
+        TEXT("here take [color=ice]this[/color]."),
         EXECUTE(function(textbox) {
             item_add(global.item_list.apple);
             item_add(global.item_list.bread);

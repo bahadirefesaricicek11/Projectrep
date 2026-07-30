@@ -18,14 +18,9 @@ var gwidth = view_width;
 var gheight = view_height + (is_ingame ? 50 : 0);
 var ds_grid = menu_pages[page];
 var ds_height = ds_grid_height(ds_grid);
-var _title = "PROJECT"; // Default placeholder fallback
+var _title = "PAUSED";
 
 if (is_ingame) {
-    draw_set_color(c_black);
-    draw_set_alpha(0.6);
-    draw_rectangle(0, 0, gwidth, gheight, false);
-    draw_set_alpha(1);
-    draw_set_color(c_white);
 
     // FIX 1: Localize the Pause title header
     _title = __("menu.title_paused"); 
@@ -38,78 +33,11 @@ if (is_ingame) {
     draw_set_font(Project_Font);
 } else {
     image_speed = 0.3;
-    
-    var _localized_sprite_string = __("menu.background");
-
-    // 2. Convert that string value directly into a real asset integer pointer index
-    var background_sprite = asset_get_index(_localized_sprite_string);
-
-    // 3. Safety validation check layer
-    if (background_sprite == -1 || !sprite_exists(background_sprite)) {
-        // Fallback default index asset pointer if the lookup returns an invalid key index (-1)
-        background_sprite = bg1; 
-    } 
-    
-    // ==========================================
-    // SEAMLESS FIXED ALTERNATING BOXES
-    // ==========================================
-    if (!variable_instance_exists(id, "bg_scroll_x")) {
-        bg_scroll_x = 0;
-        bg_scroll_y = 0;
-    }
-
-    // Move by 1 whole pixel per frame
-    bg_scroll_x += 1;
-    bg_scroll_y += 1; 
-
-    var cell_w = 16; 
-    var cell_h = 16; 
-
-    // Reset exactly at 2 full cells so colors match perfectly when wrapping
-    if (bg_scroll_x >= (cell_w * 2)) bg_scroll_x = 0;
-    if (bg_scroll_y >= (cell_h * 2)) bg_scroll_y = 0;
-
-    var color1 = make_color_rgb(222, 222, 222);  // Light Gray
-    var color2 = make_color_rgb(145, 166, 205);   // Yellow
-
-    var cell_x = 0;
-    // Start drawing off-screen by 2 cells to give padding for the movement
-    for (var xx = -cell_w * 2; xx < gwidth + cell_w * 2; xx += cell_w) {
-        var cell_y = 0;
-        for (var yy = -cell_h * 2; yy < gheight + cell_h * 2; yy += cell_h) {
-            
-            // Pure checkerboard math based strictly on loop grid position
-            var current_color = ((cell_x + cell_y) % 2 == 0) ? color1 : color2;
-            
-            var draw_x = xx + bg_scroll_x;
-            var draw_y = yy + bg_scroll_y;
-            
-            draw_set_color(current_color);
-            draw_set_alpha(0.5);
-            
-            // Draw perfectly flush boxes
-            draw_rectangle(draw_x, draw_y, draw_x + cell_w - 1, draw_y + cell_h - 1, false);
-            
-            cell_y++;
-        }
-        cell_x++;
-    }
-    
-    // Reset draw settings
-    draw_set_color(c_white);
-    draw_set_alpha(1.0);
-    // ==========================================
-    
-    // FIX: Remove "if (page == 0 || page == 1)" so the banner draws on ALL title screens!
-    _title = __("menu.title_main"); 
-    draw_set_font(title_font);
-    draw_set_halign(fa_right);
-    draw_set_valign(fa_top);
     if (page == 0 || page == 1)
     {
-        draw_sprite_stretched(spr_box, 0, gwidth/2, 40, 180, 135);
-        draw_text_ext_transformed_colour(gwidth - 45, 92, _title, 0, 300, 1.5, 1.5, 0, c_olive, c_olive, c_gray, c_gray, 1);
-        draw_text_ext_transformed_colour(gwidth - 46, 91, _title, 0, 300, 1.5, 1.5, 0, c_yellow, c_yellow, c_white, c_white, 1);
+        draw_sprite_stretched(spr_box, 0, (gwidth/2)+10, 90, 160, 24);
+        
+        draw_sprite_ext(spr_menu_title, 0, (gwidth/2)+20, (gheight/2)-12, 1.5, 1.5, 0, c_white, 1);
     }
     draw_set_valign(fa_middle);
     draw_set_font(Project_Font);
@@ -125,17 +53,14 @@ if (is_ingame && prompt_exit) {
     draw_sprite_stretched(spr_box, 0, prompt_box_x, prompt_box_y, prompt_box_w, prompt_box_h);
     
     draw_set_halign(fa_center);
-    // Localized dynamic query string
     draw_text_ext(gwidth / 2, gheight / 2.2 - 40, __("menu.prompt_save_query"), 20, 300);
     
-    // Pass raw JSON keys into this temporary list for prompt evaluation
     var prompt_labels = ["menu.prompt_save_exit", "menu.prompt_no_save_exit", "menu.prompt_cancel"];
     for (var p = 0; p < 3; p++) {
         var shadow_col = (p == prompt_option) ? c_orange : c_ltgray;
         var col = (p == prompt_option) ? c_yellow : c_white;
         var prefix = (p == prompt_option) ? "> " : "";
         
-        // Wrap with __() during screen rendering loop iteration
         var _prompt_display_string = prefix + __(prompt_labels[p]);
         draw_text_color((gwidth / 2)-1, (gheight / 2.2 + 5 + (p * 30))+1, _prompt_display_string, shadow_col, shadow_col, shadow_col, shadow_col, 1);
         draw_text_color(gwidth / 2, gheight / 2.2 + 5 + (p * 30), _prompt_display_string, col, col, col, col, 1);
@@ -152,9 +77,9 @@ if (is_ingame) {
     var main_box_w = 320; 
     var main_box_h = (ds_height * y_buffer) + (y_buffer); 
     var main_box_x = (gwidth / 2) - (main_box_w / 2);
-    var main_box_y = (gheight / 2) - (main_box_h / 2);
+    var main_box_y = (gheight / 3) - (main_box_h / 3);
     
-    draw_sprite_stretched(spr_box, 0, main_box_x, main_box_y, main_box_w, main_box_h);
+    //draw_sprite_stretched_ext(spr_box, 0, main_box_x, main_box_y, main_box_w, main_box_h, c_white, 1);
     
     start_y = main_box_y + y_buffer; 
     divider_x = gwidth / 2.1;
@@ -163,12 +88,9 @@ if (is_ingame) {
     
     draw_line(divider_x, main_box_y + 15, divider_x, main_box_y + main_box_h - 15);
 } else {
-    // 1. Restore your original working dynamic vertical centering formula
     start_y = (gheight / 2) - (((4 - 1) / 2) * y_buffer);
     menu_left = 50;
     divider_x = gwidth / 2.1;
-    
-    // 2. UNIFY RTX: Match the right side X position perfectly with the in-game structure
     rtx = divider_x + 20; 
     
     draw_line(divider_x, start_y - y_buffer, divider_x, start_y + (ds_height * y_buffer));
@@ -177,7 +99,6 @@ if (is_ingame) {
 var selected = menu_option[page];
 draw_set_halign(fa_left);
 
-// Calculate maximum space allowed for the menu label without crossing the divider line
 var max_label_w = (divider_x - menu_left) - 15;
 
 for (var i = 0; i < ds_height; i++) {
@@ -188,13 +109,45 @@ for (var i = 0; i < ds_height; i++) {
     var raw_menu_key = ds_grid[# 0, i]; 
     var raw_localized_label = __(raw_menu_key); 
     
-    // Apply truncation to keep layout perfectly locked in boundary
     var localized_menu_label = _truncate_label(raw_localized_label, max_label_w);
     
     var text_x = menu_left + (is_selected ? xo : 0);
+    
+    // Kept yellow selection colors for text
     var col = is_selected ? c_yellow : c_white;
     var shadow_col = is_selected ? c_orange : c_ltgray;
     
+    // --- DRAW PROCEDURAL SLANTED INVERT BANNER ---
+    if (is_selected) {
+        var _banner_padding_x = 12;
+        var _banner_h = 24;
+        var _skew = 12;
+        
+        // Extended total width to handle left offset over icon + right edge padding
+        var _banner_w = string_width(localized_menu_label) + 30 + _banner_padding_x;
+        
+        // Shift left offset to text_x - 30 to start before the icon (text_x - 20)
+        var _x1 = text_x - 30;
+        var _y1 = y_pos - 10; 
+        var _x2 = _x1 + _banner_w;
+        var _y2 = _y1 + _banner_h;
+        
+        // Enable subtractive inverse color blend mode
+        gpu_set_blendmode_ext(bm_inv_dest_color, bm_zero);
+        
+        // Draw solid white polygon (inverts background colors underneath)
+        draw_primitive_begin(pr_trianglestrip);
+            draw_vertex_color(_x1 + _skew, _y1, c_white, 1);
+            draw_vertex_color(_x1,         _y2, c_white, 1);
+            draw_vertex_color(_x2 + _skew, _y1, c_white, 1);
+            draw_vertex_color(_x2,         _y2, c_white, 1);
+        draw_primitive_end();
+        
+        // Reset blend mode back to normal
+        gpu_set_blendmode(bm_normal);
+    }
+    
+    // Draw option text in yellow
     draw_text_color(text_x-1, y_pos+1, localized_menu_label, shadow_col, shadow_col, shadow_col, shadow_col, 1);
     draw_text_color(text_x, y_pos, localized_menu_label, col, col, col, col, 1);
     
@@ -229,14 +182,12 @@ for (var i = 0; i < ds_height; i++) {
             var slider_width = 100;
             var slider_pos = (current_val - range[0]) / (range[1] - range[0]) * slider_width;
             
-            // 3. FIX THE VERTICAL JUMP: Lock slider_y directly to y_pos. Remove the +12 offset entirely!
-            var slider_y = y_pos; // A tiny uniform alignment offset for both in-game and main menu
+            var slider_y = y_pos;
             
-            draw_line_width_colour(rtx-1, slider_y+1 , rtx + slider_width-1, slider_y+1, 2, c_ltgray,c_ltgray);
+            draw_line_width_colour(rtx-1, slider_y+1 , rtx + slider_width-1, slider_y+1, 2, c_ltgray, c_ltgray);
             draw_line_width(rtx, slider_y , rtx + slider_width, slider_y, 2);
             
             var ball_color = is_selected ? c_yellow : c_white;
-            var shadow_col = is_selected ? c_orange : c_ltgray;
             
             draw_sprite_ext(spr_slider_ball, 0, rtx + slider_pos-1, slider_y+2, 5, 5, 45, c_ltgray, 1);
             draw_sprite_ext(spr_slider_ball, 0, rtx + slider_pos, slider_y+1, 5, 5, 45, ball_color, 1);
@@ -250,7 +201,6 @@ for (var i = 0; i < ds_height; i++) {
             var options = ds_grid[# 4, i];
             
             var active_col = is_selected ? c_yellow : c_white;
-            var shadow_col = is_selected ? c_orange : c_ltgray;
             if (inputting && i == menu_option[page]) active_col = c_yellow; 
 
             var display_string = __(options[current_val]); 
@@ -273,7 +223,7 @@ if (fade_alpha > 0) {
         var _cam_y = camera_get_view_y(view_camera[0]);
         var _cam_w = global.view_width;
         var _cam_h = global.view_height;
-        draw_rectangle(_cam_x, _cam_y, _cam_x + _cam_w, _cam_y + _cam_h, false);
+        draw_rectangle(_cam_x, _cam_y, _cam_x + _cam_w, _cam_x + _cam_h, false);
     }
     
     draw_set_alpha(1); 

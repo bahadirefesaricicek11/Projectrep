@@ -8,8 +8,8 @@ global.ingame = false;
 
 global.dialogue = 0;
 
-global.view_width = display_get_gui_width();
-global.view_height = display_get_gui_height();
+global.view_width = 384;
+global.view_height = 216;
 
 // --- 4. PERSISTENT SYSTEM CORE LIVE METRICS ---
 global.state = GAME_STATE.TITLE_SCREEN;

@@ -1,5 +1,7 @@
-bg_scroll_x += 1;
-bg_scroll_y += 1; 
-    
-if (bg_scroll_x >= 56) bg_scroll_x = 0;
-if (bg_scroll_y >= 72) bg_scroll_y = 0;
+alpha = dsin(alpha_amt);
+alpha_amt += 5;
+
+if (InputPressedMany(-1) || keyboard_check_pressed(vk_anykey) && !mouse_check_button_pressed(mb_any) == true)
+{
+	room_goto(rm_introCutscene);
+}

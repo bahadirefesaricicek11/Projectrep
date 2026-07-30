@@ -3,11 +3,17 @@
  * @param {Id.Instance} _npc_inst The instance ID of the NPC being recruited.
  */
 function party_recruit_npc(_npc_inst) {
-    // 1. Safety Guard: Make sure the instance actually exists and has an ID key
+   // 1. Safety Guard: Make sure the instance actually exists and has an ID key
     if (!instance_exists(_npc_inst)) return;
     if (!instance_exists(obj_player)) return;
     
-    var _ally_id = variable_struct_exists(_npc_inst, "ally_key") ? _npc_inst.ally_key : "Whitey";
+    // Fallback to "Unknown" so it doesn't collide with existing party members
+    var _ally_id = variable_instance_exists(_npc_inst, "ally_key") ? _npc_inst.ally_key : "Unknown";
+    
+    if (_ally_id == "Unknown") {
+        show_debug_message("CRITICAL ERROR: NPC instance " + string(_npc_inst) + " is missing its 'ally_key' variable!");
+        return;
+    }
     
     // 2. FIX: obj_player.party_allies is the array everything else actually reads —
     // Room Start rebuilds every overworld follower from it on every room transition,

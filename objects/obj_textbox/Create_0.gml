@@ -2,6 +2,7 @@ max_input_delay = 0;
 input_delay = max_input_delay;
 sequence_to_resume = noone;
 
+image_speed = 0.05;
 
 margin = 4;
 padding = 8;
@@ -10,7 +11,6 @@ height = ((display_get_gui_height() - margin)/2.5);
 
 x = (display_get_gui_width() - width) / 2;
 y = display_get_gui_height() - height - margin;
-
 
 text_font = Project_Font;
 text_color = c_white;
@@ -48,13 +48,17 @@ text = "";
 text_progress = 0;
 text_length = 0;
 
+// --- PAUSE & EFFECTS MAP ADDITIONS ---
+pause_timer = 0;
+effects_map = [];
+
 portrait_sprite = -1;
 portrait_width = sprite_get_width(spr_portrait);
 portrait_height = sprite_get_height(spr_portrait);
 
 enum PORTRAIT_SIDE {
-	LEFT,
-	RIGHT
+    LEFT,
+    RIGHT
 }
 
 speaker_name = "";
@@ -68,23 +72,20 @@ option_count = 0;
 var topic = "";
 
 setTopic = function(topic) {
-	actions = global.text[$ topic];
-	current_action = -1;
-		
-	next();
+    actions = global.text[$ topic];
+    current_action = -1;
+        
+    next();
 }
 
 next = function() {
     current_action++;
     if (current_action >= array_length(actions)) {
-        // --- SEQUENCE RESUME SYSTEM ---
         if (variable_instance_exists(id, "sequence_to_resume") && sequence_to_resume != noone) {
             layer_sequence_play(sequence_to_resume);
         } else {
-            // Only give back player controls if we aren't in a tight cutscene sequence
             if (instance_exists(obj_player)) obj_player.can_move = true;
         }
-        // ------------------------------
         
         instance_destroy();
     }
@@ -94,9 +95,14 @@ next = function() {
 }
 
 setText = function(newText) {
-	text = newText;
-	text_length = string_length(newText);
-	text_progress = 0;
+    pause_timer = 0; // Clear residual pauses from previous dialogue box
+    
+    var parsed = parse_text_effects(newText);
+    text = parsed.clean_text;
+    effects_map = parsed.effects;
+    
+    text_length = string_length(text);
+    text_progress = 0;
 }
 
 selectLerp = current_option;

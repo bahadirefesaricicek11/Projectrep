@@ -1,7 +1,7 @@
 draw_set_alpha(1); 
 draw_set_color(c_white);
 
-draw_set_font(text_font_size);
+draw_set_font(Project_Font);
 
 var _gui_w = display_get_gui_width();
 var _margin = 6;       // Distance from screen edges

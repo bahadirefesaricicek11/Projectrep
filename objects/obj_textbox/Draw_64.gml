@@ -1,4 +1,4 @@
-if(has_background == true)
+if (has_background == true)
 {
     draw_sprite_stretched(background, 0, x, y, width, height);
 }
@@ -7,7 +7,11 @@ var draw_text_x = x;
 var draw_text_y = y;
 var draw_text_width = text_width;
 
-var finished = text_progress == text_length;
+// -------------------------------------------------------------
+// FIX: Floats like 0.3 mean text_progress almost never equals text_length exactly.
+// Changing '==' to '>=' ensures options render the moment typing reaches the end.
+// -------------------------------------------------------------
+var finished = (text_progress >= text_length);
 
 // Portrait
 if (sprite_exists(portrait_sprite)) {
@@ -19,14 +23,14 @@ if (sprite_exists(portrait_sprite)) {
     
     draw_text_x += portrait_width + portrait_x + padding;
     
-    draw_sprite(spr_portrait, 0, draw_portrait_x - 6, draw_portrait_y- 5);
+    draw_sprite(spr_portrait, 0, draw_portrait_x - 6, draw_portrait_y - 5);
     
     var subimg = 0;
     if (!finished)
         subimg = (text_progress / text_speed) * (sprite_get_speed(portrait_sprite) / game_get_speed(gamespeed_fps));
         
     draw_sprite_ext(portrait_sprite, subimg,
-        draw_portrait_x, draw_portrait_y+1,
+        draw_portrait_x, draw_portrait_y + 1,
         draw_portrait_xscale, 1, 0, c_white, 1);
 }
 
@@ -35,11 +39,14 @@ draw_set_valign(fa_top);
 draw_set_font(text_font);
 draw_set_color(text_color);
 
-// Note: If your custom 'type' function uses draw_text_transformed internally, 
-// you will need to change the scale inside that function to roughly 0.55 or 0.60.
 type(draw_text_x + text_x, draw_text_y + text_y, text, text_progress, draw_text_width);
 
 var cursWidth = sprite_get_width(spr_option_arrow);
+
+if (finished)
+{
+    draw_sprite(spr_skippable, -1, 340, 193);
+}
 
 if (finished && option_count > 0) {
     draw_set_valign(fa_middle);
@@ -53,7 +60,6 @@ if (finished && option_count > 0) {
             draw_sprite(spr_option_arrow, 0, opt_x + (cursorLevitate - cursWidth / 12), opt_y + selectLerp);
         }
         
-        // REDUCED SCALE: Dropped from 0.75 down to 0.55 so the choices fit inside the new resolution
         var choice_scale = 0.50; 
         var txw = (string_width(options[i].text) + 30) * choice_scale;
         

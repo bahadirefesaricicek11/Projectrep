@@ -3,16 +3,22 @@ draw_set_valign(fa_middle);
 
 var grid_offset_x = ((grid_width - 1) * spacing_x) / 2;
 
-var gwidth = display_get_gui_width();
-var gheight = display_get_gui_height();
+var gwidth = global.view_width;
+var gheight =global.view_height;
 
 var start_x = (gwidth / 2) - grid_offset_x;
 var start_y = (gheight / 3);
 
 var _scale_factor = 0.75;
 
+
+draw_set_alpha(1);
 draw_set_color(c_white);
-draw_text_transformed(gwidth / 2, start_y - 35, __("menu.name_screen_label") + final_name, 1.5, 1.5, 0);
+
+draw_sprite_stretched(spr_box, 0, start_x-25, 20, 260, 190);
+var _text = __("menu.name_screen_label");
+draw_text_transformed(gwidth / 2, start_y - 35,  _text + final_name, 1.5, 1.5, 0);
+
 
 for (var yy = 0; yy < grid_height; yy++) {
     for (var xx = 0; xx < grid_width; xx++) {
@@ -24,10 +30,10 @@ for (var yy = 0; yy < grid_height; yy++) {
         var is_hovered = (cursor_x == xx && cursor_y == yy);
         
         if (key_text == "BACK") {
-            draw_sprite_ext(spr_back_button, 0, dx - 8, dy - 8, 1, 1, 0, is_hovered ? c_red : c_white, 1);
+            draw_sprite_ext(spr_back_button, 0, dx - 12, dy - 8, 1, 1, 0, is_hovered ? c_red : c_white, 1);
         } 
         else if (key_text == "DONE") {
-            draw_sprite_ext(spr_done_button, 0, dx - 4, dy - 8, 1, 1, 0, is_hovered ? c_lime : c_white, 1);
+            draw_sprite_ext(spr_done_button, 0, dx - 8, dy - 8, 1, 1, 0, is_hovered ? c_lime : c_white, 1);
         } 
         else {
             draw_set_color(is_hovered ? c_yellow : c_white);
@@ -35,9 +41,9 @@ for (var yy = 0; yy < grid_height; yy++) {
             
             if (is_hovered) {
                 draw_set_colour(c_yellow);
-                var soul_x = start_x + (visual_x * spacing_x) - 18;
-                var soul_y = start_y + (visual_y * spacing_y);
-                draw_sprite(spr_cursor, -1, soul_x, soul_y - 8); 
+                var soul_x = start_x + (visual_x * spacing_x) - 7;
+                var soul_y = start_y + (visual_y * spacing_y) - 6;
+                draw_sprite(spr_cursor, -1, soul_x, soul_y); 
             } else {
                 draw_set_color(c_white);
             }
