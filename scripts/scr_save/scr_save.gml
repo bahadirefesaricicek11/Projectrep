@@ -1,4 +1,4 @@
-/// @desc Saves game state split across player.json and world.json
+/// @desc Saves game state split across player.json and world.json (with Equipment Support)
 function save_game()
 {
     // 1. Run room save logic to update global.room_states
@@ -11,24 +11,40 @@ function save_game()
         script_execute(asset_get_index("save_room"));
     }
 
+    // Helper method to convert an item struct into a serialized ID/count struct
+    var _serialize_item = function(_item) {
+        if (!is_struct(_item)) return undefined;
+        
+        var _db_key = string_replace(_item.name_key, "items.", "");
+        _db_key = string_replace(_db_key, ".name", "");
+        
+        return {
+            id: _db_key,
+            count: struct_exists(_item, "count") ? _item.count : 1
+        };
+    };
+
     // 2. Map inventory references
     var _inv_save = [];
     var _inv_length = array_length(obj_item_manager.inv);
     
     for (var i = 0; i < _inv_length; i++) {
         var _item = obj_item_manager.inv[i];
-        if (is_struct(_item)) {
-            var _db_key = string_replace(_item.name_key, "items.", "");
-            _db_key = string_replace(_db_key, ".name", "");
-            
-            array_push(_inv_save, {
-                id: _db_key,
-                count: struct_exists(_item, "count") ? _item.count : 1
-            });
+        var _packed = _serialize_item(_item);
+        if (_packed != undefined) array_push(_inv_save, _packed);
+    }
+
+    // 3. Map Equipped Items Array (Maintains exact 5-slot index mapping)
+    var _equipped_save = [];
+    if (instance_exists(obj_item_manager) && variable_instance_exists(obj_item_manager, "equipped")) {
+        var _eq_len = array_length(obj_item_manager.equipped);
+        for (var i = 0; i < _eq_len; i++) {
+            var _eq_item = obj_item_manager.equipped[i];
+            array_push(_equipped_save, _serialize_item(_eq_item));
         }
     }
 
-    // 3. Construct PLAYER DATA STRUCT
+    // 4. Construct PLAYER DATA STRUCT
     var _player_data = {
         player: {
             name: global.player_name,
@@ -43,6 +59,7 @@ function save_game()
             face: instance_exists(obj_player) ? obj_player.face : 0
         },
         inventory: _inv_save,
+        equipped: _equipped_save,
         party: []
     };
 
@@ -80,7 +97,7 @@ function save_game()
         }
     }
 
-    // 4. Construct WORLD DATA STRUCT
+    // 5. Construct WORLD DATA STRUCT
     var _world_data = {
         world_state: global.room_states
     };
@@ -117,16 +134,9 @@ function save_game()
 /// @desc Loads game state asynchronously using SparkleStore (player.json & world.json)
 function load_game()
 {   
-    // 1. Verify existence of both save files
-    if (!SparkleExists("player.json") || !SparkleExists("world.json")) {
-        show_debug_message("Load failed: Missing player.json or world.json.");
-        return false; 
-    }
-    
-    // 2. Load player.json first
     SparkleLoad("player.json", function(_p_status, _p_buffer) {
         if (!_p_status) {
-            show_debug_message("CRITICAL: SparkleStore failed to load player.json.");
+            show_debug_message("Load failed: player.json could not be loaded or does not exist.");
             if (buffer_exists(_p_buffer)) buffer_delete(_p_buffer);
             return;
         }
@@ -143,48 +153,69 @@ function load_game()
         global.date        = struct_get_active(_player, "date", 0);
         
         var _spawn = struct_exists(_player_data, "spawn") ? _player_data.spawn : {};
-        
-        // Save these to global or local variables captured specifically for target transition
         var _target_room_name = struct_get_active(_spawn, "room_name", "");
         global.load_x    = struct_get_active(_spawn, "x", 0);
         global.load_y    = struct_get_active(_spawn, "y", 0);
         global.load_face = struct_get_active(_spawn, "face", 0);
-        
+
+        // Helper method to reconstruct an item struct from a saved ID
+        var _instantiate_item = function(_saved_item) {
+            if (!is_struct(_saved_item) || !struct_exists(_saved_item, "id")) return undefined;
+            
+            var _item_id = _saved_item.id;
+            var _template = variable_struct_get(global.item_list, _item_id);
+            
+            if (_template != undefined) {
+                var _real_item = new create_item(
+                    _template.name_key,
+                    _template.description_key,
+                    _template.price,
+                    _template.icon,
+                    _template.effect,
+                    _template.heal_amount,
+                    _template.rarity,
+                    _template.itemType,
+                    _template.canDrop
+                );
+                _real_item.count = struct_exists(_saved_item, "count") ? _saved_item.count : 1;
+                return _real_item;
+            } else {
+                show_debug_message("WARNING: Failed to find global.item_list registry entry for ID: " + string(_item_id));
+                return undefined;
+            }
+        };
+
         // Unpack Inventory
         if (struct_exists(_player_data, "inventory")) {
             var _saved_inv = _player_data.inventory;
             var _new_inv = [];
             
             for (var i = 0; i < array_length(_saved_inv); i++) {
-                var _saved_item = _saved_inv[i];
-                var _item_id = _saved_item.id;
-                var _template = variable_struct_get(global.item_list, _item_id);
-                
-                if (_template != undefined) {
-                    var _real_item = new create_item(
-                        _template.name_key,
-                        _template.description_key,
-                        _template.price,
-                        _template.icon,
-                        _template.effect,
-                        _template.heal_amount,
-                        _template.rarity,
-                        _template.itemType,
-                        _template.canDrop
-                    );
-                    _real_item.count = struct_exists(_saved_item, "count") ? _saved_item.count : 1;
+                var _real_item = _instantiate_item(_saved_inv[i]);
+                if (_real_item != undefined) {
                     array_push(_new_inv, _real_item);
-                } else {
-                    show_debug_message("WARNING: Failed to find global.item_list registry entry for ID: " + string(_item_id));
                 }
             }
             obj_item_manager.inv = _new_inv;
+            obj_item_manager.inv_length = array_length(_new_inv);
+        }
+
+        // Unpack Equipped Items Array (Rebuilds 5-slot array)
+        if (struct_exists(_player_data, "equipped")) {
+            var _saved_eq = _player_data.equipped;
+            var _new_eq = array_create(obj_item_manager.max_equipped_length, undefined);
+            
+            var _count = min(array_length(_saved_eq), obj_item_manager.max_equipped_length);
+            for (var i = 0; i < _count; i++) {
+                _new_eq[i] = _instantiate_item(_saved_eq[i]);
+            }
+            obj_item_manager.equipped = _new_eq;
         }
         
         // Unpack Followers
         global.load_followers = struct_exists(_player_data, "party") ? _player_data.party : [];
         
-        // 3. Load world.json in nested callback (pass _target_room_name into scope binding)
+        // Load world.json in nested callback
         var _room_to_load = _target_room_name;
         
         SparkleLoad("world.json", method({ target_room: _room_to_load }, function(_w_status, _w_buffer) {
@@ -201,7 +232,7 @@ function load_game()
             // Unpack World States
             global.room_states = struct_exists(_world_data, "world_state") ? _world_data.world_state : {};
             
-            // 4. Reset engine/visual states
+            // Reset engine/visual states
             global.state = GAME_STATE.PLAYING;
             global.active_battle_enemies = []; 
             shader_reset(); 
@@ -217,7 +248,7 @@ function load_game()
                 obj_music_manager.current_track = noone;
             }
             
-            // 5. Execute room transition using captured variable
+            // Execute room transition
             var _rm_name = target_room;
             if (_rm_name == "") 
             {
@@ -276,7 +307,6 @@ function load_settings()
         ini_close();
         
         window_enable_borderless_fullscreen(true);
-        
         window_set_fullscreen(global.fullscreen == 1);
     }
     
