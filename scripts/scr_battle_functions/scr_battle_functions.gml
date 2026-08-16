@@ -45,6 +45,15 @@
 // Frames a sprite flashes white (additive blend, no shader needed) after taking damage.
 #macro HIT_FLASH_DURATION 8
 
+// --- ACTION RESOLUTION HOLD CONFIG ---
+// How long (in frames) the game pauses on a finished action's battle_text before
+// moving to the next turn — but only AFTER the text has fully finished typing (see
+// Step_0's ACTION_RESOLUTION handling). Was a hardcoded 120 (2s) that counted down
+// independently of the typewriter, which meant any battle_text longer than ~30
+// characters got cut off mid-sentence before the fight yanked forward. Lowered to
+// 45 (~0.75s) since that dead-time was adding up fast across a full turn queue.
+#macro BATTLE_ACTION_HOLD_FRAMES 45
+
 // --- MENU NAVIGATION FEEL CONFIG ---
 // Frames of cooldown after any accepted directional menu input, before another
 // directional input is accepted. Smooths out menu navigation regardless of whether
@@ -68,7 +77,6 @@ enum BATTLE_MENU {
     TARGET_SELECT,
     INTERACT,
     TAKE_ACTION,
-	ACTION_SELECT,
     ITEM_USE,
     ITEM_TARGET_SELECT,
     HIT_BAR
@@ -149,6 +157,13 @@ function battle_setup_card_selection() {
     }
 }
 
+// DEPRECATED — appears to be from an earlier card-buff architecture. Your current
+// GAME_STATE.CARD_SELECTION flow (Step_0.gml) applies card buffs directly to
+// party_members and never calls this. This also calls event_user(0) on the
+// controller, but no User Event 0 exists on obj_battle_controller in the files
+// I've reviewed. Left in (not deleted) in case something outside these six files
+// still calls it — but if you're not calling battle_apply_card_buff() from
+// anywhere, it's safe to delete.
 function battle_apply_card_buff(_card_info) {
     if (_card_info.buff_type == "atk")    global.battle_buff_atk += _card_info.value;
     if (_card_info.buff_type == "def")    global.battle_buff_def += _card_info.value;
@@ -206,6 +221,18 @@ function battle_generate_party(_encounter_key) {
     }
     
     return _data.pools[0].enemies; // Default fallback to first pool item instead of a hardcoded string
+}
+
+/// @desc Rolls a weighted enemy group from global.encounter_database (via
+/// battle_generate_party) and starts that battle. This is the missing link that
+/// makes your encounter_database (slime_easy, forest_ambush, etc.) actually usable —
+/// previously battle_generate_party() existed but nothing ever called it, so those
+/// weighted pools were fully defined but unreachable. Scripted/fixed encounters
+/// (e.g. scr_start_slime_battle) should keep calling battle_trigger_room_transition
+/// directly, since they want a specific fixed lineup, not a random roll.
+function battle_start_random_encounter(_encounter_key) {
+    var _enemies = battle_generate_party(_encounter_key);
+    battle_trigger_room_transition(_enemies);
 }
 
 function battle_kill_enemy(_index) {
@@ -356,7 +383,7 @@ function battle_get_background_color() {
  * @param {Asset.GMObject} _object_index The object asset to instantiate (defaults to obj_battle_enemy_parent)
  * @return {Id.Instance} The created enemy instance ID
  */
-function battle_spawn_enemy(_enemy_key, _x, _y, _object_index = obj_battle_enemy_parent) {
+function battle_spawn_enemy(_enemy_key, _x, _y, _object_index = obj_enemy_parent) {
     // 1. Safety check: Verify the database and key exist
     if (!variable_global_exists("enemy_database") || !variable_struct_exists(global.enemy_database, _enemy_key)) {
         show_debug_message("ERROR: Enemy key '" + string(_enemy_key) + "' not found in database. Falling back to default slime.");
@@ -472,3 +499,91 @@ function scr_check_slime_results() {
     // Clear flag to avoid continuous triggers
     global.battle_id = "none";
 }
+
+
+// ============================================================
+// scr_battle_get_theme() -- arch-box visual theme per zone.
+// Plugs into the SAME global.overworld_room pattern already used by
+// battle_get_background_sprite() / battle_get_background_color() in
+// scr_battle_functions.gml.
+//
+// IMPORTANT: only the DEFAULT case is live right now. The castle/computer/
+// robot cases are commented out because rm_castle_1, spr_box_castle, etc.
+// don't exist as assets yet -- GML resolves those names at COMPILE time,
+// so leaving them active with placeholder names would fail to compile,
+// not just misbehave at runtime. Uncomment + rename each block once the
+// matching room and sprites actually exist in the project.
+// ============================================================
+
+/// @function scr_battle_get_theme()
+/// @description Returns the visual theme struct for the current battle,
+/// based on which overworld room the player was in when the fight started.
+function scr_battle_get_theme() {
+    switch (global.overworld_room) {
+
+        // --- CASTLE ZONE -----------------------------------------------
+        // Uncomment and fill in real room/sprite names once they exist:
+        /*
+        case rm_castle_1:
+        case rm_castle_2:
+            return {
+                theme_id       : "castle",
+                box_sprite     : spr_box_castle,      // arch shape, stone + stained glass
+                hp_box_sprite  : spr_hp_box_castle,
+                accent_color   : make_color_rgb(122, 92, 210) // stained-glass violet
+            };
+        */
+
+        // --- COMPUTER DIMENSION -----------------------------------------
+        /*
+        case rm_computer_1:
+        case rm_computer_2:
+            return {
+                theme_id       : "computer",
+                box_sprite     : spr_box_computer,    // arch shape, glass + chrome bevel
+                hp_box_sprite  : spr_hp_box_computer,
+                accent_color   : make_color_rgb(120, 200, 220) // Frutiger Aero teal
+            };
+        */
+
+        // --- ROBOT ZONE ---------------------------------------------------
+        /*
+        case rm_robot_1:
+        case rm_robot_2:
+            return {
+                theme_id       : "robot",
+                box_sprite     : spr_box_robot,       // arch shape, riveted metal panels
+                hp_box_sprite  : spr_hp_box_robot,
+                accent_color   : make_color_rgb(220, 150, 60) // hazard-panel amber
+            };
+        */
+
+        // --- DEFAULT / OVERWORLD -----------------------------------------
+        default:
+            return {
+                theme_id       : "default",
+                box_sprite     : spr_box,
+                hp_box_sprite  : spr_hp_box,
+                accent_color   : make_color_rgb(255, 255, 255)
+            };
+    }
+}
+
+/// @function scr_battle_arena_begin(arena_inst, attacker_list)
+function scr_battle_arena_begin(_arena_inst, _attacker_list) {
+    with (_arena_inst) {
+        attackers = [];
+        for (var i = 0; i < array_length(_attacker_list); i++) {
+            var _a = _attacker_list[i];
+            array_push(attackers, {
+                actor          : _a.actor,
+                target_index   : _a.target_index,
+                pattern        : _a.pattern,
+                pattern_timer  : 0,
+                hits_taken     : 0,
+                done_spawning  : false
+            });
+        }
+    }
+}
+

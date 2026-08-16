@@ -36,10 +36,15 @@ if (room == rm_battle)
             // creates a smooth horizontal ripple that updates every frame without stuttering.
             var _angle = sin(bg_wiggle_timer + (_draw_x * 0.01)) * 20;
             
+            // Tinted toward bg_color instead of c_white: even at low alpha, a
+            // white-tinted sprite still contributes full-brightness pixels, which
+            // is what made the pattern compete with sprites/UI instead of receding.
+            // Tinting it close to the backdrop color keeps the motion/parallax cue
+            // without the high-contrast "wallpaper" look.
             draw_sprite_ext(
                 bg_scroll_sprite, 0, 
                 _draw_x, _draw_y, 
-                1, 1, _angle, c_white, 0.20
+                1, 1, _angle, merge_color(bg_color, c_white, 0.35), 0.12
             );
         }
     }
@@ -145,19 +150,30 @@ if (global.state == GAME_STATE.CARD_SELECTION) {
 // ========================================== 
 if (global.state == GAME_STATE.BATTLE) {
 
-    var _column_top_y = 0; // boxes now start flush at the top
-    var _box_h = 80; // real height of spr_hp_box
-    var _available_height = 216; // swap for _gui_h if this should track view/room size dynamically
-    var _fits_at_full_size = (_box_h * party_max_members) <= _available_height;
-    var _scale = _fits_at_full_size ? 1 : (_available_height / (_box_h * party_max_members));
-    var _row_vert_spacing = _box_h * _scale;
+    // The dash/menu box (see "_dash_x/_dash_y/_dash_w/_dash_h" further down, currently
+    // gui_h - 128 to gui_h - 64) claims the lower-middle of the screen. The party row has
+    // to fit BELOW that, not just below the room top, or the two collide the same way the
+    // old vertical column did -- just horizontally instead of vertically this time.
+    var _dash_bottom_y   = _gui_h - 64; // matches the dash box's own y + h further down
+    var _row_margin       = 4;
+    var _row_bottom_y     = _gui_h - _row_margin;
+    var _available_height = _row_bottom_y - _dash_bottom_y - _row_margin; // gap left below the dash box
+    var _available_width  = _gui_w;
+
+    var _box_w = 102; // real width of spr_hp_box
+    var _box_h = 80;  // real height of spr_hp_box
+    var _scale_w = min(1, _available_width / (_box_w * party_max_members));
+    var _scale_h = min(1, _available_height / _box_h);
+    var _scale = min(_scale_w, _scale_h); // binding constraint is whichever axis is tighter
+    var _fits_at_full_size = (_scale >= 1); // still read further down for HP roller digit spacing
+    var _row_horiz_spacing = _box_w * _scale;
 
     for (var _i = 0; _i < party_max_members; _i++) {
         var _member = party_members[_i];
         if (!is_struct(_member) && !instance_exists(_member)) continue;
 
-        var _current_box_x = 5 + _sx;
-        var _current_box_y = _column_top_y + (_i * _row_vert_spacing) + _sy;
+        var _current_box_x = 5 + (_i * _row_horiz_spacing) + _sx;
+        var _current_box_y = _row_bottom_y - (_box_h * _scale) - _row_margin + _sy;
 
         // Box background now scales too (Option C) — previously this stayed full-size
         // regardless of _scale, so it would've drifted out of sync with the HUD elements
@@ -301,39 +317,60 @@ if (global.state == GAME_STATE.BATTLE) {
 
         var _sprite_top_offset = sprite_exists(_enemy_sprite) ? sprite_get_height(_enemy_sprite) - sprite_get_yoffset(_enemy_sprite) : 16;
         var _box_x = _gui_x + _sx + 30, _box_y = (_gui_y - _sprite_top_offset - 5) + _sy;
-        var _bar_w = 40, _bar_h = 4;
-    
+        var _bar_w = 40, _bar_h = 5; // was 4 — one extra px gives room for the highlight line below
+
+        // Shared frame colors so HP + mercy bars read as the same HUD family
+        // instead of raw debug rectangles: a muted navy outline (not pure black)
+        // plus a soft drop shadow, matching the metallic-panel feel of spr_hp_box.
+        var _frame_col  = make_colour_rgb(30, 38, 52);
+        var _shadow_col = make_colour_rgb(10, 12, 18);
+
         draw_set_halign(fa_center); draw_set_color(c_white);
         draw_text_transformed(_box_x, _box_y - 12, string_upper(_enemy_inst.name), 0.35, 0.35, 0);
-    
+
+        // Drop shadow, offset 1px down-right, drawn before anything else
+        draw_set_color(_shadow_col);
+        draw_rectangle(_box_x - (_bar_w / 2) + 1, _box_y + 1, _box_x + (_bar_w / 2) + 1, _box_y + _bar_h + 1, false);
+
         draw_set_color(c_dkgray); draw_rectangle(_box_x - (_bar_w / 2), _box_y, _box_x + (_bar_w / 2), _box_y + _bar_h, false);
         
         if (_enemy_inst.max_hp > 0) {
             var _current_display_hp = variable_instance_exists(_enemy_inst, "display_hp") ? _enemy_inst.display_hp : _enemy_inst.hp;
             var _hp_percent = clamp(_current_display_hp / _enemy_inst.max_hp, 0, 1);
             if (_hp_percent > 0) {
-                draw_set_color((_hp_percent <= 0.25) ? c_orange : c_red);
+                var _hp_col = (_hp_percent <= 0.25) ? c_orange : c_red;
+                draw_set_color(_hp_col);
                 draw_rectangle(_box_x - (_bar_w / 2), _box_y, (_box_x - (_bar_w / 2)) + (_bar_w * _hp_percent), _box_y + _bar_h, false);
+                // 1px lighter highlight along the top of the fill — cheap way to
+                // fake a glossy/rounded bar without needing a 9-slice sprite.
+                draw_set_color(merge_color(_hp_col, c_white, 0.35));
+                draw_rectangle(_box_x - (_bar_w / 2), _box_y, (_box_x - (_bar_w / 2)) + (_bar_w * _hp_percent), _box_y + 1, false);
             }
         }
-        draw_set_color(c_black); draw_rectangle(_box_x - (_bar_w / 2) - 1, _box_y - 1, _box_x + (_bar_w / 2) + 1, _box_y + _bar_h + 1, true);
+        draw_set_color(_frame_col); draw_rectangle(_box_x - (_bar_w / 2) - 1, _box_y - 1, _box_x + (_bar_w / 2) + 1, _box_y + _bar_h + 1, true);
         
         // --- MERCY / SPARE METER (mirrors the HP bar, drawn just below it) ---
         if (variable_instance_exists(_enemy_inst, "mercy") && variable_instance_exists(_enemy_inst, "max_mercy") && _enemy_inst.max_mercy > 0) {
             var _mercy_bar_y = _box_y + _bar_h + 3;
             var _mercy_percent = clamp(_enemy_inst.mercy / _enemy_inst.max_mercy, 0, 1);
-            
+
+            draw_set_color(_shadow_col);
+            draw_rectangle(_box_x - (_bar_w / 2) + 1, _mercy_bar_y + 1, _box_x + (_bar_w / 2) + 1, _mercy_bar_y + _bar_h + 1, false);
+
             draw_set_color(c_dkgray);
             draw_rectangle(_box_x - (_bar_w / 2), _mercy_bar_y, _box_x + (_bar_w / 2), _mercy_bar_y + _bar_h, false);
             
             if (_mercy_percent > 0) {
                 // Turns green once the enemy is actually spareable, otherwise gold while filling up
                 var _can_spare_now = variable_instance_exists(_enemy_inst, "can_spare") && _enemy_inst.can_spare;
-                draw_set_color(_can_spare_now ? c_lime : c_yellow);
+                var _mercy_col = _can_spare_now ? c_lime : c_yellow;
+                draw_set_color(_mercy_col);
                 draw_rectangle(_box_x - (_bar_w / 2), _mercy_bar_y, (_box_x - (_bar_w / 2)) + (_bar_w * _mercy_percent), _mercy_bar_y + _bar_h, false);
+                draw_set_color(merge_color(_mercy_col, c_white, 0.35));
+                draw_rectangle(_box_x - (_bar_w / 2), _mercy_bar_y, (_box_x - (_bar_w / 2)) + (_bar_w * _mercy_percent), _mercy_bar_y + 1, false);
             }
             
-            draw_set_color(c_black);
+            draw_set_color(_frame_col);
             draw_rectangle(_box_x - (_bar_w / 2) - 1, _mercy_bar_y - 1, _box_x + (_bar_w / 2) + 1, _mercy_bar_y + _bar_h + 1, true);
         }
     }
@@ -431,75 +468,12 @@ if (global.state == GAME_STATE.BATTLE) {
     // fill-then-punch layering (which, with 3+ overlapping rings, was actually
     // erasing part of the Good zone whenever the Perfect zone punched through it).
     // Each ring here is self-contained and can't bleed into or erase any other.
-    if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
-        var _dq_center_x = _gui_w / 2 + _sx;
-        var _dq_center_y = (_gui_h / 2) - 10 + _sy;
-        var _dq_base_radius = 70;
-        
-        var _dq_perfect = variable_instance_exists(id, "dodge_perfect_threshold") ? dodge_perfect_threshold : 0.12;
-        var _dq_good    = variable_instance_exists(id, "dodge_good_threshold")    ? dodge_good_threshold    : 0.30;
-        
-        var _dq_target_radius  = _dq_base_radius * dodge_target;
-        var _dq_good_px        = _dq_good * _dq_base_radius;
-        var _dq_perfect_px     = _dq_perfect * _dq_base_radius;
-        
-        // Solid dark backdrop disc — grounds the whole meter as a contained HUD
-        // element instead of shapes floating directly over the arena background.
-        draw_set_color(c_black);
-        draw_circle(_dq_center_x, _dq_center_y, _dq_base_radius + 14, false);
-        
-        // Gentle pulse on the target zone only — draws the eye without making the
-        // panel itself feel unstable.
-        var _dq_pulse = 1 + (sin(current_time * 0.006) * 0.06);
-        
-        // Track ring: solid gray outline of the whole play area
-        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_base_radius - 2, _dq_base_radius + 2, c_ltgray);
-        
-        // Good zone: solid opaque orange ring
-        var _dq_good_min = max(0, _dq_target_radius - (_dq_good_px * _dq_pulse));
-        var _dq_good_max = _dq_target_radius + (_dq_good_px * _dq_pulse);
-        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_good_min, _dq_good_max, c_orange);
-        
-        // Perfect zone: solid opaque lime ring, nested inside the Good zone — since
-        // this is its OWN ring geometry (not a punch into the Good zone's fill), the
-        // Good zone's outer and inner portions on either side of it stay fully intact.
-        var _dq_perfect_min = max(0, _dq_target_radius - (_dq_perfect_px * _dq_pulse));
-        var _dq_perfect_max = _dq_target_radius + (_dq_perfect_px * _dq_pulse);
-        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_perfect_min, _dq_perfect_max, c_lime);
-        
-        // The moving ring: shrinks from the full radius down to 0 as dodge_progress
-        // counts down from 1 to 0. A black drop-shadow ring drawn first gives it
-        // contrast against the zones/backdrop. Color shifts white -> lime as it nears
-        // the target.
-        var _dq_current_radius = _dq_base_radius * clamp(dodge_progress, 0, 1);
-        var _dq_distance_norm = clamp(abs(dodge_progress - dodge_target) / _dq_good, 0, 1);
-        var _dq_ring_color = merge_color(c_lime, c_white, _dq_distance_norm);
-        
-        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_current_radius - 4, _dq_current_radius + 4, c_black);
-        draw_ring_solid(_dq_center_x, _dq_center_y, _dq_current_radius - 2, _dq_current_radius + 2, _dq_ring_color);
-        
-        // "NOW!" callout: fires whenever the moving ring is actually inside the Good
-        // zone, so success is communicated by more than just color (helps colorblind
-        // players too, and just reads clearer at a glance during a fast QTE).
-        var _dq_in_good_zone = (abs(dodge_progress - dodge_target) <= _dq_good);
-        if (_dq_in_good_zone) {
-            var _dq_now_pulse = 1 + (sin(current_time * 0.03) * 0.15);
-            draw_set_halign(fa_center);
-            draw_set_color(c_yellow);
-            draw_text_transformed(_dq_center_x, _dq_center_y - 6, "NOW!", 0.7 * _dq_now_pulse, 0.7 * _dq_now_pulse, 0);
-            draw_set_halign(fa_left);
-        }
-        
-        // Subtle pulsing scale on the prompt text so the screen doesn't feel static
-        var _dq_prompt_scale = 0.6 + (sin(current_time * 0.01) * 0.04);
-        draw_set_halign(fa_center);
-        draw_set_color(c_yellow);
-        draw_text_transformed(_dq_center_x, _dq_center_y - _dq_base_radius - 26, "PRESS ACCEPT!", _dq_prompt_scale, _dq_prompt_scale, 0);
-        draw_set_color(c_white);
-        draw_text_transformed(_dq_center_x, _dq_center_y + _dq_base_radius + 14, "Tap when the ring closes on the band!", 0.4, 0.4, 0);
-        draw_set_halign(fa_left);
-        draw_set_color(c_white);
-    }
+    //
+    // The attack arena itself (TELL flash, avatar, beats) is no longer drawn here --
+    // it's owned entirely by obj_battle_arena's own Draw GUI event now, since the
+    // arena is a separate object (see obj_battle_arena_events.gml). This controller
+    // just spawns it, hands it data, and polls arena_ref.done. Nothing to draw here
+    // while battle_sub_state == BATTLE_STATE.DODGE_WINDOW.
 
     // --- 7. CONTEXT SUB-MENU OVERLAY --- 
     if (battle_sub_state == BATTLE_STATE.PLAYER_INPUT && menu_stage != BATTLE_MENU.MAIN && battle_text == "") { 
@@ -774,5 +748,14 @@ if (global.state == GAME_STATE.BATTLE) {
         draw_set_valign(fa_top); draw_set_halign(fa_left);
         draw_set_font(battle_font);
         draw_set_color(c_white);
+    }
+
+    // Arena drawn LAST, explicitly, so it's guaranteed to render in front of
+    // everything else above -- no reliance on cross-instance depth/layer ordering
+    // between obj_battle_controller and obj_battle_arena, which wasn't behaving
+    // predictably. obj_battle_arena still owns all state/physics/collision in its
+    // own Step event; only the actual drawing happens here now.
+    if (instance_exists(arena_ref)) {
+        scr_draw_battle_arena(arena_ref);
     }
 }

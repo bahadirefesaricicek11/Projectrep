@@ -1,5 +1,15 @@
 /// @description Core Battle & Selection Loop
 
+// --- DEBUG: F1 toggles the long test gauntlet pattern (see scr_attack_patterns.gml)
+// so every enemy attack reliably runs the full mechanic-testing sequence instead of
+// their normal random pool. Remove this block (and the matching check in
+// scr_get_attack_pattern_for) once you're done tuning and don't want a stray debug
+// key live in a shipped build.
+if (keyboard_check_pressed(vk_f1)) {
+    global.debug_force_test_pattern = !(variable_global_exists("debug_force_test_pattern") && global.debug_force_test_pattern);
+    show_debug_message("debug_force_test_pattern: " + string(global.debug_force_test_pattern));
+}
+
 // --- 1. SCREENSHAKE DECAY ---
 if (screenshake_amount > 0) {
     screenshake_amount = max(0, screenshake_amount - 0.5);
@@ -748,9 +758,13 @@ if (global.state == GAME_STATE.BATTLE) {
     // Within each tier, order is randomized.
     // ------------------------------------------
     else if (battle_sub_state == BATTLE_STATE.TURN_SORTING) {
-        // Tier 0 = take_action (Defend/Flee/Spare), 1 = item, 2 = interact, 3 = attack
-        var _tiers = array_create(4);
-        for (var _t = 0; _t < 4; _t++) _tiers[_t] = [];
+        // Tier 0 = take_action (Defend/Flee/Spare), 1 = item, 2 = interact, 3 = attack,
+        // 4 = enemies (always last, so the whole party's turn resolves before any
+        // enemy attacks -- this also means all enemy acts end up contiguous in
+        // turn_queue, which is exactly what the "gather every enemy act for one
+        // combined arena" logic in the DODGE_WINDOW trigger relies on).
+        var _tiers = array_create(5);
+        for (var _t = 0; _t < 5; _t++) _tiers[_t] = [];
         
         var _party_count = array_length(party_members);
         for (var _i = 0; _i < _party_count; _i++) {
@@ -796,7 +810,7 @@ if (global.state == GAME_STATE.BATTLE) {
                 _target_party_idx = _living_targets[irandom(array_length(_living_targets) - 1)];
             }
             
-            array_push(_tiers[3], {
+            array_push(_tiers[4], {
                 actor_type: "enemy",
                 actor_instance: _enemy,
                 actor_index: _i,
@@ -806,7 +820,7 @@ if (global.state == GAME_STATE.BATTLE) {
         
         // Shuffle each tier independently (Fisher-Yates), then concatenate in priority order
         turn_queue = [];
-        for (var _t = 0; _t < 4; _t++) {
+        for (var _t = 0; _t < 5; _t++) {
             var _bucket = _tiers[_t];
             var _n = array_length(_bucket);
             for (var _s = _n - 1; _s > 0; _s--) {
@@ -849,7 +863,7 @@ if (global.state == GAME_STATE.BATTLE) {
         }
         
         current_turn_act = array_shift(turn_queue);
-        action_timer = 120; 
+        action_timer = BATTLE_ACTION_HOLD_FRAMES; 
         text_char_count = 0;
         
         if (current_turn_act.actor_type == "party") {
@@ -923,8 +937,10 @@ if (global.state == GAME_STATE.BATTLE) {
                             color2: _is_crit ? c_red : ((_mult >= 1.5) ? c_yellow : c_white),
                             scale: _is_crit ? 0.7 : 0.5
                         });
-                        // Flavor text variety instead of one fixed template every time —
-                        // picks randomly, name/verdict/crit still substituted in normally.
+                        // Flavor text is still computed (in case you want it for a log or
+                        // combat history later) but no longer shown in the dashboard --
+                        // popups already carry the damage number, and the arena/hit
+                        // animation already carries the "attack happened" beat.
                         var _atk_flavor_templates = [
                             "@actor@ attacks @target@! @verd@",
                             "@actor@ strikes @target@! @verd@",
@@ -935,7 +951,7 @@ if (global.state == GAME_STATE.BATTLE) {
                         _atk_flavor = string_replace(_atk_flavor, "@actor@", string(_actor.name));
                         _atk_flavor = string_replace(_atk_flavor, "@target@", string(_target.name));
                         _atk_flavor = string_replace(_atk_flavor, "@verd@", string(_verd));
-                        battle_text = _atk_flavor + (_is_crit ? " CRITICAL HIT!" : "");
+                        battle_text = "";
                         screenshake_amount = _is_crit ? 7 : ((_mult >= 1.5) ? 5 : 2);
                         if (_is_crit) battle_spawn_hit_particles(_spawn_x, _spawn_y, make_colour_rgb(255, 165, 0));
                         
@@ -963,7 +979,7 @@ if (global.state == GAME_STATE.BATTLE) {
                             }
                         }
                     } else {
-                        battle_text = _actor.name + " swung, but no enemies were left!";
+                        battle_text = "";
                     }
                     battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
                     break;
@@ -1044,7 +1060,7 @@ if (global.state == GAME_STATE.BATTLE) {
                     
                 case "take_action":
                     if (current_turn_act.chosen_sub_action == "Defend") { 
-                        battle_text = _actor.name + " is guarding safely!";
+                        battle_text = "";
                     } else if (current_turn_act.chosen_sub_action == "Flee") { 
                         // Certain encounters can't be fled from at all: scripted/special
                         // battles (global.battle_id != "none", e.g. the slime ambush) and
@@ -1177,10 +1193,15 @@ if (global.state == GAME_STATE.BATTLE) {
                 battle_sub_state = BATTLE_STATE.TURN_PROCESSING;
                 exit;
             }
-            
+
+            // Gather every OTHER still-pending enemy act out of turn_queue too, so all
+            // living enemies attack together in one combined arena instead of one at a
+            // time. Party turns keep their own position in the speed-sorted queue --
+            // this only pulls enemy acts forward to bundle with this one.
+            var _attackers = [];
+
             var _t_idx = current_turn_act.target_index;
             var _target = party_members[_t_idx];
-            
             if (_target.hp <= 0) {
                 var _p_count = array_length(party_members);
                 for (var _p = 0; _p < _p_count; _p++) {
@@ -1192,134 +1213,75 @@ if (global.state == GAME_STATE.BATTLE) {
                     }
                 }
             }
-            
             if (_target.hp > 0) {
-                // Block-Tales-style dodge window: don't resolve damage immediately.
-                // Instead give the player a timed window to press Accept and reduce/negate it.
-                // Eased again (3rd pass) — still reported as too fast, so this cuts speed
-                // roughly in half again and widens both hit windows further. Visual is a
-                // shrinking ring (see Draw GUI), matching Block Tales more closely.
-                dodge_speed = 0.005; // ~200 frames / ~3.3s at 60fps to fully close, was 0.010 (~1.7s)
-                dodge_progress = 1.0;
-                dodge_target = random_range(0.3, 0.6); // where in the countdown the ring "lands"
-                dodge_verdict = "";
-                dodge_perfect_threshold = 0.16; // was 0.12 — wider Perfect window again
-                dodge_good_threshold = 0.38;    // was 0.30 — wider Good window again
-                // FIX: without this, whatever battle_text was showing right before this
-                // attack (e.g. a leftover "X attacks Y!" message) kept rendering in the
-                // dashboard box behind/underneath the dodge ring, since the dashboard
-                // only hides when battle_text == "".
+                array_push(_attackers, { actor: _actor, target_index: _t_idx, pattern: scr_get_attack_pattern_for(_actor) });
+            }
+
+            for (var q = array_length(turn_queue) - 1; q >= 0; q--) {
+                var _q_act = turn_queue[q];
+                if (_q_act.actor_type != "enemy") continue;
+                var _q_actor = _q_act.actor_instance;
+                if (!instance_exists(_q_actor) || _q_actor.hp <= 0) {
+                    array_delete(turn_queue, q, 1);
+                    continue;
+                }
+
+                var _q_t_idx = _q_act.target_index;
+                var _q_target = party_members[_q_t_idx];
+                if (_q_target.hp <= 0) {
+                    var _p_count2 = array_length(party_members);
+                    var _found_target = false;
+                    for (var _p2 = 0; _p2 < _p_count2; _p2++) {
+                        if (party_members[_p2].hp > 0) {
+                            _q_t_idx = _p2;
+                            _q_target = party_members[_p2];
+                            _found_target = true;
+                            break;
+                        }
+                    }
+                    if (!_found_target) {
+                        array_delete(turn_queue, q, 1); // no valid target left for this attacker
+                        continue;
+                    }
+                }
+
+                array_push(_attackers, { actor: _q_actor, target_index: _q_t_idx, pattern: scr_get_attack_pattern_for(_q_actor) });
+                array_delete(turn_queue, q, 1); // pulled into this combined arena
+            }
+
+            if (array_length(_attackers) > 0) {
+                // Depth no longer affects visibility (see scr_draw_battle_arena -- the
+                // controller draws this explicitly now, not relying on instance ordering).
+                arena_ref = instance_create_depth(0, 0, 0, obj_battle_arena);
+                scr_battle_arena_begin(arena_ref, _attackers);
                 battle_text = "";
                 text_char_count = 0;
                 battle_sub_state = BATTLE_STATE.DODGE_WINDOW;
             } else {
-                var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
-                battle_text = string(_e_name) + " lunges, but no active targets were left standing!";
+                battle_text = "";
                 battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
             }
         }
     }
     // ------------------------------------------
-    // SUB-STATE: DODGE WINDOW (Block-Tales-style QTE before an enemy attack lands)
-    // Press Accept: close to the landing moment = "PERFECT" (no damage),
-    // a bit off = "GOOD" (half damage), otherwise (or no press at all) = full damage.
+    // SUB-STATE: DODGE WINDOW (now: polls obj_battle_arena, all attacking enemies
+    // resolved together in one combined arena instead of one at a time)
     // ------------------------------------------
     else if (battle_sub_state == BATTLE_STATE.DODGE_WINDOW) {
-        dodge_progress -= dodge_speed;
-        
-        var _dodge_resolve_now = false;
-        var _dodge_result = "MISS";
-        
-        if (_key_conf) {
-            var _dodge_distance = abs(dodge_progress - dodge_target);
-            if (_dodge_distance <= dodge_perfect_threshold) {
-                _dodge_result = "PERFECT";
-            } else if (_dodge_distance <= dodge_good_threshold) {
-                _dodge_result = "GOOD";
-            } else {
-                _dodge_result = "MISS";
-            }
-            _dodge_resolve_now = true;
-        } else if (dodge_progress <= 0) {
-            // Ran out of time without pressing — attack lands fully.
-            _dodge_result = "MISS";
-            _dodge_resolve_now = true;
-        }
-        
-        if (_dodge_resolve_now) {
-            dodge_verdict = _dodge_result;
-            
-            var _actor = current_turn_act.actor_instance;
-            var _t_idx = current_turn_act.target_index;
-            var _target = party_members[_t_idx];
-            
-            if (instance_exists(_actor) && _target.hp > 0) {
-                var _is_guarding = variable_instance_exists(_target, "is_defending") ? _target.is_defending : false;
-                var _damage = max(1, _actor.atk - _target.def);
-                if (_is_guarding) _damage = ceil(_damage * 0.5);
-                
-                if (_dodge_result == "PERFECT") {
-                    _damage = 0;
-                } else if (_dodge_result == "GOOD") {
-                    _damage = ceil(_damage * 0.5);
-                }
-                
-                _target.hp = max(0, _target.hp - _damage);
-                if (_damage > 0) _target.hit_flash_timer = HIT_FLASH_DURATION; // NEW: brief white flash on hit (skipped on a Perfect dodge — no damage taken)
-                var _e_name = variable_instance_exists(_actor, "name") ? _actor.name : "Enemy";
-                
-                // Flavor text variety for the enemy's attack verb — "lunges at" every
-                // single time got repetitive fast. Perfect/Good/Miss each still get
-                // their own distinct outcome wording after the verb.
-                var _enemy_atk_verbs = ["lunges at", "strikes at", "attacks", "swings at"];
-                var _enemy_atk_verb = _enemy_atk_verbs[irandom(array_length(_enemy_atk_verbs) - 1)];
-                
-                if (_dodge_result == "PERFECT") {
-                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + "... PERFECT DODGE! No damage taken!";
-                } else if (_dodge_result == "GOOD") {
-                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + "! Partial dodge, " + string(_damage) + " damage.";
-                } else {
-                    battle_text = string(_e_name) + " " + _enemy_atk_verb + " " + string(_target.name) + " doing " + string(_damage) + " damage!";
-                    if (_is_guarding) battle_text += " (Guarded!)";
-                }
-                
-                // Popup at the target's HP box position (party HP boxes live in fixed GUI
-                // space, same convention as the item-heal popups) — either the damage number,
-                // or a DODGED! callout on a perfect dodge.
-                var _spawn_x = 100 + (_t_idx * 160);
-                var _spawn_y = display_get_gui_height() - 140;
-                
-                if (_damage > 0) {
-                    screenshake_amount = 3;
-                    array_push(popup_numbers, {
-                        type: "jumping_number",
-                        x: _spawn_x, y: _spawn_y,
-                        hspeed: random_range(-1.0, 1.0),
-                        vspeed: random_range(-3.5, -2.0),
-                        gravity: 0.2,
-                        text: string(_damage),
-                        life: 45, max_life: 45,
-                        color: c_white
-                    });
-                } else {
-                    array_push(popup_numbers, {
-                        type: "jumping_number",
-                        x: _spawn_x, y: _spawn_y,
-                        hspeed: random_range(-1.0, 1.0),
-                        vspeed: random_range(-3.5, -2.0),
-                        gravity: 0.2,
-                        text: "DODGED!",
-                        life: 45, max_life: 45,
-                        color: c_aqua
-                    });
-                    
-                    // Celebratory particle burst on a Perfect dodge — battle_spawn_hit_particles
-                    // now actually renders (see the popup Step/Draw fixes), so this is the
-                    // first thing that actually uses it.
-                    battle_spawn_hit_particles(_spawn_x, _spawn_y, c_aqua);
-                }
-            }
-            
+        if (instance_exists(arena_ref) && arena_ref.done) {
+            // Damage/hit-flash and all player-facing feedback (hit flash, "PARRY!"/
+            // damage callouts) already happened in real time inside obj_battle_arena's
+            // own Step/Draw -- nothing left to apply or pop up here. No post-arena
+            // "DODGED!" popup on the player either; the in-arena feedback IS the
+            // feedback now, no need to repeat it after the fact at the HP box.
+            battle_text = "";
+            text_char_count = 0;
+
+            instance_destroy(arena_ref);
+            arena_ref = noone;
+            battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
+        } else if (!instance_exists(arena_ref)) {
+            // safety fallback if the arena instance vanished unexpectedly
             battle_sub_state = BATTLE_STATE.ACTION_RESOLUTION;
         }
     }
@@ -1327,7 +1289,19 @@ if (global.state == GAME_STATE.BATTLE) {
     // SUB-STATE 4: ACTION RESOLUTION
     // ------------------------------------------
     else if (battle_sub_state == BATTLE_STATE.ACTION_RESOLUTION) {
-        if (action_timer > 0) {
+        // FIX: action_timer used to count down the instant this state was entered,
+        // completely independent of the typewriter. Any battle_text longer than
+        // ~30 characters (most of your flavor text) got cut off mid-sentence when
+        // the timer ran out, and the fight yanked forward before it could be read.
+        // Now the hold only starts once the text is actually fully revealed — until
+        // then, this just waits (the "TEXT PACING ACCELERATOR" section above still
+        // handles typing it out / instantly completing it on Cancel).
+        var _text_fully_shown = (text_char_count >= string_length(battle_text));
+        
+        if (!_text_fully_shown) {
+            // Text still typing — do nothing here, let it finish (or get
+            // instant-completed by the accelerator above on Cancel).
+        } else if (action_timer > 0) {
             action_timer--;
             // FIX: was _key_conf (ACCEPT) — your dialogue system uses CANCEL to skip
             // text, so this matched it for consistency instead of forcing a different

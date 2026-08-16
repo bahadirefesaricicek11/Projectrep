@@ -21,13 +21,29 @@ bg_wiggle_timer = 0;
 bg_scroll_sprite = spr_bg_icon_default;
 
 // Pull the overworld room we just came from to determine the correct asset pattern
-if (variable_global_exists("overworld_room_fallback")) {
+// FIX: this used to check global.overworld_room_fallback, a variable never actually
+// set anywhere in the project (see the matching fix in Step_0.gml's battle-exit
+// logic) -- so this always silently fell through to the default background/theme,
+// regardless of which room the player actually fought in. global.overworld_room is
+// the real variable, captured by battle_trigger_room_transition() when the fight began.
+if (variable_global_exists("overworld_room")) {
     bg_color = battle_get_background_color();
     bg_scroll_sprite = battle_get_background_sprite();
 } else {
     bg_scroll_sprite = spr_bg_icon_default;
 	bg_color = make_color_rgb(20, 15, 35);
 }
+
+// Zone visual theme (arch box / HP box / accent color) -- same overworld_room lookup
+// as the background above, see scr_battle_get_theme(). Falls back to the "default"
+// theme internally if overworld_room isn't set or doesn't match a themed zone.
+battle_theme = scr_battle_get_theme();
+
+// --- ATTACK ARENA (obj_battle_arena, a separate object -- see obj_battle_arena_events.gml) ---
+// This controller only holds a reference to the currently-active arena instance,
+// spawns it when enemies attack, and polls arena_ref.done. All arena state (phase,
+// avatar position, live beats, physics) lives on obj_battle_arena itself now.
+arena_ref = noone;
 
 // --- 2. STATUS EFFECT & CARD SELECTION TRACKERS ---
 global.active_combat_buffs = [];
